@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*		Message Authentication Codes Based on a Symmetric Block Cipher	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CryptSmac.c 1311 2018-08-23 21:39:29Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,100 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2018					*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
+/* 10.2.20	CryptSmac.c */
+/* 10.2.20.1	Introduction */
+/* This file contains the implementation of the message authentication codes based on a symmetric
+   block cipher. These functions only use the single block encryption functions of the selected
+   symmetric cryptographic library. */
+/* 10.2.20.2	Includes, Defines, and Typedefs */
+#define _CRYPT_HASH_C_
 #include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
-
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
+#if SMAC_IMPLEMENTED
+    /* 10.2.20.2.1	CryptSmacStart() */
+    /* Function to start an SMAC. */
+UINT16
+CryptSmacStart(
+	       HASH_STATE              *state,
+	       TPMU_PUBLIC_PARMS       *keyParameters,
+	       TPM_ALG_ID               macAlg,          // IN: the type of MAC
+	       TPM2B                   *key
+	       )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
+    UINT16                  retVal = 0;
+    //
+    // Make sure that the key size is correct. This should have been checked
+    // at key load, but...
+    if(BITS_TO_BYTES(keyParameters->symDetail.sym.keyBits.sym) == key->size)
+	{
+	    switch(macAlg)
+		{
+#if ALG_CMAC
+		  case ALG_CMAC_VALUE:
+		    retVal = CryptCmacStart(&state->state.smac, keyParameters,
+					    macAlg, key);
+		    break;
+#endif
+		  default:
+		    break;
+		}
+	}
+    state->type = (retVal != 0) ? HASH_STATE_SMAC : HASH_STATE_EMPTY;
+    return retVal;
 }
-
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
+/* 10.2.20.2.2	CryptMacStart() */
+/* Function to start either an HMAC or an SMAC. Cannot reuse the CryptHmacStart() function because
+   of the difference in number of parameters. */
+UINT16
+CryptMacStart(
+	      HMAC_STATE              *state,
+	      TPMU_PUBLIC_PARMS       *keyParameters,
+	      TPM_ALG_ID               macAlg,          // IN: the type of MAC
+	      TPM2B                   *key
+	      )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
+    MemorySet(state, 0, sizeof(HMAC_STATE));
+    if(CryptHashIsValidAlg(macAlg, FALSE))
+	{
+	    return CryptHmacStart(state, macAlg, key->size, key->buffer);
+	}
+    else if(CryptSmacIsValidAlg(macAlg, FALSE))
+	{
+	    return CryptSmacStart(&state->hashState, keyParameters, macAlg, key);
+	}
+    else
+	return 0;
 }
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
+/* 10.2.20.2.3	CryptMacEnd() */
+/* Dispatch to the MAC end function using a size and buffer pointer. */
+UINT16
+CryptMacEnd(
+	    HMAC_STATE          *state,
+	    UINT32               size,
+	    BYTE                *buffer
+	    )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
+    UINT16              retVal = 0;
+    if(state->hashState.type == HASH_STATE_SMAC)
+	retVal = (state->hashState.state.smac.smacMethods.end)(
+							       &state->hashState.state.smac.state, size, buffer);
+    else if(state->hashState.type == HASH_STATE_HMAC)
+	retVal = CryptHmacEnd(state, size, buffer);
+    state->hashState.type = HASH_STATE_EMPTY;
+    return retVal;
 }
+/* 10.2.20.2.4	CryptMacEnd2B() */
+/* Dispatch to the MAC end function using a 2B. */
+UINT16
+CryptMacEnd2B (
+	       HMAC_STATE          *state,
+	       TPM2B               *data
+	       )
+{
+    return CryptMacEnd(state, data->size, data->buffer);
+}
+#endif // SMAC_IMPLEMENTED
+

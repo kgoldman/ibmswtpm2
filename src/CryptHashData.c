@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CryptHashData.c 1262 2018-07-11 21:03:43Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,32 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016					*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
+/* 10.2.15 CryptHashData.c */
 #include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
-
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
-
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+const HASH_INFO   g_hashData[HASH_COUNT + 1] = {
+#if ALG_SHA1
+    {TPM_ALG_SHA1,    SHA1_DIGEST_SIZE,   SHA1_BLOCK_SIZE,
+     SHA1_DER_SIZE,   {SHA1_DER}},
+#endif
+#if ALG_SHA256
+    {TPM_ALG_SHA256,    SHA256_DIGEST_SIZE,   SHA256_BLOCK_SIZE,
+     SHA256_DER_SIZE,   {SHA256_DER}},
+#endif
+#if ALG_SHA384
+    {TPM_ALG_SHA384,    SHA384_DIGEST_SIZE,   SHA384_BLOCK_SIZE,
+     SHA384_DER_SIZE,   {SHA384_DER}},
+#endif
+#if ALG_SHA512
+    {TPM_ALG_SHA512,    SHA512_DIGEST_SIZE,   SHA512_BLOCK_SIZE,
+     SHA512_DER_SIZE,   {SHA512_DER}},
+#endif
+#if ALG_SM3_256
+    {TPM_ALG_SM3_256,    SM3_256_DIGEST_SIZE,   SM3_256_BLOCK_SIZE,
+     SM3_256_DER_SIZE,   {SM3_256_DER}},
+#endif
+    {TPM_ALG_NULL,0,0,0,{0}}
+};

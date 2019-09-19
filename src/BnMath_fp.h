@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: BnMath_fp.h 809 2016-11-16 18:31:54Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,102 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016					*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef BNMATH_FP_H
+#define BNMATH_FP_H
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+LIB_EXPORT BOOL
+BnAdd(
+      bigNum           result,
+      bigConst         op1,
+      bigConst         op2
+      );
+LIB_EXPORT BOOL
+BnAddWord(
+	  bigNum           result,
+	  bigConst         op,
+	  crypt_uword_t    word
+	  );
+LIB_EXPORT BOOL
+BnSub(
+      bigNum           result,
+      bigConst         op1,
+      bigConst         op2
+      );
+LIB_EXPORT BOOL
+BnSubWord(
+	  bigNum           result,
+	  bigConst     op,
+	  crypt_uword_t    word
+	  );
+LIB_EXPORT int
+BnUnsignedCmp(
+	      bigConst               op1,
+	      bigConst               op2
+	      );
+LIB_EXPORT int
+BnUnsignedCmpWord(
+		  bigConst             op1,
+		  crypt_uword_t        word
+		  );
+LIB_EXPORT crypt_word_t
+BnModWord(
+	  bigConst         numerator,
+	  crypt_word_t     modulus
+	  );
+LIB_EXPORT int
+Msb(
+    crypt_uword_t           word
+    );
+LIB_EXPORT int
+BnMsb(
+      bigConst            bn
+      );
+LIB_EXPORT unsigned
+BnSizeInBits(
+	     bigConst                 n
+	     );
+LIB_EXPORT bigNum
+BnSetWord(
+	  bigNum               n,
+	  crypt_uword_t        w
+	  );
+LIB_EXPORT BOOL
+BnSetBit(
+	 bigNum           bn,        // IN/OUT: big number to modify
+	 unsigned int     bitNum     // IN: Bit number to SET
+	 );
+LIB_EXPORT BOOL
+BnTestBit(
+	  bigNum               bn,        // IN: number to check
+	  unsigned int         bitNum     // IN: bit to test
+	  );
+LIB_EXPORT BOOL
+BnMaskBits(
+	   bigNum           bn,        // IN/OUT: number to mask
+	   crypt_uword_t    maskBit    // IN: the bit number for the mask.
+	   );
+LIB_EXPORT BOOL
+BnShiftRight(
+	     bigNum           result,
+	     bigConst         toShift,
+	     uint32_t         shiftAmount
+	     );
+LIB_EXPORT BOOL
+BnGetRandomBits(
+		bigNum           n,
+		size_t           bits,
+		RAND_STATE      *rand
+		);
+LIB_EXPORT BOOL
+BnGenerateRandomInRange(
+			bigNum           dest,
+			bigConst         limit,
+			RAND_STATE      *rand
+			);
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
 
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+#endif

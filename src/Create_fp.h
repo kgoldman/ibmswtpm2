@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: Create_fp.h 809 2016-11-16 18:31:54Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,42 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2012-2015				*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+/* rev 137 */
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+#ifndef CREATE_FP_H
+#define CREATE_FP_H
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
+typedef struct {
+    TPMI_DH_OBJECT		parentHandle;
+    TPM2B_SENSITIVE_CREATE	inSensitive;
+    TPM2B_PUBLIC		inPublic;
+    TPM2B_DATA			outsideInfo;
+    TPML_PCR_SELECTION		creationPCR;
+} Create_In;     
 
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
+#define RC_Create_parentHandle 	(TPM_RC_H + TPM_RC_1)
+#define RC_Create_inSensitive 	(TPM_RC_P + TPM_RC_1)
+#define RC_Create_inPublic 	(TPM_RC_P + TPM_RC_2)
+#define RC_Create_outsideInfo	(TPM_RC_P + TPM_RC_3)
+#define RC_Create_creationPCR	(TPM_RC_P + TPM_RC_4)
 
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
+typedef struct {
+    TPM2B_PRIVATE	outPrivate;
+    TPM2B_PUBLIC	outPublic;
+    TPM2B_CREATION_DATA	creationData;
+    TPM2B_DIGEST	creationHash;
+    TPMT_TK_CREATION	creationTicket;
+} Create_Out;
 
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+TPM_RC
+TPM2_Create(
+	    Create_In       *in,            // IN: input parameter list
+	    Create_Out      *out            // OUT: output parameter list
+	    );
+
+
+#endif

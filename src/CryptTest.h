@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			  constant definitions used for self-test.   		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CryptTest.h 1265 2018-07-15 18:29:22Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,41 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016, 2017				*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef CRYPTTEST_H
+#define CRYPTTEST_H
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
+/* 10.1.7 CryptTest.h */
+/* This file contains constant definitions used for self test */
+/* This is the definition of a bit array with one bit per algorithm */
+/* NOTE: Since bit numbering starts at zero, when ALG_LAST_VALUE is a multiple of 8,
+   ALGORITHM_VECTOR will need to have byte for the single bit in the last byte. So, for example,
+   when ALG_LAST_VECTOR is 8, ALGORITHM_VECTOR will need 2 bytes. */
+#define ALGORITHM_VECTOR_BYTES  ((ALG_LAST_VALUE + 8) / 8)
+typedef BYTE    ALGORITHM_VECTOR[ALGORITHM_VECTOR_BYTES];
+#ifdef  TEST_SELF_TEST
+LIB_EXPORT    extern  ALGORITHM_VECTOR    LibToTest;
+#endif
+/* This structure is used to contain self-test tracking information for the cryptographic
+   modules. Each of the major modules is given a 32-bit value in which it may maintain its own self
+   test information. The convention for this state is that when all of the bits in this structure
+   are 0, all functions need to be tested. */
+typedef struct
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+    UINT32      rng;
+    UINT32      hash;
+    UINT32      sym;
+#if ALG_RSA
+    UINT32      rsa;
+#endif
+#if ALG_ECC
+    UINT32      ecc;
+#endif
+} CRYPTO_SELF_TEST_STATE;
+/* This structure contains the cryptographic self-test state values. */
+extern CRYPTO_SELF_TEST_STATE   g_cryptoSelfTestState;
+#endif // _CRYPT_TEST_H
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}

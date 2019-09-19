@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     RSA-related structures and defines			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CryptRsa.h 953 2017-03-06 20:31:40Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,46 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016, 2017				*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef CRYPTRSA_H
+#define CRYPTRSA_H
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
+/* 10.1.6 CryptRsa.h */
+#ifndef _CRYPT_RSA_H
+#define _CRYPT_RSA_H
+/* This structure is a succinct representation of the cryptographic components of an RSA key. It is
+   used in testing */
+typedef struct
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
-
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
+    UINT32        exponent;      // The public exponent pointer
+    TPM2B        *publicKey;     // Pointer to the public modulus
+    TPM2B        *privateKey;    // The private prime
+} RSA_KEY;
+/* These values are used in the bigNum representation of various RSA values. */
+#define RSA_BITS            (MAX_RSA_KEY_BYTES * 8)
+BN_TYPE(rsa, RSA_BITS);
+#define BN_RSA(name)       BN_VAR(name, RSA_BITS)
+#define BN_RSA_INITIALIZED(name, initializer)		\
+    BN_INITIALIZED(name, RSA_BITS, initializer)
+#define BN_PRIME(name)     BN_VAR(name, (RSA_BITS / 2))
+BN_TYPE(prime, (RSA_BITS / 2));
+#define BN_PRIME_INITIALIZED(name, initializer)			\
+    BN_INITIALIZED(name, RSA_BITS / 2, initializer)
+typedef struct privateExponent
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
+#if CRT_FORMAT_RSA == NO
+    bn_rsa_t            D;
+#else
+    bn_prime_t          Q;
+    bn_prime_t          dP;
+    bn_prime_t          dQ;
+    bn_prime_t          qInv;
+#endif // CRT_FORMAT_RSA
+} privateExponent_t;
+#endif      // _CRYPT_RSA_H
 
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
 
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+#endif

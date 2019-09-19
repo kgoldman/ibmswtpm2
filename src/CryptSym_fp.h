@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CryptSym_fp.h 1047 2017-07-20 18:27:34Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,57 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016					*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef CRYPTSYM_FP_H
+#define CRYPTSYM_FP_H
 
 BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+CryptSymInit(
+	     void
+	     );
+BOOL
+CryptSymStartup(
+		void
+		);
+LIB_EXPORT INT16
+CryptGetSymmetricBlockSize(
+			   TPM_ALG_ID      symmetricAlg,   // IN: the symmetric algorithm
+			   UINT16          keySizeInBits   // IN: the key size
+			   );
+LIB_EXPORT TPM_RC
+CryptSymmetricEncrypt(
+		      BYTE                *dOut,          // OUT:
+		      TPM_ALG_ID           algorithm,     // IN: the symmetric algorithm
+		      UINT16               keySizeInBits, // IN: key size in bits
+		      const BYTE          *key,           // IN: key buffer. The size of this buffer
+		      //     in bytes is (keySizeInBits + 7) / 8
+		      TPM2B_IV            *ivInOut,       // IN/OUT: IV for decryption.
+		      TPM_ALG_ID           mode,          // IN: Mode to use
+		      INT32                dSize,         // IN: data size (may need to be a
+		      //     multiple of the blockSize)
+		      const BYTE          *dIn            // IN: data buffer
+		      );
+LIB_EXPORT TPM_RC
+CryptSymmetricDecrypt(
+		      BYTE                *dOut,          // OUT: decrypted data
+		      TPM_ALG_ID           algorithm,     // IN: the symmetric algorithm
+		      UINT16               keySizeInBits, // IN: key size in bits
+		      const BYTE          *key,           // IN: key buffer. The size of this buffer
+		      //     in bytes is (keySizeInBits + 7) / 8
+		      TPM2B_IV            *ivInOut,       // IN/OUT: IV for decryption.
+		      TPM_ALG_ID           mode,          // IN: Mode to use
+		      INT32                dSize,         // IN: data size (may need to be a
+		      //     multiple of the blockSize)
+		      const BYTE          *dIn            // IN: data buffer
+		      );
+TPM_RC
+CryptSymKeyValidate(
+		    TPMT_SYM_DEF_OBJECT *symDef,
+		    TPM2B_SYM_KEY       *key
+		    );
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
 
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+#endif

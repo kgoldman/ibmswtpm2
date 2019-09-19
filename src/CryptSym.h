@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*		Implementation of the symmetric block cipher modes 		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CryptSym.h 1259 2018-07-10 19:11:09Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,95 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2017 - 2018				*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+#ifndef CRYPTSYM_H
+#define CRYPTSYM_H
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+union tpmCryptKeySchedule_t {
+#if ALG_AES
+    tpmKeyScheduleAES           AES;
+#endif
+#if ALG_SM4
+    tpmKeyScheduleSM4           SM4;
+#endif
+#if ALG_CAMELLIA
+    tpmKeyScheduleCAMELLIA      CAMELLIA;
+#endif
+#if ALG_TDES
+    tpmKeyScheduleTDES          TDES[3];
+#endif
+#if SYMMETRIC_ALIGNMENT == 8
+    uint64_t            alignment;
+#else
+    uint32_t            alignment;
+#endif
+};
+/* Each block cipher within a library is expected to conform to the same calling conventions with
+   three parameters (keySchedule, in, and out) in the same order. That means that all algorithms
+   would use the same order of the same parameters. The code is written assuming the (keySchedule,
+   in, and out) order. However, if the library uses a different order, the order can be changed with
+   a SWIZZLE macro that puts the parameters in the correct order. Note that all algorithms have to
+   use the same order and number of parameters because the code to build the calling list is common
+   for each call to encrypt or decrypt with the algorithm chosen by setting a function pointer to
+   select the algorithm that is used. */
+#   define ENCRYPT(keySchedule, in, out)	\
+    encrypt(SWIZZLE(keySchedule, in, out))
+#   define DECRYPT(keySchedule, in, out)	\
+    decrypt(SWIZZLE(keySchedule, in, out))
+/* Note that the macros rely on encrypt as local values in the functions that use these
+   macros. Those parameters are set by the macro that set the key schedule to be used for the
+   call. */
+#define ENCRYPT_CASE(ALG)						\
+    case TPM_ALG_##ALG:							\
+    TpmCryptSetEncryptKey##ALG(key, keySizeInBits, &keySchedule.ALG);	\
+    encrypt = (TpmCryptSetSymKeyCall_t)TpmCryptEncrypt##ALG;		\
+    break;
+#define DECRYPT_CASE(ALG)						\
+    case TPM_ALG_##ALG:							\
+    TpmCryptSetDecryptKey##ALG(key, keySizeInBits, &keySchedule.ALG);	\
+    decrypt = (TpmCryptSetSymKeyCall_t)TpmCryptDecrypt##ALG;		\
+    break;
+#if ALG_AES
+#define ENCRYPT_CASE_AES    ENCRYPT_CASE(AES)
+#define DECRYPT_CASE_AES    DECRYPT_CASE(AES)
+#else
+#define ENCRYPT_CASE_AES
+#define DECRYPT_CASE_AES
+#endif
+#if ALG_SM4
+#define ENCRYPT_CASE_SM4    ENCRYPT_CASE(SM4)
+#define DECRYPT_CASE_SM4    DECRYPT_CASE(SM4)
+#else
+#define ENCRYPT_CASE_SM4
+#define DECRYPT_CASE_SM4
+#endif
+#if ALG_CAMELLIA
+#define ENCRYPT_CASE_CAMELLIA    ENCRYPT_CASE(CAMELLIA)
+#define DECRYPT_CASE_CAMELLIA    DECRYPT_CASE(CAMELLIA)
+#else
+#define ENCRYPT_CASE_CAMELLIA
+#define DECRYPT_CASE_CAMELLIA
+#endif
+#if ALG_TDES
+#define ENCRYPT_CASE_TDES    ENCRYPT_CASE(TDES)
+#define DECRYPT_CASE_TDES    DECRYPT_CASE(TDES)
+#else
+#define ENCRYPT_CASE_TDES
+#define DECRYPT_CASE_TDES
+#endif
+/* For each algorithm the case will either be defined or null. */
+#define     SELECT(direction)					    \
+    switch(algorithm)						    \
+	{								\
+	    direction##_CASE_AES					\
+	    direction##_CASE_SM4					\
+            direction##_CASE_CAMELLIA					\
+	    direction##_CASE_TDES					\
+	  default:							\
+		FAIL(FATAL_ERROR_INTERNAL);				\
+	}
+#endif

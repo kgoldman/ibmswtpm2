@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			   Compiler Dependencies  				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CompilerDependencies.h 1311 2018-08-23 21:39:29Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -59,56 +59,98 @@
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef COMPILERDEPEDENCIES_H
+#define COMPILERDEPEDENCIES_H
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+/* 5.10	CompilerDependencies.h */
+#ifdef GCC
+#   undef _MSC_VER
+#   undef WIN32
+#endif
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
+#ifdef _MSC_VER
 
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
+// These definitions are for the Microsoft compiler Endian conversion for aligned structures
+#   define REVERSE_ENDIAN_16(_Number) _byteswap_ushort(_Number)
+#   define REVERSE_ENDIAN_32(_Number) _byteswap_ulong(_Number)
+#   define REVERSE_ENDIAN_64(_Number) _byteswap_uint64(_Number)
 
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
+// Avoid compiler warning for in line of stdio (or not)
 
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+// #define _NO_CRT_STDIO_INLINE
+
+// This macro is used to handle LIB_EXPORT of function and variable names in lieu of a .def
+// file. Visual Studio requires that functions be explicitly exported and imported.
+
+#   define LIB_EXPORT __declspec(dllexport) // VS compatible version
+#   define LIB_IMPORT __declspec(dllimport)
+
+// This is defined to indicate a function that does not return. Microsoft compilers do not
+// support the _Noretrun() function parameter.
+
+#   define NORETURN  __declspec(noreturn)
+#   if _MSC_VER >= 1400     // SAL processing when needed
+#       include <sal.h>
+#   endif
+#   ifdef _WIN64
+#       define _INTPTR 2
+#   else
+#       define _INTPTR 1
+#   endif
+#   define NOT_REFERENCED(x)   (x)
+
+// Lower the compiler error warning for system include files. They tend not to be that clean and
+// there is no reason to sort through all the spurious errors that they generate when the normal
+// error level is set to /Wall
+
+#   define _REDUCE_WARNING_LEVEL_(n)		\
+    __pragma(warning(push, n))
+
+// Restore the compiler warning level
+
+#   define _NORMAL_WARNING_LEVEL_		\
+    __pragma(warning(pop))
+#   include <stdint.h>
+#endif 	// _MSC_VER
+
+#ifndef _MSC_VER
+#ifndef WINAPI
+#   define WINAPI
+#endif
+#   define __pragma(x)
+#   define REVERSE_ENDIAN_16(_Number) __builtin_bswap16(_Number)
+#   define REVERSE_ENDIAN_32(_Number) __builtin_bswap32(_Number)
+#   define REVERSE_ENDIAN_64(_Number) __builtin_bswap64(_Number)
+#endif
+#if defined(__GNUC__)
+#      define NORETURN                     __attribute__((noreturn))
+#      include <stdint.h>
+#endif
+
+// Things that are not defined should be defined as NULL
+#ifndef NORETURN
+#   define NORETURN
+#endif
+#ifndef LIB_EXPORT
+#   define LIB_EXPORT
+#endif
+#ifndef LIB_IMPORT
+#   define LIB_IMPORT
+#endif
+#ifndef _REDUCE_WARNING_LEVEL_
+#   define _REDUCE_WARNING_LEVEL_(n)
+#endif
+#ifndef _NORMAL_WARNING_LEVEL_
+#   define _NORMAL_WARNING_LEVEL_
+#endif
+#ifndef NOT_REFERENCED
+#   define  NOT_REFERENCED(x) (x = x)
+#endif
+#ifdef _POSIX_
+typedef int SOCKET;
+#endif
+// #ifdef TPM_POSIX
+// typedef int SOCKET;
+// #endif
+#endif // _COMPILER_DEPENDENCIES_H_
+

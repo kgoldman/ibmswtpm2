@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: BnConvert_fp.h 809 2016-11-16 18:31:54Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,54 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016					*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef BNCONVERT_FP_H
+#define BNCONVERT_FP_H
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+LIB_EXPORT bigNum
+BnFromBytes(
+	    bigNum           bn,
+	    const BYTE      *bytes,
+	    NUMBYTES         nBytes
+	    );
+LIB_EXPORT bigNum
+BnFrom2B(
+	 bigNum           bn,         // OUT:
+	 const TPM2B     *a2B         // IN: number to convert
+	 );
+LIB_EXPORT bigNum
+BnFromHex(
+	  bigNum          bn,         // OUT:
+	  const char      *hex        // IN:
+	  );
+LIB_EXPORT BOOL
+BnToBytes(
+	  bigConst             bn,
+	  BYTE                *buffer,
+	  NUMBYTES            *size           // This the number of bytes that are
+	  // available in the buffer. The result
+	  // should be this big.
+	  );
+LIB_EXPORT BOOL
+BnTo2B(
+       bigConst         bn,                // IN:
+       TPM2B           *a2B,               // OUT:
+       NUMBYTES         size               // IN: the desired size
+       );
+LIB_EXPORT bn_point_t   *
+BnPointFrom2B(
+	      bigPoint             ecP,         // OUT: the preallocated point structure
+	      TPMS_ECC_POINT      *p            // IN: the number to convert
+	      );
+LIB_EXPORT BOOL
+BnPointTo2B(
+	    TPMS_ECC_POINT  *p,             // OUT: the converted 2B structure
+	    bigPoint         ecP,           // IN: the values to be converted
+	    bigCurve         E              // IN: curve descriptor for the point
+	    );
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
 
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+#endif

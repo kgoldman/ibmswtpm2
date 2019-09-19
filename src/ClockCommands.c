@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			    Clocks and Timers	 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: ClockCommands.c 1259 2018-07-10 19:11:09Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -59,56 +59,52 @@
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
 #include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
-
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
+#include "ReadClock_fp.h"
+#if CC_ReadClock  // Conditional expansion of this file
+TPM_RC
+TPM2_ReadClock(
+	       ReadClock_Out   *out            // OUT: output parameter list
+	       )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
+    // Command Output
+    out->currentTime.time = g_time;
+    TimeFillInfo(&out->currentTime.clockInfo);
+    return TPM_RC_SUCCESS;
 }
-
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
+#endif // CC_ReadClock
+#include "Tpm.h"
+#include "ClockSet_fp.h"
+#if CC_ClockSet  // Conditional expansion of this file
+TPM_RC
+TPM2_ClockSet(
+	      ClockSet_In     *in             // IN: input parameter list
+	      )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
+#define CLOCK_UPDATE_MASK  ~((1ULL << NV_CLOCK_UPDATE_INTERVAL)- 1)
+    // Input Validation
+    // new time can not be bigger than 0xFFFF000000000000 or smaller than
+    // current clock
+    if(in->newTime > 0xFFFF000000000000ULL
+       || in->newTime < go.clock)
+	return TPM_RCS_VALUE + RC_ClockSet_newTime;
+    // Internal Data Update
+    // Can't modify the clock if NV is not available.
+    RETURN_IF_NV_IS_NOT_AVAILABLE;
+    TimeClockUpdate(in->newTime);
+    return TPM_RC_SUCCESS;
 }
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
+#endif // CC_ClockSet
+#include "Tpm.h"
+#include "ClockRateAdjust_fp.h"
+#if CC_ClockRateAdjust  // Conditional expansion of this file
+TPM_RC
+TPM2_ClockRateAdjust(
+		     ClockRateAdjust_In  *in             // IN: input parameter list
+		     )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
+    // Internal Data Update
+    TimeSetAdjustRate(in->rateAdjust);
+    return TPM_RC_SUCCESS;
 }
+#endif // CC_ClockRateAdjust

@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     Command Attributes					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CommandAttributes.h 1259 2018-07-10 19:11:09Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -59,56 +59,30 @@
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef COMMANDATTRIBUTES_H
+#define COMMANDATTRIBUTES_H
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+/* 5.7	CommandAttributes.h */
+/* The attributes defined in this file are produced by the parser that creates the structure
+   definitions from Part 3. The attributes are defined in that parser and should track the
+   attributes being tested in CommandCodeAttributes.c. Generally, when an attribute is added to this
+   list, new code will be needed in CommandCodeAttributes.c to test it. */
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+typedef  UINT16             COMMAND_ATTRIBUTES;
+#define NOT_IMPLEMENTED     (COMMAND_ATTRIBUTES)(0)
+#define ENCRYPT_2           ((COMMAND_ATTRIBUTES)1 << 0)
+#define ENCRYPT_4           ((COMMAND_ATTRIBUTES)1 << 1)
+#define DECRYPT_2           ((COMMAND_ATTRIBUTES)1 << 2)
+#define DECRYPT_4           ((COMMAND_ATTRIBUTES)1 << 3)
+#define HANDLE_1_USER       ((COMMAND_ATTRIBUTES)1 << 4)
+#define HANDLE_1_ADMIN      ((COMMAND_ATTRIBUTES)1 << 5)
+#define HANDLE_1_DUP        ((COMMAND_ATTRIBUTES)1 << 6)
+#define HANDLE_2_USER       ((COMMAND_ATTRIBUTES)1 << 7)
+#define PP_COMMAND          ((COMMAND_ATTRIBUTES)1 << 8)
+#define IS_IMPLEMENTED      ((COMMAND_ATTRIBUTES)1 << 9)
+#define NO_SESSIONS         ((COMMAND_ATTRIBUTES)1 << 10)
+#define NV_COMMAND          ((COMMAND_ATTRIBUTES)1 << 11)
+#define PP_REQUIRED         ((COMMAND_ATTRIBUTES)1 << 12)
+#define R_HANDLE            ((COMMAND_ATTRIBUTES)1 << 13)
+#define ALLOW_TRIAL         ((COMMAND_ATTRIBUTES)1 << 14)
+#endif // COMMAND_ATTRIBUTES_H

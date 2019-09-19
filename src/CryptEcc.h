@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CryptEcc.h 1047 2017-07-20 18:27:34Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,42 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016					*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef CRYPTECC_H
+#define CRYPTECC_H
 
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
+
+/* 10.1.2 CryptEcc.h */
+/* 10.1.2.1 Introduction */
+/* This file contains structure definitions used for ECC. The structures in this file are only used
+   internally. The ECC-related structures that cross the TPM interface are defined in TpmTypes.h */
+#ifndef _CRYPT_ECC_H
+#define _CRYPT_ECC_H
+/* 10.1.2.1.1 ECC-related Structures */
+/* This is used to define the macro that may or may not be in the data set for the curve
+   (BnEccData.c). If there is a mismatch, the compiler will warn that there is to much/not enough
+   initialization data in the curve. The macro is used because not all versions of the
+   CryptEccData.c need the curve name. */
+#ifdef NAMED_CURVES
+#define CURVE_NAME(a) , a
+#define CURVE_NAME_DEF const char *name;
+#else
+#  define CURVE_NAME(a)
+#  define CURVE_NAME_DEF
+#endif
+typedef struct ECC_CURVE
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+    const TPM_ECC_CURVE          curveId;
+    const UINT16                 keySizeBits;
+    const TPMT_KDF_SCHEME        kdf;
+    const TPMT_ECC_SCHEME        sign;
+    const ECC_CURVE_DATA        *curveData; // the address of the curve data
+    CURVE_NAME_DEF
+} ECC_CURVE;
+extern const ECC_CURVE eccCurves[ECC_CURVE_COUNT];
+#endif
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+#endif

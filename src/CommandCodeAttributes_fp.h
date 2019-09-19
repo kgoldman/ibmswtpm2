@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: CommandCodeAttributes_fp.h 809 2016-11-16 18:31:54Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,60 +55,69 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016					*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
-/* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
+#ifndef COMMANDCODEATTRIBUTES_FP_H
+#define COMMANDCODEATTRIBUTES_FP_H
 
+COMMAND_INDEX
+GetClosestCommandIndex(
+		       TPM_CC           commandCode    // IN: the command code to start at
+		       );
+COMMAND_INDEX
+CommandCodeToCommandIndex(
+			  TPM_CC           commandCode    // IN: the command code to look up
+			  );
+COMMAND_INDEX
+GetNextCommandIndex(
+		    COMMAND_INDEX    commandIndex   // IN: the starting index
+		    );
+TPM_CC
+GetCommandCode(
+	       COMMAND_INDEX    commandIndex   // IN: the command index
+	       );
+AUTH_ROLE
+CommandAuthRole(
+		COMMAND_INDEX    commandIndex,  // IN: command index
+		UINT32           handleIndex    // IN: handle index (zero based)
+		);
+int
+EncryptSize(
+	    COMMAND_INDEX    commandIndex   // IN: command index
+	    );
+int
+DecryptSize(
+	    COMMAND_INDEX    commandIndex   // IN: command index
+	    );
 BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
-}
+IsSessionAllowed(
+		 COMMAND_INDEX    commandIndex   // IN: the command to be checked
+		 );
+BOOL
+IsHandleInResponse(
+		   COMMAND_INDEX    commandIndex
+		   );
+BOOL
+IsWriteOperation(
+		 COMMAND_INDEX    commandIndex   // IN: Command to check
+		 );
+BOOL
+IsReadOperation(
+		COMMAND_INDEX    commandIndex   // IN: Command to check
+		);
+TPMI_YES_NO
+CommandCapGetCCList(
+		    TPM_CC           commandCode,   // IN: start command code
+		    UINT32           count,         // IN: maximum count for number of entries in
+		    //     'commandList'
+		    TPML_CCA        *commandList    // OUT: list of TPMA_CC
+		    );
+BOOL
+IsVendorCommand(
+		COMMAND_INDEX    commandIndex   // IN: command index to check
+		);
 
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
 
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
-}
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
-{
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
-}
+#endif

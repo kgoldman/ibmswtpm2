@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			  Bit Manipulation Routines   				*/
+/*			Simulates the cancel pins on the TPM.	 		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Bits.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: Cancel.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -59,56 +59,43 @@
 /*										*/
 /********************************************************************************/
 
-/* 9.2 Bits.c */
-/* 9.2.1 Introduction */
-/* This file contains bit manipulation routines.  They operate on bit arrays. */
-/* The 0th bit in the array is the right-most bit in the 0th octet in the array. */
-/* NOTE: If pAssert() is defined, the functions will assert if the indicated bit number is outside
-   of the range of bArray. How the assert is handled is implementation dependent. */
-/* 9.2.2 Includes */
-#include "Tpm.h"
-/* 9.2.3 Functions */
-/* 9.2.3.1 TestBit() */
-/* This function is used to check the setting of a bit in an array of bits. */
+/* C.2 Cancel.c */
+/* C.2.1. Description */
+/* This module simulates the cancel pins on the TPM. */
+/* C.2.2. Includes, Typedefs, Structures, and Defines */
+#include "PlatformData.h"
+#include "Platform_fp.h"
+/* C.2.3. Functions */
+/* C.2.3.1. _plat__IsCanceled() */
+/* Check if the cancel flag is set */
 /* Return Values Meaning */
-/* TRUE bit is set */
-/* FALSE bit is not set */
-
-BOOL
-TestBit(
-	unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-	BYTE            *bArray,        // IN: array containing the bits
-	unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	)
+/* TRUE(1) if cancel flag is set */
+/* FALSE(0) if cancel flag is not set */
+LIB_EXPORT int
+_plat__IsCanceled(
+		  void
+		  )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    return((bArray[bitNum >> 3] & (1 << (bitNum & 7))) != 0);
+    // return cancel flag
+    return s_isCanceled;
 }
-
-/* 9.2.3.2 SetBit() */
-/* This function will set the indicated bit in bArray. */
-
-void
-SetBit(
-       unsigned int     bitNum,        // IN: number of the bit in 'bArray'
-       BYTE            *bArray,        // IN: array containing the bits
-       unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-       )
+/* C.2.3.2. _plat__SetCancel() */
+/* Set cancel flag. */
+LIB_EXPORT void
+_plat__SetCancel(
+		 void
+		 )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] |= (1 << (bitNum & 7));
+    s_isCanceled = TRUE;
+    return;
 }
-
-/* 9.2.3.3 ClearBit() */
-/* This function will clear the indicated bit in bArray. */
-
-void
-ClearBit(
-	 unsigned int     bitNum,        // IN: number of the bit in 'bArray'.
-	 BYTE            *bArray,        // IN: array containing the bits
-	 unsigned int     bytesInArray   // IN: size in bytes of 'bArray'
-	 )
+/* C.2.3.3. _plat__ClearCancel() */
+/* Clear cancel flag */
+LIB_EXPORT void
+_plat__ClearCancel(
+		   void
+		   )
 {
-    pAssert(bytesInArray > (bitNum >> 3));
-    bArray[bitNum >> 3] &= ~(1 << (bitNum & 7));
+    s_isCanceled = FALSE;
+    return;
 }
