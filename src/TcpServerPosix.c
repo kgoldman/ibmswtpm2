@@ -3,7 +3,7 @@
 /*		Socket Interface to a TPM Simulator    				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TcpServerPosix.c 1332 2018-09-07 14:20:51Z kgoldman $	*/
+/*            $Id: TcpServerPosix.c 1528 2019-11-20 20:31:43Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2012-2018				*/
+/*  (c) Copyright IBM Corp. and others, 2012 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -77,10 +77,20 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include "Implementation.h"	/* kgold */
 #include "TpmTcpProtocol.h"
+#include "Manufacture_fp.h"
 #include "TcpServerPosix_fp.h"
 #include "Simulator_fp.h"
+#include "TpmProfile.h"		/* kgold */
+#include "Platform_fp.h"	/* kgold */
+#include "PlatformACT_fp.h"	/* added kgold */
+
+BOOL				/* kgold */
+ReadUINT32(
+	   SOCKET           s,
+	   UINT32          *val
+	   );
+
 
 #define IPVER(len) ((len) == sizeof(struct sockaddr_in6) ? 6 :		\
 		    ((len) == sizeof(struct sockaddr_in) ? 4 : 0))
@@ -112,7 +122,8 @@ CreateSocket(
 	     int                  domain 	// AF_INET or AF_INET6
 	     )
 {
-    struct		sockaddr_storage MyAddress;
+    struct		sockaddr_in MyAddress4;
+    struct		sockaddr_in6 MyAddress6;
     int			opt;
     
     int res;
@@ -127,20 +138,27 @@ CreateSocket(
 	    printf("Ignore the IPv6 warning if the platform doesn't support IPv6\n");
 	    return -1;
 	}
-    
-    // bind the listening socket to the specified port, any address (0s)
-    memset((char *)&MyAddress, 0, sizeof(MyAddress));
 
-    MyAddress.ss_family = domain;
+    opt = 1;
+    /* Set SO_REUSEADDR before calling bind() for servers that bind to a fixed port number. */
+    res = setsockopt(*listenSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (res != 0) {
+	printf("setsockopt error. Error is %d %s\n", errno, strerror(errno));
+	return -1;
+    }
+    // bind the listening socket to the specified port, any address (0s)
     switch (domain) {
       case AF_INET:
-        ((struct sockaddr_in *)&MyAddress)->sin_port =
-            htons((short) PortNumber);
+	memset((char *)&MyAddress4, 0, sizeof(MyAddress4));
+	MyAddress4.sin_family = domain;
+	MyAddress4.sin_port = htons((short) PortNumber);
 	*addr_len = sizeof(struct sockaddr_in);
-        break;
+	res= bind(*listenSocket,(struct sockaddr*) &MyAddress4, *addr_len);
+	break;
       case AF_INET6:
-        ((struct sockaddr_in6 *)&MyAddress)->sin6_port =
-            htons((short) PortNumber);
+	memset((char *)&MyAddress6, 0, sizeof(MyAddress6));
+	MyAddress6.sin6_family = domain;
+        MyAddress6.sin6_port = htons((short) PortNumber);
 	*addr_len = sizeof(struct sockaddr_in6);
 
         opt = 1;
@@ -152,21 +170,12 @@ CreateSocket(
 		   errno, strerror(errno));
 	    return -1;
         }
-        break;
+	res= bind(*listenSocket,(struct sockaddr*) &MyAddress6, *addr_len);
+      break;
       default:
         printf("Address family %d not supported\n", domain);
         return -1;
     }
-
-    opt = 1;
-    /* Set SO_REUSEADDR before calling bind() for servers that bind to a fixed port number. */
-    res = setsockopt(*listenSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (res != 0) {
-	printf("setsockopt error. Error is %d %s\n", errno, strerror(errno));
-	return -1;
-    }
-
-    res= bind(*listenSocket,(struct sockaddr*) &MyAddress, *addr_len);
     if(res != 0)
 	{
             close(*listenSocket);
@@ -197,7 +206,6 @@ PlatformServer(
 	       )
 {
     BOOL                 ok = TRUE;
-    // UINT32               length = 0; kgold - unused
     UINT32               Command;
     
     for(;;)
@@ -248,6 +256,7 @@ PlatformServer(
 		    
 		  case TPM_SESSION_END:
 		    // Client signaled end-of-session
+		    TpmEndSimulation();
 		    return TRUE;
 		    
 		  case TPM_STOP:
@@ -265,7 +274,13 @@ PlatformServer(
 		    if(!ok)
 			return TRUE;
 		    break;
-		    
+		  case TPM_ACT_GET_SIGNALED:
+		      {
+			  UINT32 actHandle;
+			  ok = ReadUINT32(s, &actHandle);
+			  WriteUINT32(s, _rpc__ACT_GetSignaled(actHandle));
+			  break;
+		      }
 		  default:
 		    printf("Unrecognized platform interface command %08x\n", Command);
 		    WriteUINT32(s, 1);
@@ -292,7 +307,7 @@ PlatformSvcRoutine(
     int                  res, i;
     int                  nSock = 0;
     socklen_t            length[2];
-    BOOL                 continueServing;
+    BOOL                 continueServing = TRUE;	/* kgold initialized */
 
     if (CreateSocket(PortNumber, &listenSocket[nSock], &length[nSock],
 		     AF_INET) == 0) {
@@ -382,31 +397,12 @@ PlatformSignalService(
     irc = pthread_create(pthread,
                          NULL,
                          (void * (*)(void *))PlatformSvcRoutine,      /* thread entry function */
-                         (void *)PortNumberPlatform);           /* thread function parameters */
+                         (void *)PortNumberPlatform); 	          /* thread function parameters */
     if (irc != 0) {
 	printf("Thread Creation failed\n");
 	return -1;
     }
     return 0;
-
-
-#if 0
-    int                  ThreadId;
-    HANDLE               hPlatformSvc;
-    // Create service thread for platform signals
-    hPlatformSvc = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE)PlatformSvcRoutine,
-				(LPVOID) (INT_PTR) port, 0, (LPDWORD)&ThreadId);
-    if(hPlatformSvc == NULL)
-	{
-	    printf("Thread Creation failed\n");
-	    return -1;
-	}
-    
-    return 0;
-
-
-#endif
 }
 
 // D.3.3.5.	RegularCommandService()
@@ -424,7 +420,7 @@ RegularCommandService(
     int                  res, i;
     int                  nSock = 0;
     socklen_t            length[2];
-    BOOL 		continueServing;
+    BOOL 		continueServing = TRUE;	/* kgold - initialized */
     
     if (CreateSocket(*PortNumber, &listenSocket[nSock], &length[nSock],
 		     AF_INET) == 0) {
@@ -494,6 +490,82 @@ RegularCommandService(
     return 0;
 }
 
+/* D.3.2.5.	SimulatorTimeServiceRoutine() */
+/* This function is called to service the time ticks. */
+static int
+SimulatorTimeServiceRoutine(
+			    void
+			    )
+{
+    // All time is in ms
+    const INT64   tick = 1000;
+    UINT64  prevTime = _plat__RealTime();
+    INT64   timeout = tick;
+    
+    while (TRUE)
+	{
+	    UINT64  curTime;
+	    
+	    struct timespec req = {timeout / 1000, (timeout % 1000) * 1000};
+	    struct timespec rem;
+	    nanosleep(&req, &rem);
+
+	    curTime = _plat__RealTime();
+	    
+	    // May need to issue several ticks if the Sleep() took longer than asked,
+	    // or no ticks at all, it Sleep() was interrupted prematurely.
+	    while (prevTime < curTime - tick / 2)
+	        {
+	            //printf("%05lld | %05lld\n",
+	            //      prevTime % 100000, (curTime - tick / 2) % 100000);
+	            _plat__ACT_Tick();
+	            prevTime += (UINT64)tick;
+	        }
+	    // Adjust the next timeout to keep the average interval of one second
+	    timeout = tick + (prevTime - curTime);
+	    //prevTime = curTime;
+	    //printf("%04lld | c:%05lld | p:%05llu\n",
+	    //          timeout, curTime % 100000, prevTime);
+	}
+    return 0;
+}
+
+#if RH_ACT_0
+
+/* D.3.2.6.	ActTimeService() */
+/* This function starts a new thread waiting to wait for time ticks. */
+/* Return Value	Meaning */
+/* ==0	success */
+/*     !=0	failure */
+static int
+ActTimeService(
+	       void
+	       )
+{
+    static BOOL          running = FALSE;
+    int                  ret = 0;
+    if(!running)
+	{
+	    pthread_t            thread_id;
+
+	    /* kgold - hoisted out of WIndows only version */
+	    printf("Starting ACT thread...\n");
+	    //  Don't allow ticks to be processed before TPM is manufactured.
+	    _plat__ACT_EnableTicks(FALSE);
+
+	    //
+	    ret = pthread_create(&thread_id, NULL, (void*)SimulatorTimeServiceRoutine,
+				 NULL);
+	    
+	    if(ret != 0)
+		printf("ACT thread Creation failed\n");
+	    else
+		running = TRUE;
+	}
+    return ret;
+}
+#endif // RH_ACT_0
+
 // D.3.3.6.	StartTcpServer()
 
 // Main entry-point to the TCP server.  The server listens on port specified. Note that there is no
@@ -506,7 +578,16 @@ StartTcpServer(
 	       )
 {
     int                  res;
-    
+
+#if RH_ACT_0 || 1
+    // Start the Time Service routine
+    res = ActTimeService();
+    if(res != 0)
+	{
+	    printf("TimeService failed\n");
+	    return res;
+	}
+#endif
     // Start Platform Signal Processing Service
     res = PlatformSignalService(PortNumberPlatform);
     if (res != 0)
@@ -543,7 +624,7 @@ ReadBytes(
     while(numGot<NumBytes)
 	{
 	    res = read(s, buffer+numGot, NumBytes-numGot);
-	    if(res <= 0)
+	    if(res < 0)
 		{
 		    printf("read() error.  Error is %d %s\n", errno, strerror(errno));
 		    return FALSE;
@@ -583,7 +664,7 @@ WriteBytes(
 }
 
 // D.3.3.9.	WriteUINT32()
-// Send 4 bytes containing hton(1)
+// Send 4 byte integer
 
 BOOL
 WriteUINT32(
@@ -593,6 +674,22 @@ WriteUINT32(
 {
     UINT32 netVal = htonl(val);
     return WriteBytes(s, (char*) &netVal, 4);
+}
+
+/* D.3.2.11.	ReadUINT32() */
+/* Function to read 4 byte integer from socket. */
+BOOL
+ReadUINT32(
+	   SOCKET           s,
+	   UINT32          *val
+	   )
+{
+    UINT32 netVal;
+    //
+    if (!ReadBytes(s, (char*)&netVal, 4))
+	return FALSE;
+    *val = ntohl(netVal);
+    return TRUE;
 }
 
 // D.3.3.10.	ReadVarBytes()
@@ -764,5 +861,4 @@ TpmServer(
 	    if(!ok)
 		return TRUE;
 	}
-    return FALSE;
 }

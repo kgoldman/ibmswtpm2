@@ -43,6 +43,19 @@ static int   app_fsetmod(FILE *fp,char mod)
 extern "C" {
 #endif
 
+    /* function prototype */
+__declspec(dllexport)
+void **
+#if defined(__BORLANDC__)
+    __stdcall	/* __stdcall appears to be the only way to get the name
+		 * decoration right with Borland C. Otherwise it works
+		 * purely incidentally, as we pass no parameters. */
+#else
+    __cdecl
+#endif
+    OPENSSL_Applink(void);
+
+    /* function implementation */
 __declspec(dllexport)
 void **
 #if defined(__BORLANDC__)

@@ -3,7 +3,7 @@
 /*			    Code for prime validation. 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptPrime.c 1262 2018-07-11 21:03:43Z kgoldman $		*/
+/*            $Id: CryptPrime.c 1529 2019-11-21 23:29:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,11 +55,14 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
-/* 10.2.16 CryptPrime.c */
+/* 10.2.14 CryptPrime.c */
+/* 10.2.14.1	Introduction */
+/* This file contains the code for prime validation. */
+
 #include "Tpm.h"
 #include "CryptPrime_fp.h"
 //#define CPRI_PRIME
@@ -70,7 +73,8 @@ extern const uint32_t      s_PrimeTableSize;
 extern const uint32_t      s_PrimesInTable;
 extern const unsigned char s_PrimeTable[];
 extern bigConst            s_CompositeOfSmallPrimes;
-/* 10.2.16.1.1 Root2() */
+
+/* 10.2.14.1.1 Root2() */
 /* This finds ceil(sqrt(n)) to use as a stopping point for searching the prime table. */
 static uint32_t
 Root2(
@@ -99,7 +103,7 @@ Root2(
     pAssert(((n / next) <= (unsigned)next) && (n / (next + 1) < (unsigned)next));
     return next;
 }
-/* 10.2.16.1.2 IsPrimeInt() */
+/* 10.2.14.1.2 IsPrimeInt() */
 /* This will do a test of a word of up to 32-bits in size. */
 BOOL
 IsPrimeInt(
@@ -127,7 +131,7 @@ IsPrimeInt(
 	}
     return TRUE;
 }
-/* 10.2.16.1.3 BnIsPrime() */
+/* 10.2.14.1.3 BnIsProbablyPrime() */
 /* This function is used when the key sieve is not implemented. This function Will try to eliminate
    some of the obvious things before going on to perform MillerRabin() as a final verification of
    primeness. */
@@ -143,7 +147,7 @@ BnIsProbablyPrime(
 #else
 	if(BnGetSize(prime) == 1)
 #endif
-	    return IsPrimeInt(prime->d[0]);
+	    return IsPrimeInt((uint32_t)prime->d[0]);
     if(BnIsEven(prime))
 	return FALSE;
     if(BnUnsignedCmpWord(prime, s_LastPrimeInTable) <= 0)
@@ -159,7 +163,7 @@ BnIsProbablyPrime(
     }
     return MillerRabin(prime, rand);
 }
-/* 10.2.16.1.4 MillerRabinRounds() */
+/* 10.2.14.1.4 MillerRabinRounds() */
 /* Function returns the number of Miller-Rabin rounds necessary to give an error probability equal
    to the security strength of the prime. These values are from FIPS 186-3. */
 UINT32
@@ -171,7 +175,7 @@ MillerRabinRounds(
     if(bits < 1536) return 5;   // for 512 and 1K primes
     return 4;                   // for 3K public modulus and greater
 }
-/* 10.2.16.1.5 MillerRabin() */
+/* 10.2.14.1.5 MillerRabin() */
 /* This function performs a Miller-Rabin test from FIPS 186-3. It does iterations trials on the
    number. In all likelihood, if the number is not prime, the first test fails. */
 /* Return Values Meaning */
@@ -195,14 +199,16 @@ MillerRabin(
     int              iterations = MillerRabinRounds(BnSizeInBits(bnW));
     //
     INSTRUMENT_INC(MillerRabinTrials[PrimeIndex]);
+    
     pAssert(bnW->size > 1);
     // Let a be the largest integer such that 2^a divides w1.
     BnSubWord(bnWm1, bnW, 1);
     pAssert(bnWm1->size != 0);
+    
     // Since w is odd (w-1) is even so start at bit number 1 rather than 0
     // Get the number of bits in bnWm1 so that it doesn't have to be recomputed
     // on each iteration.
-    i = bnWm1->size * RADIX_BITS;
+    i = (int)(bnWm1->size * RADIX_BITS);
     // Now find the largest power of 2 that divides w1
     for(a = 1;
 	(a < (bnWm1->size * RADIX_BITS)) &&
@@ -217,16 +223,17 @@ MillerRabin(
 	{
 	    // 4.1 Obtain a string b of wlen bits from an RBG.
 	    // Ensure that 1 < b < w1.
-	    do
-		{
-		    BnGetRandomBits(bnB, wLen, rand);
-		    // 4.2 If ((b <= 1) or (b >= w1)), then go to step 4.1.
-		} while((BnUnsignedCmpWord(bnB, 1) <= 0)
-			|| (BnUnsignedCmp(bnB, bnWm1) >= 0));
+	    // 4.2 If ((b <= 1) or (b >= w1)), then go to step 4.1.
+	    while(BnGetRandomBits(bnB, wLen, rand) && ((BnUnsignedCmpWord(bnB, 1) <= 0)
+						       || (BnUnsignedCmp(bnB, bnWm1) >= 0)));
+	    if(g_inFailureMode)
+		return FALSE;
+	    
 	    // 4.3 z = b^m mod w.
 	    // if ModExp fails, then say this is not
 	    // prime and bail out.
 	    BnModExp(bnZ, bnB, bnM, bnW);
+	    
 	    // 4.4 If ((z == 1) or (z = w == 1)), then go to step 4.7.
 	    if((BnUnsignedCmpWord(bnZ, 1) == 0)
 	       || (BnUnsignedCmp(bnZ, bnWm1) == 0))
@@ -257,7 +264,7 @@ MillerRabin(
     return ret;
 }
 #if ALG_RSA
-/* 10.2.16.1.6 RsaCheckPrime() */
+/* 10.2.14.1.6 RsaCheckPrime() */
 /* This will check to see if a number is prime and appropriate for an RSA prime. */
 /* This has different functionality based on whether we are using key sieving or not. If not, the
    number checked to see if it is divisible by the public exponent, then the number is adjusted
@@ -285,45 +292,72 @@ RsaCheckPrime(
 	// 0 != (p - 1) mod e
 	BnSubWord(prime, prime, 2);
     if(BnIsProbablyPrime(prime, rand) == 0)
-	ERROR_RETURN(TPM_RC_VALUE);
+	ERROR_RETURN(g_inFailureMode ? TPM_RC_FAILURE : TPM_RC_VALUE);
  Exit:
     return retVal;
 #else
     return PrimeSelectWithSieve(prime, exponent, rand);
 #endif
 }
-/* 10.2.16.1.7 AdjustPrimeCandiate() */
-/* This function adjusts the candidate prime so that it is odd and > root(2)/2. This allows the
-   product of these two numbers to be .5, which, in fixed point notation means that the most
-   significant bit is 1. For this routine, the root(2)/2 is approximated with 0xB505 which is, in
-   fixed point is 0.7071075439453125 or an error of 0.0001%. Just setting the upper two bits would
-   give a value > 0.75 which is an error of > 6%. Given the amount of time all the other
-   computations take, reducing the error is not much of a cost, but it isn't totally required
-   either. */
-/* The function also puts the number on a field boundary. */
+/* 10.2.14.1.7 RsaAdjustPrimeCandidate() */
+
+/* For this math, we assume that the RSA numbers are fixed-point numbers with the decimal point to
+   the left of the most significant bit. This approach helps make it clear what is happening with
+   the MSb of the values. The two RSA primes have to be large enough so that their product will be a
+   number with the necessary number of significant bits. For example, we want to be able to multiply
+   two 1024-bit numbers to produce a number with 2048 significant bits. If we accept any 1024-bit
+   prime that has its MSb set, then it is possible to produce a product that does not have the MSb
+   SET. For example, if we use tiny keys of 16 bits and have two 8-bit primes of 0x80, then the
+   public key would be 0x4000 which is only 15-bits. So, what we need to do is made sure that each
+   of the primes is large enough so that the product of the primes is twice as large as each
+   prime. A little arithmetic will show that the only way to do this is to make sure that each of
+   the primes is no less than root(2)/2. That's what this functions does. This function adjusts the
+   candidate prime so that it is odd and >= root(2)/2. This allows the product of these two numbers
+   to be .5, which, in fixed point notation means that the most significant bit is 1. For this
+   routine, the root(2)/2 (0.7071067811865475) approximated with 0xB505 which is, in fixed point,
+   0.7071075439453125 or an error of 0.000108%. Just setting the upper two bits would give a value >
+   0.75 which is an error of > 6%. Given the amount of time all the other computations take,
+   reducing the error is not much of a cost, but it isn't totally required either. */
+/* This function can be replaced with a function that just sets the two most significant bits of
+   each prime candidate without introducing any computational issues. */
+
 LIB_EXPORT void
 RsaAdjustPrimeCandidate(
 			bigNum          prime
 			)
 {
-    UINT16  highBytes;
-    crypt_uword_t       *msw = &prime->d[prime->size - 1];
-#define MASK (MAX_CRYPT_UWORD >> (RADIX_BITS - 16))
-    highBytes = *msw >> (RADIX_BITS - 16);
-    // This is fixed point arithmetic on 16-bit values
-    highBytes = ((UINT32)highBytes * (UINT32)0x4AFB) >> 16;
-    highBytes += 0xB505;
-    *msw = ((crypt_uword_t)(highBytes) << (RADIX_BITS - 16)) + (*msw & MASK);
+    UINT32          msw;
+    UINT32          adjusted;
+    
+    // If the radix is 32, the compiler should turn this into a simple assignment
+    msw = prime->d[prime->size - 1] >> ((RADIX_BITS == 64) ? 32 : 0);
+    // Multiplying 0xff...f by 0x4AFB gives 0xff..f - 0xB5050...0
+    adjusted = (msw >> 16) * 0x4AFB;
+    adjusted += ((msw & 0xFFFF) * 0x4AFB) >> 16;
+    adjusted += 0xB5050000UL;
+#if RADIX_BITS == 64
+    // Save the low-order 32 bits
+    prime->d[prime->size - 1] &= 0xFFFFFFFFUL;
+    // replace the upper 32-bits
+    prime->d[prime->size -1] |= ((crypt_uword_t)adjusted << 32);
+#else
+    prime->d[prime->size - 1] = (crypt_uword_t)adjusted;
+#endif
+    // make sure the number is odd
     prime->d[0] |= 1;
 }
-/* 10.2.16.1.8 BnGeneratePrimeForRSA() */
+
+
+/* 10.2.14.1.8 BnGeneratePrimeForRSA() */
 /* Function to generate a prime of the desired size with the proper attributes for an RSA prime. */
-void
+
+TPM_RC
 BnGeneratePrimeForRSA(
-		      bigNum          prime,
-		      UINT32          bits,
-		      UINT32          exponent,
-		      RAND_STATE      *rand
+		      bigNum          prime,          // IN/OUT: points to the BN that will get the
+		      //  random value
+		      UINT32          bits,           // IN: number of bits to get
+		      UINT32          exponent,       // IN: the exponent
+		      RAND_STATE      *rand           // IN: the random state
 		      )
 {
     BOOL            found = FALSE;
@@ -332,12 +366,21 @@ BnGeneratePrimeForRSA(
     pAssert(prime->allocated >= BITS_TO_CRYPT_WORDS(bits));
     // Only try to handle specific sizes of keys in order to save overhead
     pAssert((bits % 32) == 0);
+    
     prime->size = BITS_TO_CRYPT_WORDS(bits);
+    
     while(!found)
 	{
-	    DRBG_Generate(rand, (BYTE *)prime->d, (UINT16)BITS_TO_BYTES(bits));
+	    // The change below is to make sure that all keys that are generated from the same
+	    // seed value will be the same regardless of the endianess or word size of the CPU.
+	    //       DRBG_Generate(rand, (BYTE *)prime->d, (UINT16)BITS_TO_BYTES(bits));// old
+	    //       if(g_inFailureMode)                                                // old
+	    if(!BnGetRandomBits(prime, bits, rand))                              // new
+		return TPM_RC_FAILURE;
 	    RsaAdjustPrimeCandidate(prime);
 	    found = RsaCheckPrime(prime, exponent, rand) == TPM_RC_SUCCESS;
 	}
+    return TPM_RC_SUCCESS;
 }
+
 #endif // TPM_ALG_RSA

@@ -3,9 +3,8 @@
 #			Linux gcc TPM2 Makefile					#
 #			     Written by Ken Goldman				#
 #		       IBM Thomas J. Watson Research Center			#
-#	      $Id: makefile 1260 2018-07-10 19:55:54Z kgoldman $			#
 #										#
-# (c) Copyright IBM Corporation 2015 - 2018					#
+# (c) Copyright IBM Corporation 2015 - 2019					#
 # 										#
 # All rights reserved.								#
 # 										#
@@ -47,21 +46,28 @@ CCFLAGS = -Wall  			\
 	 -c -ggdb -O0 			\
 	-DTPM_POSIX			\
 	-D_POSIX_			\
-	-DTPM_NUVOTON			\
-	-I../utils			\
-	-I.
+	-DTPM_NUVOTON
+
+# add this line for big endian platforms
+#	-DBIG_ENDIAN_TPM=YES
+
+#	--coverage			\
+#	-fprofile-arcs -ftest-coverage
 
 LNFLAGS = -ggdb 			\
-	-DTPM_POSIX			\
-	-DTPM_NUVOTON			\
 	-lcrypto			\
 	-lpthread			\
 	-lrt				\
 	-I.
 
+#	--coverage -lgcov
+
 all:	tpm_server
 
-CRYPTO_SUBSYSTEM = openssl
+# contributed code, not tested
+install:	tpm_server
+		install -d $(DESTDIR)/usr/bin
+		install -t $(DESTDIR)/usr/bin $<
 
 include makefile-common
 

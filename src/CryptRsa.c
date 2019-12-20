@@ -3,7 +3,7 @@
 /*		Implementation of cryptographic primitives for RSA		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptRsa.c 1314 2018-08-28 14:25:12Z kgoldman $		*/
+/*            $Id: CryptRsa.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,21 +55,21 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
-/* 10.2.19 CryptRsa.c */
-/* 10.2.19.1 Introduction */
+/* 10.2.17 CryptRsa.c */
+/* 10.2.17.1 Introduction */
 /* This file contains implementation of cryptographic primitives for RSA. Vendors may replace the
    implementation in this file with their own library functions. */
-/* 10.2.19.2 Includes */
+/* 10.2.17.2 Includes */
 /* Need this define to get the private defines for this function */
 #define CRYPT_RSA_C
 #include "Tpm.h"
 #if ALG_RSA
-/* 10.2.19.3 Obligatory Initialization Functions */
-/* 10.2.19.3.1 CryptRsaInit() */
+/* 10.2.17.3 Obligatory Initialization Functions */
+/* 10.2.17.3.1 CryptRsaInit() */
 /* Function called at _TPM_Init(). */
 BOOL
 CryptRsaInit(
@@ -78,7 +78,7 @@ CryptRsaInit(
 {
     return TRUE;
 }
-/* 10.2.19.3.2 CryptRsaStartup() */
+/* 10.2.17.3.2 CryptRsaStartup() */
 /* Function called at TPM2_Startup() */
 BOOL
 CryptRsaStartup(
@@ -87,7 +87,7 @@ CryptRsaStartup(
 {
     return TRUE;
 }
-/* 10.2.19.4 Internal Functions */
+/* 10.2.17.4 Internal Functions */
 void
 RsaInitializeExponent(
 		      privateExponent_t      *pExp
@@ -102,7 +102,11 @@ RsaInitializeExponent(
     BN_INIT(pExp->qInv);
 #endif
 }
-/* 10.2.19.4.1 ComputePrivateExponent() */
+/* 10.2.17.4.1 ComputePrivateExponent() */
+/* This function computes the private exponent from the primes. */
+/* Return Value	Meaning */
+/* TRUE(1)	success */
+/* FALSE(0)	failure */
 static BOOL
 ComputePrivateExponent(
 		       bigNum               P,             // IN: first prime (size is 1/2 of bnN)
@@ -156,9 +160,12 @@ ComputePrivateExponent(
 	BnSetWord(Q, 0);
     return pOK && qOK;
 }
-/* 10.2.19.4.2 RsaPrivateKeyOp() */
+/* 10.2.17.4.2 RsaPrivateKeyOp() */
 /* This function is called to do the exponentiation with the private key. Compile options allow use
    of the simple (but slow) private exponent, or the more complex but faster CRT method. */
+/* Return Value	Meaning */
+/* TRUE(1)	success */
+/* FALSE(0)	failure */
 static BOOL
 RsaPrivateKeyOp(
 		bigNum               inOut, // IN/OUT: number to be exponentiated
@@ -203,7 +210,7 @@ RsaPrivateKeyOp(
 #endif
     return OK;
 }
-/* 10.2.19.4.3 RSAEP() */
+/* 10.2.17.4.3 RSAEP() */
 /* This function performs the RSAEP operation defined in PKCS#1v2.1. It is an exponentiation of a
    value (m) with the public exponent (e), modulo the public (n). */
 /* Error Returns Meaning */
@@ -231,7 +238,7 @@ RSAEP(
 		   e.t.size, e.t.buffer, key->publicArea.unique.rsa.t.size,
 		   key->publicArea.unique.rsa.t.buffer);
 }
-/* 10.2.19.4.4 RSADP() */
+/* 10.2.17.4.4 RSADP() */
 /* This function performs the RSADP operation defined in PKCS#1v2.1. It is an exponentiation of a
    value (c) with the private exponent (d), modulo the public modulus (n). The decryption is in
    place. */
@@ -261,7 +268,7 @@ RSADP(
     BnTo2B(bnM, inOut, inOut->size);
     return TPM_RC_SUCCESS;
 }
-/* 10.2.19.4.5 OaepEncode() */
+/* 10.2.17.4.5 OaepEncode() */
 /* This function performs OAEP padding. The size of the buffer to receive the OAEP padded data must
    equal the size of the modulus */
 /* Error Returns Meaning */
@@ -280,7 +287,7 @@ OaepEncode(
     INT32        i;
     BYTE         mySeed[MAX_DIGEST_SIZE];
     BYTE        *seed = mySeed;
-    INT32        hLen = CryptHashGetDigestSize(hashAlg);
+    UINT16       hLen = CryptHashGetDigestSize(hashAlg);
     BYTE         mask[MAX_RSA_KEY_BYTES];
     BYTE        *pp;
     BYTE        *pm;
@@ -288,7 +295,7 @@ OaepEncode(
     pAssert(padded != NULL && message != NULL);
     // A value of zero is not allowed because the KDF can't produce a result
     // if the digest size is zero.
-    if(hLen <= 0)
+    if(hLen == 0)
 	return TPM_RC_VALUE;
     // Basic size checks
     //  make sure digest isn't too big for key size
@@ -335,7 +342,7 @@ OaepEncode(
  Exit:
     return retVal;
 }
-/* 10.2.19.4.6 OaepDecode() */
+/* 10.2.17.4.6 OaepDecode() */
 /* This function performs OAEP padding checking. The size of the buffer to receive the recovered
    data. If the padding is not valid, the dSize size is set to zero and the function returns
    TPM_RC_VALUE. */
@@ -410,7 +417,7 @@ OaepDecode(
 	dataOut->size = 0;
     return retVal;
 }
-/* 10.2.19.4.7 PKCS1v1_5Encode() */
+/* 10.2.17.4.7 PKCS1v1_5Encode() */
 /* This function performs the encoding for RSAES-PKCS1-V1_5-ENCRYPT as defined in PKCS#1V2.1 */
 /* Error Returns Meaning */
 /* TPM_RC_VALUE message size is too large */
@@ -446,7 +453,7 @@ RSAES_PKCS1v1_5Encode(
 	}
     return TPM_RC_SUCCESS;
 }
-/* 10.2.19.4.8 RSAES_Decode() */
+/* 10.2.17.4.8 RSAES_Decode() */
 /* This function performs the decoding for RSAES-PKCS1-V1_5-ENCRYPT as defined in PKCS#1V2.1 */
 /* Error Returns Meaning */
 /* TPM_RC_FAIL decoding error or results would no fit into provided buffer */
@@ -469,7 +476,7 @@ RSAES_Decode(
     pSize++;
     // Make sure that pSize has not gone over the end and that there are at least 8
     // bytes of pad data.
-    fail = (pSize >= coded->size) | fail;
+    fail = (pSize > coded->size) | fail;
     fail = ((pSize - 2) < 8) | fail;
     if((message->size < (UINT16)(coded->size - pSize)) || fail)
 	return TPM_RC_VALUE;
@@ -477,7 +484,29 @@ RSAES_Decode(
     memcpy(message->buffer, &coded->buffer[pSize], coded->size - pSize);
     return TPM_RC_SUCCESS;
 }
-/* 10.2.19.4.9 PssEncode() */
+/* 10.2.17.4.13	CryptRsaPssSaltSize() */
+/* This function computes the salt size used in PSS. It is broken out so that the X509 code can get
+   the same value that is used by the encoding function in this module. */
+INT16
+CryptRsaPssSaltSize(
+    INT16              hashSize,
+    INT16               outSize
+)
+{
+    INT16               saltSize;
+    //
+    // (Mask Length) = (outSize - hashSize - 1);
+    // Max saltSize is (Mask Length) - 1
+    saltSize = (outSize - hashSize - 1) - 1;
+    // Use the maximum salt size allowed by FIPS 186-4
+    if (saltSize > hashSize)
+	saltSize = hashSize;
+    else if (saltSize < 0)
+	saltSize = 0;
+    return saltSize;
+}
+
+/* 10.2.17.4.9 PssEncode() */
 /* This function creates an encoded block of data that is the size of modulus. The function uses the
    maximum salt size that will fit in the encoded block. */
 /* Returns TPM_RC_SUCCESS or goes into failure mode. */
@@ -534,7 +563,7 @@ PssEncode(
     // and we are done
     return TPM_RC_SUCCESS;
 }
-/* 10.2.19.4.10 PssDecode() */
+/* 10.2.17.4.10 PssDecode() */
 /* This function checks that the PSS encoded block was built from the provided digest. If the check
    is successful, TPM_RC_SUCCESS is returned. Any other value indicates an error. */
 /* This implementation of PSS decoding is intended for the reference TPM implementation and is not
@@ -628,12 +657,57 @@ PssDecode(
  Exit:
     return retVal;
 }
-/* 10.2.19.4.11 () RSASSA_Encode */
-/* Encode a message using PKCS1v1().5 method. */
-/* Error Returns Meaning */
-/* TPM_RC_SCHEME hashAlg is not a supported hash algorithm */
-/* TPM_RC_SIZE eOutSize is not large enough */
-/* TPM_RC_VALUE hInSize does not match the digest size of hashAlg */
+/* 10.2.17.4.16	MakeDerTag() */
+/* Construct the DER value that is used in RSASSA */
+/* Return Value	Meaning */
+/* > 0	size of value */
+/* <= 0	no hash exists */
+INT16
+MakeDerTag(
+	   TPM_ALG_ID   hashAlg,
+	   INT16        sizeOfBuffer,
+	   BYTE        *buffer
+	   )
+{
+    //    0x30, 0x31,       // SEQUENCE (2 elements) 1st
+    //        0x30, 0x0D,   // SEQUENCE (2 elements)
+    //            0x06, 0x09,   // HASH OID
+    //                0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,
+    //             0x05, 0x00,  // NULL
+    //        0x04, 0x20  //  OCTET STRING
+    HASH_DEF   *info = CryptGetHashDef(hashAlg);
+    INT16       oidSize;
+    // If no OID, can't do encode
+    VERIFY(info != NULL);
+    oidSize = 2 + (info->OID)[1];
+    // make sure this fits in the buffer
+    VERIFY(sizeOfBuffer >= (oidSize + 8));
+    *buffer++ = 0x30;  // 1st SEQUENCE
+    // Size of the 1st SEQUENCE is 6 bytes + size of the hash OID + size of the
+    // digest size
+    *buffer++ = (BYTE)(6 + oidSize + info->digestSize);   //
+    *buffer++ = 0x30; // 2nd SEQUENCE
+    // size is 4 bytes of overhead plus the side of the OID
+    *buffer++ = (BYTE)(2 + oidSize);
+    MemoryCopy(buffer, info->OID, oidSize);
+    buffer += oidSize;
+    *buffer++ = 0x05;   // Add a NULL
+    *buffer++ = 0x00;
+    
+    *buffer++ = 0x04;
+    *buffer++ = (BYTE)(info->digestSize);
+    return oidSize + 8;
+ Error:
+    return 0;
+    
+}
+
+/* 10.2.17.4.17	RSASSA_Encode() */
+/* Encode a message using PKCS1v1.5 method. */
+/* Error Returns	Meaning */
+/* TPM_RC_SCHEME	hashAlg is not a supported hash algorithm */
+/* TPM_RC_SIZE	eOutSize is not large enough */
+/* TPM_RC_VALUE	hInSize does not match the digest size of hashAlg */
 static TPM_RC
 RSASSA_Encode(
 	      TPM2B               *pOut,      // IN:OUT on in, the size of the public key
@@ -642,23 +716,28 @@ RSASSA_Encode(
 	      TPM2B               *hIn        // IN: digest value to encode
 	      )
 {
-    const BYTE      *der;
+    BYTE             DER[20];
+    BYTE            *der = DER;
+    INT32            derSize = MakeDerTag(hashAlg, sizeof(DER), DER);
     BYTE            *eOut;
-    INT32            derSize = CryptHashGetDer(hashAlg, &der);
     INT32            fillSize;
     TPM_RC           retVal = TPM_RC_SUCCESS;
+    
     // Can't use this scheme if the algorithm doesn't have a DER string defined.
     if(derSize == 0)
 	ERROR_RETURN(TPM_RC_SCHEME);
+    
     // If the digest size of 'hashAl' doesn't match the input digest size, then
     // the DER will misidentify the digest so return an error
     if(CryptHashGetDigestSize(hashAlg) != hIn->size)
 	ERROR_RETURN(TPM_RC_VALUE);
     fillSize = pOut->size - derSize - hIn->size - 3;
     eOut = pOut->buffer;
+    
     // Make sure that this combination will fit in the provided space
     if(fillSize < 8)
 	ERROR_RETURN(TPM_RC_SIZE);
+    
     // Start filling
     *eOut++ = 0; // initial byte of zero
     *eOut++ = 1; // byte of 0x01
@@ -673,11 +752,12 @@ RSASSA_Encode(
  Exit:
     return retVal;
 }
-/* 10.2.19.4.12 RSASSA_Decode() */
+
+/* 10.2.17.4.18	RSASSA_Decode() */
 /* This function performs the RSASSA decoding of a signature. */
-/* Error Returns Meaning */
-/* TPM_RC_VALUE decode unsuccessful */
-/* TPM_RC_SCHEME haslAlg is not supported */
+/* Error Returns	Meaning */
+/* TPM_RC_VALUE	decode unsuccessful */
+/* TPM_RC_SCHEME	haslAlg is not supported */
 static TPM_RC
 RSASSA_Decode(
 	      TPM_ALG_ID       hashAlg,        // IN: hash algorithm to use for the encoding
@@ -686,25 +766,30 @@ RSASSA_Decode(
 	      )
 {
     BYTE             fail;
-    const BYTE      *der;
+    BYTE             DER[20];
+    BYTE            *der = DER;
+    INT32            derSize = MakeDerTag(hashAlg, sizeof(DER), DER);
     BYTE            *pe;
-    INT32            derSize = CryptHashGetDer(hashAlg, &der);
     INT32            hashSize = CryptHashGetDigestSize(hashAlg);
     INT32            fillSize;
     TPM_RC           retVal;
     BYTE            *digest;
     UINT16           digestSize;
+    
     pAssert(hIn != NULL && eIn != NULL);
     pe = eIn->buffer;
+    
     // Can't use this scheme if the algorithm doesn't have a DER string
     // defined or if the provided hash isn't the right size
     if(derSize == 0 || (unsigned)hashSize != hIn->size)
 	ERROR_RETURN(TPM_RC_SCHEME);
+    
     // Make sure that this combination will fit in the provided space
     // Since no data movement takes place, can just walk though this
     // and accept nearly random values. This can only be called from
     // CryptValidateSignature() so eInSize is known to be in range.
     fillSize = eIn->size - derSize - hashSize - 3;
+    
     // Start checking (fail will become non-zero if any of the bytes do not have
     // the expected value.
     fail = *pe++;                   // initial byte of zero
@@ -722,7 +807,8 @@ RSASSA_Decode(
  Exit:
     return retVal;
 }
-/* 10.2.19.4.13 CryptRsaSelectScheme() */
+
+/* 10.2.17.4.13 CryptRsaSelectScheme() */
 /* This function is used by TPM2_RSA_Decrypt() and TPM2_RSA_Encrypt().  It sets up the rules to
    select a scheme between input and object default. This function assume the RSA object is
    loaded. If a default scheme is defined in object, the default scheme should be chosen, otherwise,
@@ -768,7 +854,7 @@ CryptRsaSelectScheme(
     // two different, incompatible schemes specified will return NULL
     return retVal;
 }
-/* 10.2.19.4.14 CryptRsaLoadPrivateExponent() */
+/* 10.2.17.4.14 CryptRsaLoadPrivateExponent() */
 /* Error Returns Meaning */
 /* TPM_RC_BINDING public and private parts of rsaKey are not matched */
 TPM_RC
@@ -802,7 +888,7 @@ CryptRsaLoadPrivateExponent(
     rsaKey->attributes.privateExp = (retVal == TPM_RC_SUCCESS);
     return retVal;
 }
-/* 10.2.19.4.15 CryptRsaEncrypt() */
+/* 10.2.17.4.15 CryptRsaEncrypt() */
 /* This is the entry point for encryption using RSA. Encryption is use of the public exponent. The
    padding parameter determines what padding will be used. */
 /* The cOutSize parameter must be at least as large as the size of the key. */
@@ -881,7 +967,7 @@ CryptRsaEncrypt(
  Exit:
     return retVal;
 }
-/* 10.2.19.4.16 CryptRsaDecrypt() */
+/* 10.2.17.4.16 CryptRsaDecrypt() */
 /* This is the entry point for decryption using RSA. Decryption is use of the private exponent. The
    padType parameter determines what padding was used. */
 /* Error Returns Meaning */
@@ -932,7 +1018,7 @@ CryptRsaDecrypt(
  Exit:
     return retVal;
 }
-/* 10.2.19.4.17 CryptRsaSign() */
+/* 10.2.17.4.17 CryptRsaSign() */
 /* This function is used to generate an RSA signature of the type indicated in scheme. */
 /* Error Returns Meaning */
 /* TPM_RC_SCHEME scheme or hashAlg are not supported */
@@ -977,7 +1063,7 @@ CryptRsaSign(
 	}
     return retVal;
 }
-/* 10.2.19.4.18 CryptRsaValidateSignature() */
+/* 10.2.17.4.18 CryptRsaValidateSignature() */
 /* This function is used to validate an RSA signature. If the signature is valid TPM_RC_SUCCESS is
    returned. If the signature is not valid, TPM_RC_SIGNATURE is returned. Other return codes
    indicate either parameter problems or fatal errors. */
@@ -1036,7 +1122,7 @@ int GetCachedRsaKey(OBJECT *key, RAND_STATE *rand);
 #else
 #define GET_CACHED_KEY(key, rand)
 #endif
-/* 10.2.19.4.19 CryptRsaGenerateKey() */
+/* 10.2.17.4.19 CryptRsaGenerateKey() */
 /* Generate an RSA key from a provided seed */
 /* Error Returns Meaning */
 /* TPM_RC_CANCELED operation was canceled */

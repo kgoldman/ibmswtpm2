@@ -3,7 +3,7 @@
 /*	     	TPM2 Novoton Proprietary Command Utilities			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*	      $Id: ntc2lib.h 1055 2017-08-08 20:30:09Z kgoldman $		*/
+/*	      $Id: ntc2lib.h 1476 2019-06-10 19:32:03Z kgoldman $		*/
 /*										*/
 /* (c) Copyright IBM Corporation 2015, 2017					*/
 /*										*/
@@ -42,6 +42,7 @@
 
 #include <stdint.h>
 
+#include "Tpm.h"
 #include "TpmTypes.h"
 
 typedef struct tdNTC2_CFG_STRUCT {

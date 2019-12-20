@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*			  Interfaces to the CryptoEngine			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptUtil_fp.h 1047 2017-07-20 18:27:34Z kgoldman $		*/
+/*            $Id: CryptUtil_fp.h 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016, 2017				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -200,15 +200,6 @@ TPM_RC
 CryptGetTestResult(
 		   TPM2B_MAX_BUFFER    *outData        // OUT: test result data
 		   );
-BOOL
-CryptIsUniqueSizeValid(
-		       TPMT_PUBLIC     *publicArea     // IN: the public area to check
-		       );
-BOOL
-CryptIsSensitiveSizeValid(
-			  TPMT_PUBLIC             *publicArea,        // IN: the object's public part
-			  TPMT_SENSITIVE          *sensitiveArea      // IN: the object's sensitive part
-			  );
 TPM_RC
 CryptValidateKeys(
 		  TPMT_PUBLIC      *publicArea,
@@ -216,10 +207,6 @@ CryptValidateKeys(
 		  TPM_RC            blamePublic,
 		  TPM_RC            blameSensitive
 		  );
-void
-CryptAlgsSetImplemented(
-			void
-			);
 TPM_RC
 CryptSelectMac(
 	       TPMT_PUBLIC             *publicArea,

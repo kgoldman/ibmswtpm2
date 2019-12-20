@@ -3,7 +3,7 @@
 /*			  Code to perform the various self-test functions.	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: AlgorithmTests.c 1311 2018-08-23 21:39:29Z kgoldman $	*/
+/*            $Id: AlgorithmTests.c 1519 2019-11-15 20:43:51Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -132,7 +132,9 @@ TestHash(
 #endif
 #if ALG_SM3_256
 	  case ALG_SM3_256_VALUE:
-	    testDigest = &c_SM3_256_digest.b;
+	    // There are currently not test vectors for SM3
+	    //            testDigest = &c_SM3_256_digest.b;
+	    testDigest = NULL;
 	    break;
 #endif
 	  default:
@@ -140,6 +142,11 @@ TestHash(
 	}
     // Clear the to-test bits
     CLEAR_BOTH(hashAlg);
+    
+    // If there is an algorithm without test vectors, then assume that things are OK.
+    if(testDigest == NULL)
+	return TPM_RC_SUCCESS;
+
     // Set the HMAC key to twice the digest size
     digestSize = CryptHashGetDigestSize(hashAlg);
     CryptHmacStart(&state, hashAlg, digestSize * 2,
@@ -215,6 +222,9 @@ TestSymmetricAlgorithm(
 /* 10.2.1.4.3 AllSymsAreDone() */
 /* Checks if both symmetric algorithms have been tested. This is put here so that addition of a
    symmetric algorithm will be relatively easy to handle */
+/* Return Value	Meaning */
+/* TRUE(1)	all symmetric algorithms tested */
+/* FALSE(0)	not all symmetric algorithms tested */
 static BOOL
 AllSymsAreDone(
 	       ALGORITHM_VECTOR        *toTest
@@ -224,6 +234,9 @@ AllSymsAreDone(
 }
 /* 10.2.1.4.4 AllModesAreDone() */
 /* Checks if all the modes have been tested */
+/* Return Value	Meaning */
+/* TRUE(1)	all modes tested */
+/* FALSE(0)	all modes not tested */
 static BOOL
 AllModesAreDone(
 		ALGORITHM_VECTOR            *toTest
@@ -345,7 +358,7 @@ RsaKeyInitialize(
     testObject->attributes.privateExp = 0;
 }
 /* 10.2.1.5.3 TestRsaEncryptDecrypt() */
-/* These test are for an public key encryption that uses a random value */
+/* These tests are for a public key encryption that uses a random value. */
 static TPM_RC
 TestRsaEncryptDecrypt(
 		      TPM_ALG_ID           scheme,            // IN: the scheme
@@ -756,7 +769,6 @@ TestEcc(
    no test (i.e. no tests are actually run but the vector is cleared). */
 /* NOTE: toTest will only ever have bits set for implemented algorithms but alg can be anything. */
 /* Error Returns Meaning */
-/* TPM_RC_SUCCESS test complete */
 /* TPM_RC_CANCELED test was canceled */
 LIB_EXPORT
 TPM_RC

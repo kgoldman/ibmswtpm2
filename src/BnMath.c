@@ -3,7 +3,7 @@
 /*			Simple Operations on Big Numbers     			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: BnMath.c 1259 2018-07-10 19:11:09Z kgoldman $		*/
+/*            $Id: BnMath.c 1529 2019-11-21 23:29:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,17 +55,38 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
-/* 10.2.4 BnMath.c */
-/* 10.2.4.2 Includes */
+/* 10.2.3 BnMath.c */
+
+/* 10.2.3.1	Introduction */
+/* The simulator code uses the canonical form whenever possible in order to make the code in Part 3
+   more accessible. The canonical data formats are simple and not well suited for complex big number
+   computations. When operating on big numbers, the data format is changed for easier
+   manipulation. The format is native words in little-endian format. As the magnitude of the number
+   decreases, the length of the array containing the number decreases but the starting address
+   doesn't change. */
+/* The functions in this file perform simple operations on these big numbers. Only the more complex
+   operations are passed to the underlying support library. Although the support library would have
+   most of these functions, the interface code to convert the format for the values is greater than
+   the size of the code to implement the functions here. So, rather than incur the overhead of
+   conversion, they are done here. */
+/* If an implementer would prefer, the underlying library can be used simply by making code
+   substitutions here. */
+/* NOTE: There is an intention to continue to augment these functions so that there would be no need
+   to use an external big number library. */
+/* Many of these functions have no error returns and will always return TRUE. This is to allow them
+   to be used in guarded sequences. That is: OK = OK || BnSomething(s); where the BnSomething()
+   function should not be called if OK isn't true. */
+
+/* 10.2.3.2 Includes */
 #include "Tpm.h"
 /* A constant value of zero as a stand in for NULL bigNum values */
 const bignum_t   BnConstZero = {1, 0, {0}};
-/* 10.2.4.3 Functions */
-/* 10.2.4.3.1 AddSame() */
+/* 10.2.3.3 Functions */
+/* 10.2.3.3.1 AddSame() */
 /* Adds two values that are the same size. This function allows result to be the same as either of
    the addends. This is a nice function to put into assembly because handling the carry for
    multi-precision stuff is not as easy in C (unless there is a REALLY smart compiler). It would be
@@ -98,7 +119,7 @@ AddSame(
 	}
     return carry;
 }
-/* 10.2.4.3.2 CarryProp() */
+/* 10.2.3.3.2 CarryProp() */
 /* Propagate a carry */
 static int
 CarryProp(
@@ -126,8 +147,8 @@ CarryResolve(
 	}
     BnSetTop(result, stop);
 }
-/* 10.2.4.3.3 BnAdd() */
-/* Function to add two bigNum values. Always returns TRUEF */
+/* 10.2.3.3.3 BnAdd() */
+/* This function adds two bigNum values. Always returns TRUE */
 LIB_EXPORT BOOL
 BnAdd(
       bigNum           result,
@@ -147,13 +168,13 @@ BnAdd(
 	}
     pAssert(result->allocated >= n1->size);
     stop = MIN(n1->size, n2->allocated);
-    carry = AddSame(result->d, n1->d, n2->d, stop);
+    carry = (int)AddSame(result->d, n1->d, n2->d, (int)stop);
     if(n1->size > stop)
-	carry = CarryProp(&result->d[stop], &n1->d[stop], n1->size - stop, carry);
-    CarryResolve(result, n1->size, carry);
+	carry = CarryProp(&result->d[stop], &n1->d[stop], (int)(n1->size - stop), carry);
+    CarryResolve(result, (int)n1->size, carry);
     return TRUE;
 }
-/* 10.2.4.3.4 BnAddWord() */
+/* 10.2.3.3.4 BnAddWord() */
 /* Adds a word value to a bigNum. */
 LIB_EXPORT BOOL
 BnAddWord(
@@ -165,11 +186,11 @@ BnAddWord(
     int              carry;
     //
     carry = (result->d[0] = op->d[0] + word) < word;
-    carry = CarryProp(&result->d[1], &op->d[1], op->size - 1, carry);
-    CarryResolve(result, op->size, carry);
+    carry = CarryProp(&result->d[1], &op->d[1], (int)(op->size - 1), carry);
+    CarryResolve(result, (int)op->size, carry);
     return TRUE;
 }
-/* 10.2.4.3.5 SubSame() */
+/* 10.2.3.3.5 SubSame() */
 /* Subtract two values that have the same size. */
 static int
 SubSame(
@@ -191,7 +212,7 @@ SubSame(
 	}
     return borrow;
 }
-/* 10.2.4.3.6 BorrowProp() */
+/* 10.2.3.3.6 BorrowProp() */
 /* This propagates a borrow. If borrow is true when the end of the array is reached, then it means
    that op2 was larger than op1 and we don't handle that case so an assert is generated. This design
    choice was made because our only bigNum computations are on large positive numbers (primes) or on
@@ -208,9 +229,11 @@ BorrowProp(
 	borrow = ((*result++ = *op++ - borrow) == MAX_CRYPT_UWORD) && borrow;
     return borrow;
 }
-/* 10.2.4.3.7 BnSub() */
-/* Function to do subtraction of result = op1 - op2 when op1 is greater than op2. If it isn't then a
-   fault is generated. */
+/* 10.2.3.3.7 BnSub() */
+/* This function does subtraction of two bigNum values and returns result = op1 - op2 when op1 is
+   greater than op2. If op2 is greater than op1, then a fault is generated. This function always
+   returns TRUE. */
+
 LIB_EXPORT BOOL
 BnSub(
       bigNum           result,
@@ -219,20 +242,20 @@ BnSub(
       )
 {
     int             borrow;
-    crypt_uword_t   stop = MIN(op1->size, op2->allocated);
+    int             stop = (int)MIN(op1->size, op2->allocated);
     //
     // Make sure that op2 is not obviously larger than op1
     pAssert(op1->size >= op2->size);
     borrow = SubSame(result->d, op1->d, op2->d, stop);
-    if(op1->size > stop)
-	borrow = BorrowProp(&result->d[stop], &op1->d[stop], op1->size - stop,
+    if(op1->size > (crypt_uword_t)stop)
+	borrow = BorrowProp(&result->d[stop], &op1->d[stop], (int)(op1->size - stop),
 			    borrow);
     pAssert(!borrow);
     BnSetTop(result, op1->size);
     return TRUE;
 }
-/* 10.2.4.3.8 BnSubWord() */
-/* Subtract a word value from a bigNum. */
+/* 10.2.3.3.8 BnSubWord() */
+/* This function subtracts a word value from a bigNum. This function always returns TRUE. */
 LIB_EXPORT BOOL
 BnSubWord(
 	  bigNum           result,
@@ -245,12 +268,12 @@ BnSubWord(
     pAssert(op->size > 1 || word <= op->d[0]);
     borrow = word > op->d[0];
     result->d[0] = op->d[0] - word;
-    borrow = BorrowProp(&result->d[1], &op->d[1], op->size - 1, borrow);
+    borrow = BorrowProp(&result->d[1], &op->d[1], (int)(op->size - 1), borrow);
     pAssert(!borrow);
     BnSetTop(result, op->size);
     return TRUE;
 }
-/* 10.2.4.3.9 BnUnsignedCmp() */
+/* 10.2.3.3.9 BnUnsignedCmp() */
 /* This function performs a comparison of op1 to op2. The compare is approximately constant time if
    the size of the values used in the compare is consistent across calls (from the same line in the
    calling code). */
@@ -269,7 +292,7 @@ BnUnsignedCmp(
     int              i;
     //
     pAssert((op1 != NULL) && (op2 != NULL));
-    retVal = op1->size - op2->size;
+    retVal = (int)(op1->size - op2->size);
     if(retVal == 0)
 	{
 	    for(i = (int)(op1->size - 1); i >= 0; i--)
@@ -282,9 +305,12 @@ BnUnsignedCmp(
 	retVal = (retVal < 0) ? -1 : 1;
     return retVal;
 }
-/* 10.2.4.3.10 BnUnsignedCmpWord() */
-/* Compare a bigNum to a crypt_uword_t. -1 op1 is less that word 0 op1 is equal to word 1 op1 is
-   greater than word */
+/* 10.2.3.3.10 BnUnsignedCmpWord() */
+/* Compare a bigNum to a crypt_uword_t. */
+/* Return Value	Meaning */
+/* -1	op1 is less that word */
+/* 0	op1 is equal to word */
+/* 1	op1 is greater than word */
 LIB_EXPORT int
 BnUnsignedCmpWord(
 		  bigConst             op1,
@@ -299,8 +325,8 @@ BnUnsignedCmpWord(
 	// equal if word is zero
 	return (word == 0) ? 0 : -1;
 }
-/* 10.2.4.3.11 BnModWord() */
-/* Find the modulus of a big number when the modulus is a word value */
+/* 10.2.3.3.11 BnModWord() */
+/* This function does modular division of a big number when the modulus is a word value. */
 LIB_EXPORT crypt_word_t
 BnModWord(
 	  bigConst         numerator,
@@ -315,7 +341,7 @@ BnModWord(
     BnDiv(NULL, remainder, numerator, mod);
     return remainder->d[0];
 }
-/* 10.2.4.3.12 Msb() */
+/* 10.2.3.3.12 Msb() */
 /* Returns the bit number of the most significant bit of a crypt_uword_t. The number for the least
    significant bit of any bigNum value is 0. The maximum return value is RADIX_BITS - 1, */
 /* Return Values Meaning */
@@ -338,8 +364,12 @@ Msb(
     if(word & 0x00000002) { retVal += 1; word >>= 1; }
     return retVal + (int)word;
 }
-/* 10.2.4.3.13 BnMsb() */
-/* Returns the number of the MSb(). Returns a negative number if the value is zero or bn is NULL. */
+/* 10.2.3.3.13 BnMsb() */
+/* This function returns the number of the MSb() of a bigNum value. */
+/*     Return Value	Meaning */
+/*     -1	the word was zero or bn was NULL */
+/*     n	the bit number of the most significant bit in the word */
+
 LIB_EXPORT int
 BnMsb(
       bigConst            bn
@@ -349,14 +379,14 @@ BnMsb(
     if(bn != NULL && bn->size > 0)
 	{
 	    int         retVal = Msb(bn->d[bn->size - 1]);
-	    retVal += (bn->size - 1) * RADIX_BITS;
+	    retVal += (int)(bn->size - 1) * RADIX_BITS;
 	    return retVal;
 	}
     else
 	return -1;
 }
-/* 10.2.4.3.14 BnSizeInBits() */
-/* Returns the number of bits required to hold a number. */
+/* 10.2.3.3.14 BnSizeInBits() */
+/* Returns the number of bits required to hold a number. It is one greater than the Msb. */
 LIB_EXPORT unsigned
 BnSizeInBits(
 	     bigConst                 n
@@ -366,7 +396,7 @@ BnSizeInBits(
     //
     return bits < 0 ? 0 : (unsigned)bits;
 }
-/* 10.2.4.3.15 BnSetWord() */
+/* 10.2.3.3.15 BnSetWord() */
 /* Change the value of a bignum_t to a word value. */
 LIB_EXPORT bigNum
 BnSetWord(
@@ -382,7 +412,7 @@ BnSetWord(
 	}
     return n;
 }
-/* 10.2.4.3.16 BnSetBit() */
+/* 10.2.3.3.16 BnSetBit() */
 /* SET a bit in a bigNum. Bit 0 is the least-significant bit in the 0th digit_t. The function always
    return TRUE */
 LIB_EXPORT BOOL
@@ -396,12 +426,11 @@ BnSetBit(
     // Grow the number if necessary to set the bit.
     while(bn->size <= offset)
 	bn->d[bn->size++] = 0;
-    bn->d[offset] |= (1 << RADIX_MOD(bitNum));
+    bn->d[offset] |= (crypt_uword_t)(1 << RADIX_MOD(bitNum));
     return TRUE;
 }
-/* 10.2.4.3.17 BnTestBit() */
-/* Check to see if a bit is SET in a bignum_t. The 0th bit is the LSb() of d[0] If a bit is outside
-   the range of the number, it returns FALSE */
+/* 10.2.3.3.17 BnTestBit() */
+/* Check to see if a bit is SET in a bignum_t. The 0th bit is the LSb() of d[0]. */
 /* Return Values Meaning */
 /* TRUE the bit is set */
 /* FALSE the bit is not set or the number is out of range */
@@ -418,7 +447,7 @@ BnTestBit(
     else
 	return FALSE;
 }
-/* 10.2.4.3.18 BnMaskBits() */
+/* 10.2.3.3.18 BnMaskBits() */
 /* Function to mask off high order bits of a big number. The returned value will have no more than
    maskBit bits set. */
 /* NOTE: There is a requirement that unused words of a bignum_t are set to zero. */
@@ -444,8 +473,9 @@ BnMaskBits(
     BnSetTop(bn, finalSize);
     return retVal;
 }
-/* 10.2.4.3.19 BnShiftRight() */
-/* Function will shift a bigNum to the right by the shiftAmount */
+/* 10.2.3.3.19 BnShiftRight() */
+/* Function will shift a bigNum to the right by the shiftAmount. This function always returns
+   TRUE. */
 LIB_EXPORT BOOL
 BnShiftRight(
 	     bigNum           result,
@@ -483,7 +513,10 @@ BnShiftRight(
     BnSetTop(result, finalSize);
     return TRUE;
 }
-/* 10.2.4.3.20	BnGetRandomBits() */
+/* 10.2.3.3.20	BnGetRandomBits() */
+/* Return Value	Meaning */
+/* TRUE(1)	success */
+/* FALSE(0)	failure */
 LIB_EXPORT BOOL
 BnGetRandomBits(
 		bigNum           n,
@@ -501,19 +534,22 @@ BnGetRandomBits(
 	{
 	    if(BnFrom2B(n, &large.b) != NULL)
 		{
-		    if(BnMaskBits(n, bits))
+		    if(BnMaskBits(n, (crypt_uword_t)bits))
 			return TRUE;
 		}
 	}
     return FALSE;
 }
-/* 10.2.4.3.21 BnGenerateRandomInRange() */
+/* 10.2.3.3.21 BnGenerateRandomInRange() */
 /* Function to generate a random number r in the range 1 <= r < limit. The function gets a random
    number of bits that is the size of limit. There is some some probability that the returned number
    is going to be greater than or equal to the limit. If it is, try again. There is no more than 50%
    chance that the next number is also greater, so try again. We keep trying until we get a value
    that meets the criteria. Since limit is very often a number with a LOT of high order ones, this
    rarely would need a second try. */
+/* Return Value	Meaning */
+/* TRUE(1)	success */
+/* FALSE(0)	failure */
 LIB_EXPORT BOOL
 BnGenerateRandomInRange(
 			bigNum           dest,
@@ -530,10 +566,8 @@ BnGenerateRandomInRange(
 	}
     else
 	{
-	    do
-		{
-		    BnGetRandomBits(dest, bits, rand);
-		} while(BnEqualZero(dest) || BnUnsignedCmp(dest, limit) >= 0);
+	    while(BnGetRandomBits(dest, bits, rand)
+		  && (BnEqualZero(dest) || (BnUnsignedCmp(dest, limit) >= 0)));
 	}
-    return TRUE;
+    return !g_inFailureMode;
 }

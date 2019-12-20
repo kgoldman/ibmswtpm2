@@ -3,7 +3,7 @@
 /*			  Command Header Includes   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Commands.h 1265 2018-07-15 18:29:22Z kgoldman $		*/
+/*            $Id: Commands.h 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016, 2017				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -191,6 +191,9 @@
 #if CC_CertifyCreation
 #include "CertifyCreation_fp.h"
 #endif
+#if CC_CertifyX509
+#include "CertifyX509_fp.h"
+#endif
 #if CC_Quote
 #include "Quote_fp.h"
 #endif
@@ -202,6 +205,9 @@
 #endif
 #if CC_GetTime
 #include "GetTime_fp.h"
+#endif
+#ifdef TPM_CC_CertifyX509
+#include "CertifyX509_fp.h"
 #endif
 /* Ephemeral EC Keys */
 #if CC_Commit
@@ -436,6 +442,11 @@
 #endif
 #if CC_Policy_AC_SendSelect
 #include "Policy_AC_SendSelect_fp.h"
+#endif
+
+/* Authenticated Countdown Timer */
+#ifdef TPM_CC_ACT_SetTimeout
+#include "ACT_SetTimeout_fp.h"
 #endif
 
 /* Vendor Specific */

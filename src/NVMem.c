@@ -3,7 +3,7 @@
 /*			 NV read and write access methods			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: NVMem.c 1313 2018-08-27 16:43:31Z kgoldman $			*/
+/*            $Id: NVMem.c 1529 2019-11-21 23:29:01Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -68,41 +68,56 @@
 #include <memory.h>
 #include <string.h>
 #include <assert.h>
-#include "PlatformData.h"
-#include "Platform_fp.h"
+#include "Platform.h"
 #if FILE_BACKED_NV
 #   include         <stdio.h>
 FILE                *s_NvFile = NULL;
+int                 s_NeedsManufacture = FALSE;
 #endif
 
-/* C.6.3. Functions */
-/* C.6.3.1.	NvFileOpen() */
-/* Function to open the NV file */
+/* C.6.2. Functions */
+/* C.6.2.1.	NvFileOpen() */
+
 #if FILE_BACKED_NV
+
+/* This function opens the file used to hold the NV image.
+   Return Type: int */
 /* Return Value	Meaning */
-/* 0	success */
+/* >=0	success */
 /* -1	error */
 static int
 NvFileOpen(
 	   const char      *mode
 	   )
 {
+#if defined(NV_FILE_PATH)
+#   define TO_STRING(s) TO_STRING_IMPL(s)
+#   define TO_STRING_IMPL(s) #s
+    const char* s_NvFilePath = TO_STRING(NV_FILE_PATH);
+#   undef TO_STRING
+#   undef TO_STRING_IMPL
+#else
+    const char* s_NvFilePath = "NVChip";
+#endif
+
     // Try to open an exist NVChip file for read/write
 #   if defined _MSC_VER && 1
-    if(0 != fopen_s(&s_NvFile, "NVChip", mode))
+    if(fopen_s(&s_NvFile, s_NvFilePath, mode) != 0)
 	s_NvFile = NULL;
 #   else
-    s_NvFile = fopen("NVChip", mode);
+    s_NvFile = fopen(s_NvFilePath, mode);
 #   endif
     return (s_NvFile == NULL) ? -1 : 0;
 }
-/* C.6.3.2.	NvFileCommit() */
+
+/* C.6.2.2.	NvFileCommit() */
 /* Write all of the contents of the NV image to a file. */
 /* Return Value	Meaning */
-/* 0	failure */
-/* 1	success */
+/* TRUE	success */
+/* FALSE failure */
 static int
 NvFileCommit(
+	     void
 	     	)
 {
     int         OK;
@@ -116,7 +131,7 @@ NvFileCommit(
     assert(OK);
     return OK;
 }
-/* C.6.3.3.	NvFileSize() */
+/* C.6.2.3.	NvFileSize() */
 /* This function gets the size of the NV file and puts the file pointer were desired using the seek
    method values. SEEK_SET => beginning; SEEK_CUR => current position and SEEK_END => to the end of
    the file. */
@@ -149,7 +164,7 @@ NvFileSize(
 }
 #endif
 
-/* C.6.3.4. _plat__NvErrors() */
+/* C.6.2.4. _plat__NvErrors() */
 /* This function is used by the simulator to set the error flags in the NV subsystem to simulate an
    error in the NV loading process */
 LIB_EXPORT void
@@ -161,7 +176,7 @@ _plat__NvErrors(
     s_NV_unrecoverable = unrecoverable;
     s_NV_recoverable = recoverable;
 }
-/* C.6.3.5. _plat__NVEnable() */
+/* C.6.2.5. _plat__NVEnable() */
 /* Enable NV memory. */
 /* This version just pulls in data from a file. In a real TPM, with NV on chip, this function would
    verify the integrity of the saved context. If the NV memory was not on chip but was in something
@@ -190,20 +205,29 @@ _plat__NVEnable(
     _plat__NvMemoryClear(0, NV_MEMORY_SIZE);
     
     // If the file exists
-    if(0 == NvFileOpen("r+b"))
+    if(NvFileOpen("r+b") >= 0)
 	{
 	    long    fileSize = NvFileSize(SEEK_SET);    // get the file size and leave the
 	    // file pointer at the start
 	    //
 	    // If the size is right, read the data
 	    if(NV_MEMORY_SIZE == fileSize)
-		fread(s_NV, 1, NV_MEMORY_SIZE, s_NvFile);
+		{
+		    s_NeedsManufacture =
+			fread(s_NV, 1, NV_MEMORY_SIZE, s_NvFile) != NV_MEMORY_SIZE;
+		}
 	    else
-		NvFileCommit();     // for any other size, initialize it
+		{
+		    NvFileCommit();     // for any other size, initialize it
+		    s_NeedsManufacture = TRUE;
+		}
 	}
     // If NVChip file does not exist, try to create it for read/write.
-    else if(0 == NvFileOpen("w+b"))
-	NvFileCommit();             // Initialize the file
+    else if(NvFileOpen("w+b") >= 0)
+	{
+	    NvFileCommit();             // Initialize the file
+	    s_NeedsManufacture = TRUE;
+	}
     assert(NULL != s_NvFile);       // Just in case we are broken for some reason.
 #endif
     // NV contents have been initialized and the error checks have been performed. For
@@ -214,22 +238,35 @@ _plat__NVEnable(
     return s_NV_recoverable;
 }
 
-/* C.6.3.6. _plat__NVDisable() */
+/* C.6.2.6. _plat__NVDisable() */
 /* Disable NV memory */
 LIB_EXPORT void
 _plat__NVDisable(
-		 void
+		 int             delete           // IN: If TRUE, delete the NV contents.
 		 )
 {
-#if FILE_BACKED_NV
-    if(NULL != s_NvFile);
-    fclose(s_NvFile);    // Close NV file
+#if  FILE_BACKED_NV
+    if(NULL != s_NvFile)
+	{
+	    fclose(s_NvFile);    // Close NV file
+	    // Alternative to deleting the file is to set its size to 0. This will not
+	    // match the NV size so the TPM will need to be remanufactured.
+	    if(delete)
+		{
+		    // Open for writing at the start. Sets the size to zero.
+		    if(NvFileOpen("w") >= 0)
+			{
+			    fflush(s_NvFile);
+			    fclose(s_NvFile);
+			}
+		}
+	}
     s_NvFile = NULL;        // Set file handle to NULL
 #endif
     return;
 }
 
-/* C.6.3.7. _plat__IsNvAvailable() */
+/* C.6.2.7. _plat__IsNvAvailable() */
 /* Check if NV is available */
 /* Return Values Meaning */
 /* 0 NV is available */
@@ -251,7 +288,7 @@ _plat__IsNvAvailable(
     return retVal;
 }
 
-/* C.6.3.8. _plat__NvMemoryRead() */
+/* C.6.2.8. _plat__NvMemoryRead() */
 /* Function: Read a chunk of NV memory */
 LIB_EXPORT void
 _plat__NvMemoryRead(
@@ -264,7 +301,7 @@ _plat__NvMemoryRead(
     memcpy(data, &s_NV[startOffset], size);	// Copy data from RAM
     return;
 }
-/* C.6.3.9. _plat__NvIsDifferent() */
+/* C.6.2.9. _plat__NvIsDifferent() */
 /* This function checks to see if the NV is different from the test value. This is so that NV will
    not be written if it has not changed. */
 /* Return Values Meaning */
@@ -279,23 +316,28 @@ _plat__NvIsDifferent(
 {
     return (memcmp(&s_NV[startOffset], data, size) != 0);
 }
-/* C.6.3.10. _plat__NvMemoryWrite() */
+/* C.6.2.10. _plat__NvMemoryWrite() */
 /* This function is used to update NV memory. The write is to a memory copy of NV. At the end of the
    current command, any changes are written to the actual NV memory. */
 /* NOTE: A useful optimization would be for this code to compare the current contents of NV with the
    local copy and note the blocks that have changed. Then only write those blocks when
    _plat__NvCommit() is called. */
-LIB_EXPORT void
+
+LIB_EXPORT int
 _plat__NvMemoryWrite(
 		     unsigned int     startOffset,   // IN: write start
 		     unsigned int     size,          // IN: size of bytes to write
 		     void            *data           // OUT: data buffer
 		     )
 {
-    assert(startOffset + size <= NV_MEMORY_SIZE);
-    memcpy(&s_NV[startOffset], data, size);    // Copy the data to the NV image
+    if(startOffset + size <= NV_MEMORY_SIZE)
+	{
+	    memcpy(&s_NV[startOffset], data, size);     // Copy the data to the NV image
+	    return TRUE;
+	}
+    return FALSE;
 }
-/* C.6.3.11. _plat__NvMemoryClear() */
+/* C.6.2.11. _plat__NvMemoryClear() */
 /* Function is used to set a range of NV memory bytes to an implementation-dependent value. The
    value represents the erase state of the memory. */
 LIB_EXPORT void
@@ -308,7 +350,7 @@ _plat__NvMemoryClear(
     // In this implementation, assume that the erase value for NV is all 1s
     memset(&s_NV[start], 0xff, size);
 }
-/* C.6.3.12. _plat__NvMemoryMove() */
+/* C.6.2.12. _plat__NvMemoryMove() */
 /* Function: Move a chunk of NV memory from source to destination This function should ensure that
    if there overlap, the original data is copied before it is written */
 LIB_EXPORT void
@@ -323,7 +365,7 @@ _plat__NvMemoryMove(
     memmove(&s_NV[destOffset], &s_NV[sourceOffset], size);	// Move data in RAM
     return;
 }
-/* C.6.3.13. _plat__NvCommit() */
+/* C.6.2.13. _plat__NvCommit() */
 /* This function writes the local copy of NV to NV for permanent store. It will write NV_MEMORY_SIZE
    bytes to NV. If a file is use, the entire file is written. */
 /* Return Values Meaning */
@@ -341,7 +383,7 @@ _plat__NvCommit(
 #endif
 }
 
-/* C.6.3.14. _plat__SetNvAvail() */
+/* C.6.2.14. _plat__SetNvAvail() */
 /* Set the current NV state to available.  This function is for testing purpose only.  It is not
    part of the platform NV logic */
 LIB_EXPORT void
@@ -352,7 +394,7 @@ _plat__SetNvAvail(
     s_NvIsAvailable = TRUE;
     return;
 }
-/* C.6.3.15. _plat__ClearNvAvail() */
+/* C.6.2.15. _plat__ClearNvAvail() */
 /* Set the current NV state to unavailable.  This function is for testing purpose only.  It is not
    part of the platform NV logic */
 LIB_EXPORT void
@@ -362,4 +404,19 @@ _plat__ClearNvAvail(
 {
     s_NvIsAvailable = FALSE;
     return;
+}
+
+/* C.6.2.15.	_plat__NVNeedsManufacture() */
+/* This function is used by the simulator to determine when the TPM's NV state needs to be manufactured. */
+
+LIB_EXPORT int
+_plat__NVNeedsManufacture(
+			  void
+			  )
+{
+#if FILE_BACKED_NV
+    return s_NeedsManufacture;
+#else
+    return FALSE;
+#endif
 }

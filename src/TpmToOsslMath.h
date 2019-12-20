@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*	 		TPM to OpenSSL BigNum Shim Layer			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslMath.h 1259 2018-07-10 19:11:09Z kgoldman $		*/
+/*            $Id: TpmToOsslMath.h 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,45 +55,65 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
-
-#ifndef TPMTOOSSLMATH_H
-#define TPMTOOSSLMATH_H
 
 /* B.2.2.1. TpmToOsslMath.h */
 /* B.2.2.1.1. Introduction */
 /* This file contains the structure definitions used for ECC in the LibTopCrypt() version of the
    code. These definitions would change, based on the library. The ECC-related structures that cross
    the TPM interface are defined in TpmTypes.h */
-#if MATH_LIB == OSSL
+
+#ifndef MATH_LIB_DEFINED
+#define MATH_LIB_DEFINED
+#define MATH_LIB_OSSL
 #include <openssl/evp.h>
 #include <openssl/ec.h>
+
+#if OPENSSL_VERSION_NUMBER >= 0x10200000L
+// Check the bignum_st definition in crypto/bn/bn_lcl.h and either update the
+// version check or provide the new definition for this version.
+#   error Untested OpenSSL version
+#elif OPENSSL_VERSION_NUMBER >= 0x10100000L
+// from crypto/bn/bn_lcl.h
+struct bignum_st {
+    BN_ULONG *d;                /* Pointer to an array of 'BN_BITS2' bit
+				 * chunks. */
+    int top;                    /* Index of last used d +1. */
+    /* The next are internal book keeping for bn_expand. */
+    int dmax;                   /* Size of the d array. */
+    int neg;                    /* one if the number is negative */
+    int flags;
+};
+#endif // OPENSSL_VERSION_NUMBER
+
 #include <openssl/bn.h>
+
 /* B.2.2.2.2. Macros and Defines */
 /* Make sure that the library is using the correct size for a crypt word */
-#if !(defined THIRTY_TWO_BIT || defined SIXTY_FOUR_BIT || defined SIXTY_FOUR_BIT_LONG)
-#error "No architecture found"
-#endif
 
 #if    defined THIRTY_TWO_BIT && (RADIX_BITS != 32)			\
     || ((defined SIXTY_FOUR_BIT_LONG || defined SIXTY_FOUR_BIT)		\
 	&& (RADIX_BITS != 64))
-#  error "Ossl library is using different radix"
+#   error Ossl library is using different radix
 #endif
 
-/*     Allocate a local BIGNUM value. For the allocation, a bigNum structure is created as is a
-       local BIGNUM. The bigNum is initialized and then the BIGNUM is set to reference the local
-       value. */
+/* Allocate a local BIGNUM value. For the allocation, a bigNum structure is created as is a local
+   BIGNUM. The bigNum is initialized and then the BIGNUM is set to reference the local value. */
+
 #define BIG_VAR(name, bits)						\
     BN_VAR(name##Bn, (bits));						\
-    BIGNUM          *name = BigInitialized(BnInit(name##Bn,		\
+    BIGNUM          _##name;						\
+    BIGNUM          *name = BigInitialized(&_##name,			\
+					   BnInit(name##Bn,		\
 						  BYTES_TO_CRYPT_WORDS(sizeof(_##name##Bn.d))))
 
 /* Allocate a BIGNUM and initialize with the values in a bigNum initializer */
+
 #define BIG_INITIALIZED(name, initializer)				\
-    BIGNUM          *name = BigInitialized(initializer)
+    BIGNUM           _##name;						\
+    BIGNUM          *name = BigInitialized(&_##name, initializer)
 
 typedef struct
 {
@@ -104,22 +124,29 @@ typedef struct
 } OSSL_CURVE_DATA;
 typedef OSSL_CURVE_DATA      *bigCurve;
 #define AccessCurveData(E)  ((E)->C)
+
+#include "TpmToOsslSupport_fp.h"
+
+#define OSSL_ENTER()     BN_CTX      *CTX = OsslContextEnter()
+#define OSSL_LEAVE()     OsslContextLeave(CTX)
+
+/* Start and end a context that spans multiple ECC functions. This is used so that the group for the
+   curve can persist across multiple frames. */
+
 #define CURVE_INITIALIZED(name, initializer)				\
     OSSL_CURVE_DATA     _##name;					\
     bigCurve            name =  BnCurveInitialize(&_##name, initializer)
-#include "TpmToOsslSupport_fp.h"
-#define CURVE_FREE(E)							\
-    if(E != NULL)							\
-	{								\
-	    if(E->G != NULL)						\
-		EC_GROUP_free(E->G);					\
-	    OsslContextLeave(E->CTX);					\
-	}
-#define OSSL_ENTER()     BN_CTX      *CTX = OsslContextEnter()
-#define OSSL_LEAVE()     OsslContextLeave(CTX)
+
+#define CURVE_FREE(name)               BnCurveFree(name)
+
+/* Start and end a local stack frame within the context of the curve frame */
+#define ECC_ENTER()     BN_CTX         *CTX = OsslPushContext(E->CTX)
+#define ECC_LEAVE()     OsslPopContext(CTX)
+#define BN_NEW()        BnNewVariable(CTX)
+
+
 /* This definition would change if there were something to report */
 #define MathLibSimulationEnd()
-#endif // MATH_LIB == OSSL
+#endif // MATH_LIB_DEFINED
 
 
-#endif

@@ -3,7 +3,7 @@
 /*			  Parameter Marshaling   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Marshal.c 1262 2018-07-11 21:03:43Z kgoldman $		*/
+/*            $Id: Marshal.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,11 +55,9 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
-
-/* rev 136 */
 
 #include <string.h>
 
@@ -84,12 +82,6 @@ UINT8_Marshal(UINT8 *source, BYTE **buffer, INT32 *size)
 	}
     }
     return sizeof(UINT8);
-}
-    
-UINT16
-INT8_Marshal(INT8 *source, BYTE **buffer, INT32 *size)
-{
-    return UINT8_Marshal((UINT8 *)source, buffer, size);
 }
     
 UINT16
@@ -134,12 +126,6 @@ UINT32_Marshal(UINT32 *source, BYTE **buffer, INT32 *size)
 	}
     }
     return sizeof(UINT32);
-}
-
-UINT16
-INT32_Marshal(INT32 *source, BYTE **buffer, INT32 *size)
-{
-    return UINT32_Marshal((UINT32 *)source, buffer, size);
 }
 
 UINT16
@@ -366,16 +352,6 @@ TPMI_YES_NO_Marshal(TPMI_YES_NO *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += UINT8_Marshal(source, buffer, size);
-    return written;
-}
-
-/* Table 2:48 - Definition of TPMI_DH_CONTEXT Type (InterfaceTable()) */
-
-UINT16
-TPMI_DH_CONTEXT_Marshal(TPMI_DH_CONTEXT *source, BYTE **buffer, INT32 *size)
-{
-    UINT16 written = 0;
-    written += TPM_HANDLE_Marshal(source, buffer, size);
     return written;
 }
 
@@ -1065,6 +1041,16 @@ TPMS_NV_CERTIFY_INFO_Marshal(TPMS_NV_CERTIFY_INFO *source, BYTE **buffer, INT32 
     return written;
 }
 
+/* Table 125 - Definition of TPMS_NV_DIGEST_CERTIFY_INFO Structure <OUT> */
+UINT16
+TPMS_NV_DIGEST_CERTIFY_INFO_Marshal(TPMS_NV_DIGEST_CERTIFY_INFO *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+    written += TPM2B_NAME_Marshal(&source->indexName, buffer, size);
+    written += TPM2B_DIGEST_Marshal(&source->nvDigest, buffer, size);
+    return written;
+}
+
 /* Table 2:121 - Definition of TPMI_ST_ATTEST Type (InterfaceTable()) */
 
 UINT16
@@ -1104,6 +1090,9 @@ TPMU_ATTEST_Marshal(TPMU_ATTEST  *source, BYTE **buffer, INT32 *size, UINT32 sel
       case TPM_ST_ATTEST_NV:
 	written += TPMS_NV_CERTIFY_INFO_Marshal(&source->nv, buffer, size);
 	break;
+      case TPM_ST_ATTEST_NV_DIGEST:
+	written += TPMS_NV_DIGEST_CERTIFY_INFO_Marshal(&source->nvDigest, buffer, size);
+	break;
       default:
 	pAssert(FALSE);
     }
@@ -1141,6 +1130,14 @@ TPM2B_ATTEST_Marshal(TPM2B_ATTEST *source, BYTE **buffer, INT32 *size)
 
 UINT16
 TPMI_AES_KEY_BITS_Marshal(TPMI_AES_KEY_BITS *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+    written += TPM_KEY_BITS_Marshal(source, buffer, size);
+    return written;
+}
+
+UINT16
+TPMI_CAMELLIA_KEY_BITS_Marshal(TPMI_CAMELLIA_KEY_BITS *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
     written += TPM_KEY_BITS_Marshal(source, buffer, size);
@@ -1984,17 +1981,6 @@ TPMU_PUBLIC_PARMS_Marshal(TPMU_PUBLIC_PARMS *source, BYTE **buffer, INT32 *size,
     return written;
 }
 
-/* Table 2:190 - Definition of TPMT_PUBLIC_PARMS Structure (StructuresTable()) */
-
-UINT16
-TPMT_PUBLIC_PARMS_Marshal(TPMT_PUBLIC_PARMS *source, BYTE **buffer, INT32 *size)
-{
-    UINT16 written = 0;
-    written += TPMI_ALG_PUBLIC_Marshal(&source->type, buffer, size);
-    written += TPMU_PUBLIC_PARMS_Marshal(&source->parameters, buffer, size, source->type);
-    return written;
-}
-
 /* Table 2:191 - Definition of TPMT_PUBLIC Structure (StructuresTable()) */
 
 UINT16
@@ -2206,6 +2192,43 @@ TPM2B_CREATION_DATA_Marshal(TPM2B_CREATION_DATA *source, BYTE **buffer, INT32 *s
     }
     else {
 	written += sizeof(UINT16);
+    }
+    return written;
+}
+
+/* Table 225 - Definition of (UINT32) TPM_AT Constants */
+
+UINT16
+TPM_AT_Marshal(TPM_AT *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+    written += UINT32_Marshal(source, buffer, size);
+    return written;
+}
+
+/* Table 227 - Definition of TPMS_AC_OUTPUT Structure <OUT> */
+
+UINT16
+TPMS_AC_OUTPUT_Marshal(TPMS_AC_OUTPUT *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+
+    written += TPM_AT_Marshal(&source->tag, buffer, size);
+    written += UINT32_Marshal(&source->data, buffer, size);
+    return written;
+}
+
+/* Table 228 - Definition of TPML_AC_CAPABILITIES Structure <OUT> */
+
+UINT16
+TPML_AC_CAPABILITIES_Marshal(TPML_AC_CAPABILITIES *source, BYTE **buffer, INT32 *size)
+{
+    UINT16 written = 0;
+    UINT32 i;
+    
+    written += UINT32_Marshal(&source->count, buffer, size);
+    for (i = 0 ; i < source->count ; i++) {
+	written += TPMS_AC_OUTPUT_Marshal(&source->acCapabilities[i], buffer, size);
     }
     return written;
 }

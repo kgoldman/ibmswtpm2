@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*			   Structure definitions used for ECC 			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptEcc.h 1047 2017-07-20 18:27:34Z kgoldman $		*/
+/*            $Id: CryptEcc.h 1532 2019-11-26 14:28:36Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,13 +55,9 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
-
-#ifndef CRYPTECC_H
-#define CRYPTECC_H
-
 
 /* 10.1.2 CryptEcc.h */
 /* 10.1.2.1 Introduction */
@@ -69,9 +65,9 @@
    internally. The ECC-related structures that cross the TPM interface are defined in TpmTypes.h */
 #ifndef _CRYPT_ECC_H
 #define _CRYPT_ECC_H
-/* 10.1.2.1.1 ECC-related Structures */
+/* 10.1.2.2 Structures */
 /* This is used to define the macro that may or may not be in the data set for the curve
-   (BnEccData.c). If there is a mismatch, the compiler will warn that there is to much/not enough
+   (CryptEccData.c). If there is a mismatch, the compiler will warn that there is to much/not enough
    initialization data in the curve. The macro is used because not all versions of the
    CryptEccData.c need the curve name. */
 #ifdef NAMED_CURVES
@@ -88,9 +84,9 @@ typedef struct ECC_CURVE
     const TPMT_KDF_SCHEME        kdf;
     const TPMT_ECC_SCHEME        sign;
     const ECC_CURVE_DATA        *curveData; // the address of the curve data
+    const BYTE                  *OID;
     CURVE_NAME_DEF
 } ECC_CURVE;
 extern const ECC_CURVE eccCurves[ECC_CURVE_COUNT];
-#endif
 
 #endif

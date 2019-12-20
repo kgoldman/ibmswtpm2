@@ -3,7 +3,7 @@
 /*		Socket Interface to a TPM Simulator    				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TcpServer.c 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: TcpServer.c 1529 2019-11-21 23:29:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,32 +55,35 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
-/* D.4 TcpServer.c */
-/* D.4.1. Description */
+/* D.3 TcpServer.c */
+/* D.3.1. Description */
 /* This file contains the socket interface to a TPM simulator. */
-/* D.4.2. Includes, Locals, Defines and Function Prototypes */
+/* D.3.2. Includes, Locals, Defines and Function Prototypes */
 #include "TpmBuildSwitches.h"
 #include <stdio.h>
 
 #ifdef TPM_WINDOWS
 #include <windows.h>
 #include <winsock.h>
-#else
-typedef int SOCKET;
+typedef int socklen_t;
 #endif
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "Implementation.h"	/* kgold */
 #include "TpmTcpProtocol.h"
 #include "Manufacture_fp.h"
+#include "TpmProfile.h"
 #include "Simulator_fp.h"
 #include "TcpServer_fp.h"
+#include "Platform_fp.h"
+#include "PlatformACT_fp.h"		/* added kgold */
+
+typedef int         BOOL;
 
 /*     To access key cache control in TPM */
 void RsaKeyCacheControl(int state);
@@ -97,8 +100,8 @@ struct
     uint32_t    largestResponse;
 } CommandResponseSizes = {0};
 #endif // __IGNORE_STATE___
-/* D.4.3. Functions */
-/* D.4.3.1. CreateSocket() */
+/* D.3.3. Functions */
+/* D.3.3.1. CreateSocket() */
 /* This function creates a socket listening on PortNumber. */
 static int
 CreateSocket(
@@ -143,7 +146,7 @@ CreateSocket(
 	}
     return 0;
 }
-/* D.4.3.2. PlatformServer() */
+/* D.3.3.2. PlatformServer() */
 /* This function processes incoming platform requests. */
 BOOL
 PlatformServer(
@@ -215,6 +218,13 @@ PlatformServer(
 		    if(!OK)
 			return TRUE;
 		    break;
+		  case TPM_ACT_GET_SIGNALED:
+		      {
+			  UINT32 actHandle;
+			  OK = ReadUINT32(s, &actHandle);
+			  WriteUINT32(s, _rpc__ACT_GetSignaled(actHandle));
+			  break;
+		      }
 		  default:
 		    printf("Unrecognized platform interface command %d\n",
 			   (int)Command);
@@ -225,18 +235,18 @@ PlatformServer(
 	}
     return FALSE;
 }
-/* D.4.3.3. PlatformSvcRoutine() */
+/* D.3.3.3. PlatformSvcRoutine() */
 /* This function is called to set up the socket interfaces to listen for commands. */
 DWORD WINAPI
 PlatformSvcRoutine(
-		   LPVOID           port
+		   void *port
 		   )
 {
-    int                  PortNumber = (int)(INT_PTR)port;
+    int                  PortNumber = *(int *)port;
     SOCKET               listenSocket, serverSocket;
     struct               sockaddr_in HerAddress;
     int                  res;
-    int                  length;
+    socklen_t            length;
     BOOL                 continueServing;
     res = CreateSocket(PortNumber, &listenSocket);
     if(res != 0)
@@ -255,10 +265,10 @@ PlatformSvcRoutine(
 	    serverSocket = accept(listenSocket,
 				  (struct sockaddr*) &HerAddress,
 				  &length);
-	    if(serverSocket == SOCKET_ERROR)
+	    if(serverSocket == INVALID_SOCKET)
 		{
 		    printf("Accept error.  Error is 0x%x\n", WSAGetLastError());
-		    return -1;
+		    return (DWORD)-1;
 		}
 	    printf("Client accepted\n");
 	    // normal behavior on client disconnection is to wait for a new client
@@ -268,21 +278,21 @@ PlatformSvcRoutine(
 	} while(continueServing);
     return 0;
 }
-/* D.4.3.4. PlatformSignalService() */
+/* D.3.3.4. PlatformSignalService() */
 /* This function starts a new thread waiting for platform signals. Platform signals are processed
    one at a time in the order in which they are received. */
 int
 PlatformSignalService(
-		      int              PortNumberPlatform
+		      int              *PortNumberPlatform
 		      )
 {
     HANDLE               hPlatformSvc;
     int                  ThreadId;
-    int                  port = PortNumberPlatform;
+
     // Create service thread for platform signals
     hPlatformSvc = CreateThread(NULL, 0,
 				(LPTHREAD_START_ROUTINE)PlatformSvcRoutine,
-				(LPVOID)(INT_PTR)port, 0, (LPDWORD)&ThreadId);
+				(void *)PortNumberPlatform, 0, (LPDWORD)&ThreadId);
     if(hPlatformSvc == NULL)
 	{
 	    printf("Thread Creation failed\n");
@@ -290,19 +300,20 @@ PlatformSignalService(
 	}
     return 0;
 }
-/* D.4.3.5. RegularCommandService() */
+/* D.3.3.5. RegularCommandService() */
 /* This function services regular commands. */
 int
 RegularCommandService(
-		      int              PortNumber
+		      int              *PortNumber
 		      )
 {
     SOCKET               listenSocket;
     SOCKET               serverSocket;
     struct               sockaddr_in HerAddress;
-    int res, length;
+    int 		 res;
+    socklen_t 		 length;
     BOOL continueServing;
-    res = CreateSocket(PortNumber, &listenSocket);
+    res = CreateSocket(*PortNumber, &listenSocket);
     if(res != 0)
 	{
 	    printf("Create platform service socket fail\n");
@@ -313,13 +324,13 @@ RegularCommandService(
     // a new connection until the prior connection drops.
     do
 	{
-	    printf("TPM command server listening on port %d\n", PortNumber);
+	    printf("TPM command server listening on port %d\n", *PortNumber);
 	    // blocking accept
 	    length = sizeof(HerAddress);
 	    serverSocket = accept(listenSocket,
 				  (struct sockaddr*) &HerAddress,
 				  &length);
-	    if(serverSocket == SOCKET_ERROR)
+	    if(serverSocket == INVALID_SOCKET)
 		{
 		    printf("Accept error.  Error is 0x%x\n", WSAGetLastError());
 		    return -1;
@@ -332,7 +343,101 @@ RegularCommandService(
 	} while(continueServing);
     return 0;
 }
-/* D.4.3.6. StartTcpServer() */
+
+/* D.3.2.5.	SimulatorTimeServiceRoutine() */
+/* This function is called to service the time ticks. */
+static DWORD WINAPI
+SimulatorTimeServiceRoutine(
+			    LPVOID           notUsed
+			    )
+{
+    // All time is in ms
+    const INT64   tick = 1000;
+    UINT64  prevTime = _plat__RealTime();
+    INT64   timeout = tick;
+    
+    (void)notUsed;
+    
+    while (TRUE)
+	{
+	    UINT64  curTime;
+	    
+#if defined(TPM_WINDOWS)
+	    Sleep((DWORD)timeout);
+#else
+	    struct timespec req = {timeout / 1000, (timeout % 1000) * 1000};
+	    struct timespec rem;
+	    nanosleep(&req, &rem);
+#endif // _MSC_VER
+	    curTime = _plat__RealTime();
+	    
+	    // May need to issue several ticks if the Sleep() took longer than asked,
+	    // or no ticks at all, it Sleep() was interrupted prematurely.
+	    while (prevTime < curTime - tick / 2)
+	        {
+	            //printf("%05lld | %05lld\n",
+	            //      prevTime % 100000, (curTime - tick / 2) % 100000);
+	            _plat__ACT_Tick();
+	            prevTime += (UINT64)tick;
+	        }
+	    // Adjust the next timeout to keep the average interval of one second
+	    timeout = tick + (prevTime - curTime);
+	    //prevTime = curTime;
+	    //printf("%04lld | c:%05lld | p:%05llu\n",
+	    //          timeout, curTime % 100000, prevTime);
+	}
+    return 0;
+}
+
+#if RH_ACT_0
+
+/* D.3.2.6.	ActTimeService() */
+/* This function starts a new thread waiting to wait for time ticks. */
+/* Return Value	Meaning */
+/* ==0	success */
+/*     !=0	failure */
+static int
+ActTimeService(
+	       void
+	       )
+{
+    static BOOL          running = FALSE;
+    int                  ret = 0;
+    if(!running)
+	{
+#if defined(TPM_WINDOWS)
+	    HANDLE               hThr;
+	    int                  ThreadId;
+	    //
+	    printf("Starting ACT thread...\n");
+	    //  Don't allow ticks to be processed before TPM is manufactured.
+	    _plat__ACT_EnableTicks(FALSE);
+	    
+	    // Create service thread for ACT internal timer
+	    hThr = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE)SimulatorTimeServiceRoutine,
+				(LPVOID)(INT_PTR)NULL, 0, (LPDWORD)&ThreadId);
+	    if(hThr != NULL)
+		CloseHandle(hThr);
+	    else
+		ret = -1;
+#else
+	    pthread_t            thread_id;
+	    //
+	    ret = pthread_create(&thread_id, NULL, (void*)SimulatorTimeServiceRoutine,
+				 NULL);
+#endif // TPM_WINDOWS
+	    
+	    if(ret != 0)
+		printf("ACT thread Creation failed\n");
+	    else
+		running = TRUE;
+	}
+    return ret;
+}
+#endif // RH_ACT_0
+
+/* D.3.3.6. StartTcpServer() */
 /* Main entry-point to the TCP server.  The server listens on port specified. Note that there is no
    way to specify the network interface in this implementation. */
 int
@@ -342,15 +447,24 @@ StartTcpServer(
 	       )
 {
     int                  res;
+#if RH_ACT_0 || 1
+    // Start the Time Service routine
+    res = ActTimeService();
+    if(res != 0)
+	{
+	    printf("TimeService failed\n");
+	    return res;
+	}
+#endif
     // Start Platform Signal Processing Service
-    res = PlatformSignalService(*PortNumberPlatform);
+    res = PlatformSignalService(PortNumberPlatform);
     if(res != 0)
 	{
 	    printf("PlatformSignalService failed\n");
 	    return res;
 	}
     // Start Regular/DRTM TPM command service
-    res = RegularCommandService(*PortNumber);
+    res = RegularCommandService(PortNumber);
     if(res != 0)
 	{
 	    printf("RegularCommandService failed\n");
@@ -358,7 +472,7 @@ StartTcpServer(
 	}
     return 0;
 }
-/* D.4.3.7. ReadBytes() */
+/* D.3.3.7. ReadBytes() */
 /* This function reads the indicated number of bytes (NumBytes) into buffer from the indicated
    socket. */
 BOOL
@@ -386,7 +500,7 @@ ReadBytes(
 	}
     return TRUE;
 }
-/* D.4.3.8. WriteBytes() */
+/* D.3.3.8. WriteBytes() */
 /* This function will send the indicated number of bytes (NumBytes) to the indicated socket */
 BOOL
 WriteBytes(
@@ -416,8 +530,8 @@ WriteBytes(
 	}
     return TRUE;
 }
-/* D.4.3.9. WriteUINT32() */
-/* Send 4 bytes containing hton(1) */
+/* D.3.3.9. WriteUINT32() */
+/* Send 4 byte integer */
 BOOL
 WriteUINT32(
 	    SOCKET           s,
@@ -427,7 +541,23 @@ WriteUINT32(
     UINT32 netVal = htonl(val);
     return WriteBytes(s, (char*)&netVal, 4);
 }
-/* D.4.3.10. ReadVarBytes() */
+/* D.3.2.11.	ReadUINT32() */
+/* Function to read 4 byte integer from socket. */
+BOOL
+ReadUINT32(
+	   SOCKET           s,
+	   UINT32          *val
+	   )
+{
+    UINT32 netVal;
+    //
+    if (!ReadBytes(s, (char*)&netVal, 4))
+	return FALSE;
+    *val = ntohl(netVal);
+    return TRUE;
+}
+
+/* D.3.3.10. ReadVarBytes() */
 /* Get a UINT32-length-prepended binary array.  Note that the 4-byte length is in network byte order
    (big-endian). */
 BOOL
@@ -454,7 +584,7 @@ ReadVarBytes(
     if(!res) return res;
     return TRUE;
 }
-/* D.4.3.11. WriteVarBytes() */
+/* D.3.3.11. WriteVarBytes() */
 /* Send a UINT32-length-prepended binary array.  Note that the 4-byte length is in network byte
    order (big-endian). */
 BOOL
@@ -472,7 +602,7 @@ WriteVarBytes(
     if(!res) return res;
     return TRUE;
 }
-/* D.4.3.12. TpmServer() */
+/* D.3.3.12. TpmServer() */
 /* Processing incoming TPM command requests using the protocol / interface defined above. */
 BOOL
 TpmServer(
@@ -579,5 +709,4 @@ TpmServer(
 	    if(!OK)
 		return TRUE;
 	}
-    return FALSE;
 }

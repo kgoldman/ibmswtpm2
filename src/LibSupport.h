@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*		 select the library code that gets included in the TPM build 	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: LibSupport.h 809 2016-11-16 18:31:54Z kgoldman $			*/
+/*            $Id: LibSupport.h 1561 2019-12-19 20:58:43Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,70 +55,38 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
-#ifndef LIBSUPPORT_H
-#define LIBSUPPORT_H
-
-/* 5.15	LibSupport.h */
-
-/* This header file is used to select the library code that gets included in the TPM built */
+// 5.12	LibSupport.h
+// This header file is used to select the library code that gets included in the TPM build
 #ifndef _LIB_SUPPORT_H_
 #define _LIB_SUPPORT_H_
-/* OSSL has a full suite but yields an executable that is much larger than it needs to be. */
-#define     OSSL        1
-/* LTC has symmetric support, RSA support, and inadequate ECC support */
-#define     LTC         2
-/*     MSBN only provides math support so should not be used as the hash or symmetric library */
-#define     MSBN        3
-/*     SYMCRYPT only provides symmetric cryptography so would need to be combined with another
-       library that has math support */
-#define     SYMCRYPT    4
-#if RADIX_BITS == 32
-#   define RADIX_BYTES 4
-#elif RADIX_BITS == 64
-#   define RADIX_BYTES 8
-#else
-#error  "RADIX_BITS must either be 32 or 64."
-#endif
-/*     Include the options for hashing If all the optional headers were always part of the
-       distribution then it would not be necessary to do the conditional testing before the
-       include. )-; */
-#if HASH_LIB == OSSL
-#  include "TpmToOsslHash.h"
-#elif HASH_LIB == LTC
-#  include "ltc/TpmToLtcHash.h"
-#elif HASH_LIB == SYMCRYPT
-#include "symcrypt/TpmToSymcryptHash.h"
-#else
-#  error "No hash library selected"
-#endif
-/*     Set the linkage for the selected symmetric library */
-#if SYM_LIB == OSSL
-#  include "TpmToOsslSym.h"
-#elif SYM_LIB == LTC
-#  include "ltc/TpmToLtcSym.h"
-#elif SYM_LIB == SYMCRYPT
-#include "symcrypt/TpmToSymcryptSym.h"
-#else
-#  error "No symmetric library selected"
-#endif
+
+#ifndef RADIX_BITS
+#   if defined(__x86_64__) || defined(__x86_64)				\
+    || defined(__amd64__) || defined(__amd64) || defined(_WIN64) || defined(_M_X64) \
+    || defined(_M_ARM64) || defined(__aarch64__) \
+    || defined(__powerpc64__) || defined(__ppc64__)
+#       define RADIX_BITS                      64
+#   elif defined(__i386__) || defined(__i386) || defined(i386)		\
+    || defined(_WIN32) || defined(_M_IX86)				\
+    || defined(_M_ARM) || defined(__arm__) || defined(__thumb__)
+#       define RADIX_BITS                      32
+#   else
+#       error Unable to determine RADIX_BITS from compiler environment
+#   endif
+#endif // RADIX_BITS
+
+// These macros use the selected libraries to the proper include files.
+#define LIB_QUOTE(_STRING_) #_STRING_
+#define LIB_INCLUDE2(_LIB_, _TYPE_) LIB_QUOTE(TpmTo##_LIB_##_TYPE_.h)
+#define LIB_INCLUDE(_LIB_, _TYPE_) LIB_INCLUDE2(_LIB_, _TYPE_)
+// Include the options for hashing and symmetric. Defer the load of the math package Until the
+// bignum parameters are defined.
+#include LIB_INCLUDE(SYM_LIB, Sym)
+#include LIB_INCLUDE(HASH_LIB, Hash)
 #undef MIN
-#undef MIN
-/*     Select a big number Library. This uses a define rather than an include so that the header
-       will not be included until the required values have been defined. */
-#if MATH_LIB == OSSL
-#  define MATHLIB_H  "TpmToOsslMath.h"
-#elif MATH_LIB == LTC
-#  define MATHLIB_H  "ltc/TpmToLtcMath.h"
-#elif MATH_LIB == MSBN
-#define MATHLIB_H  "msbn/TpmToMsBnMath.h"
-#else
-#  error "No math library selected"
-#endif
+#undef MAX
 #endif // _LIB_SUPPORT_H_
-
-
-#endif

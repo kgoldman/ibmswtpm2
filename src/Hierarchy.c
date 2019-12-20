@@ -3,7 +3,7 @@
 /*			Managing and accessing the hierarchy-related values   	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Hierarchy.c 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: Hierarchy.c 1490 2019-07-26 21:13:22Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 /* 8.3 Hierarchy.c */
@@ -125,7 +125,7 @@ HierarchyPreInstall_Init(
 }
 /* 8.3.3.2 HierarchyStartup() */
 /* This function is called at TPM2_Startup() to initialize the hierarchy related values. */
-void
+BOOL
 HierarchyStartup(
 		 STARTUP_TYPE     type           // IN: start up type
 		 )
@@ -138,6 +138,7 @@ HierarchyStartup(
 	{
 	    gc.platformAuth.t.size = 0;
 	    gc.platformPolicy.t.size = 0;
+	    gc.platformAlg = TPM_ALG_NULL;
 	    // enable the storage and endorsement hierarchies and the platformNV
 	    gc.shEnable = gc.ehEnable = gc.phEnableNV = TRUE;
 	}
@@ -149,7 +150,7 @@ HierarchyStartup(
 	    gr.nullSeed.t.size = sizeof(gr.nullSeed.t.buffer);
 	    CryptRandomGenerate(gr.nullSeed.t.size, gr.nullSeed.t.buffer);
 	}
-    return;
+    return TRUE;
 }
 /* 8.3.3.3 HierarchyGetProof() */
 /* This function finds the proof value associated with a hierarchy.It returns a pointer to the proof
@@ -174,12 +175,9 @@ HierarchyGetProof(
 	    // shProof for TPM_RH_OWNER
 	    proof = &gp.shProof;
 	    break;
-	  case TPM_RH_NULL:
-	    // nullProof for TPM_RH_NULL
-	    proof = &gr.nullProof;
-	    break;
 	  default:
-	    FAIL(FATAL_ERROR_INTERNAL);
+	    // nullProof for TPM_RH_NULL or anything else
+	    proof = &gr.nullProof;
 	    break;
 	}
     return proof;
@@ -203,10 +201,8 @@ HierarchyGetPrimarySeed(
 	  case TPM_RH_ENDORSEMENT:
 	    seed = &gp.EPSeed;
 	    break;
-	  case TPM_RH_NULL:
-	    return &gr.nullSeed;
 	  default:
-	    FAIL(FATAL_ERROR_INTERNAL);
+	    seed = &gr.nullSeed;
 	    break;
 	}
     return seed;
@@ -238,7 +234,7 @@ HierarchyIsEnabled(
 	    enabled = TRUE;
 	    break;
 	  default:
-	    FAIL(FATAL_ERROR_INTERNAL);
+	    enabled = FALSE;
 	    break;
 	}
     return enabled;

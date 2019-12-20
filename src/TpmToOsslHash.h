@@ -3,7 +3,7 @@
 /*		Used to splice the OpenSSL() hash code into the TPM code  	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslHash.h 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: TpmToOsslHash.h 1529 2019-11-21 23:29:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,21 +55,21 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/ 
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/ 
 /*										*/
 /********************************************************************************/
 
-#ifndef TPMTOOSSLHASH_H
-#define TPMTOOSSLHASH_H
-
 /* B.2.2.1. TpmToOsslHash.h */
 /* B.2.2.1.1. Introduction */
-/* This header file is used to splice the OpenSSL() hash code into the TPM code. */
-#ifndef _TPM_TO_OSSL_HASH_H_
-#define _TPM_TO_OSSL_HASH_H_
-#if HASH_LIB == OSSL
+/* This header file is used to splice the OpenSSL hash code into the TPM code. */
+#ifndef HASH_LIB_DEFINED
+#define HASH_LIB_DEFINED
+#define HASH_LIB_OSSL
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#if ALG_SM3
+#include <openssl/sm3.h>
+#endif
 #include <openssl/ossl_typ.h>
 /* B.2.2.1.2. Links to the OpenSSL HASH code */
 /* Redefine the internal name used for each of the hash state structures to the name used by the
@@ -79,6 +79,7 @@
 #define tpmHashStateSHA256_t      SHA256_CTX
 #define tpmHashStateSHA384_t      SHA512_CTX
 #define tpmHashStateSHA512_t      SHA512_CTX
+#define tpmHashStateSM3_256_t     SM3_CTX
 #if ALG_SM3_256
 #   error "The version of OpenSSL used by this code does not support SM3"
 #endif
@@ -97,6 +98,9 @@ typedef const BYTE    *PCBYTE;
    library). */
 /* The macro that calls the method also defines how the parameters get swizzled between the default
    form (in CryptHash.c)and the library form. */
+
+#define HASH_ALIGNMENT  RADIX_BYTES
+
 /* Initialize the hash context */
 #define HASH_START_METHOD_DEF   void (HASH_START_METHOD)(PANY_HASH_STATE state)
 #define HASH_START(hashState)						\
@@ -146,7 +150,6 @@ typedef const BYTE    *PCBYTE;
      (hashStateTo)->def->contextSize)
 /* Function aliases. The code in CryptHash.c uses the internal designation for the functions. These
    need to be translated to the function names of the library. */
-//      Internal Designation        External Designation
 #define tpmHashStart_SHA1           SHA1_Init   // external name of the initialization method
 #define tpmHashData_SHA1            SHA1_Update
 #define tpmHashEnd_SHA1             SHA1_Final
@@ -171,11 +174,17 @@ typedef const BYTE    *PCBYTE;
 #define tpmHashStateCopy_SHA512     memcpy
 #define tpmHashStateExport_SHA512   memcpy
 #define tpmHashStateImport_SHA512   memcpy
+#define tpmHashStart_SM3_256        sm3_init
+#define tpmHashData_SM3_256         sm3_update
+#define tpmHashEnd_SM3_256          sm3_final
+#define tpmHashStateCopy_SM3_256    memcpy
+#define tpmHashStateExport_SM3_256  memcpy
+#define tpmHashStateImport_SM3_256  memcpy
+
 #endif // _CRYPT_HASH_C_
 #define LibHashInit()
 /* This definition would change if there were something to report */
 #define HashLibSimulationEnd()
-#endif // HASH_LIB == OSSL
-#endif //
+#endif // // HASH_LIB_DEFINED
 
-#endif
+

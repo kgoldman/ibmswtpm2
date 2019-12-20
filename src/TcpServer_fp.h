@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*			     TcpServer Header					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TcpServer_fp.h 809 2016-11-16 18:31:54Z kgoldman $			*/
+/*            $Id: TcpServer_fp.h 1530 2019-11-21 23:36:21Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -72,11 +72,11 @@ PlatformSvcRoutine(
 		   );
 int
 PlatformSignalService(
-		      int              PortNumber
+		      int              *PortNumber
 		      );
 int
 RegularCommandService(
-		      int              PortNumber
+		      int              *PortNumber
 		      );
 int
 StartTcpServer(
@@ -100,6 +100,18 @@ WriteUINT32(
 	    SOCKET           s,
 	    uint32_t         val
 	    );
+BOOL
+ReadUINT32(
+	   SOCKET           s,
+	   UINT32          *val
+	   );
+BOOL
+ReadVarBytes(
+	     SOCKET           s,
+	     char            *buffer,
+	     uint32_t        *BytesReceived,
+	     int              MaxLen
+	     );
 BOOL
 WriteVarBytes(
 	      SOCKET           s,

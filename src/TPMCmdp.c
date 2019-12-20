@@ -3,7 +3,7 @@
 /*			  Process the commands    				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TPMCmdp.c 1262 2018-07-11 21:03:43Z kgoldman $		*/
+/*            $Id: TPMCmdp.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,27 +55,27 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
-/* D.5 TPMCmdp.c */
-/* D.5.1. Description */
+/* D.4 TPMCmdp.c */
+/* D.4.1. Description */
 /* This file contains the functions that process the commands received on the control port or the
    command port of the simulator. The control port is used to allow simulation of hardware events
    (such as, _TPM_Hash_Start()) to test the simulated TPM's reaction to those events. This improves
    code coverage of the testing. */
-/* D.5.2. Includes and Data Definitions */
+/* D.4.2. Includes and Data Definitions */
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
-#include "Implementation.h"
 #include "TpmBuildSwitches.h"
 #ifdef TPM_WINDOWS
 #include <windows.h>
 #include <winsock.h>
 #endif
 #include "Platform_fp.h"
+#include "PlatformACT_fp.h"
 #include "ExecCommand_fp.h"
 #include "Manufacture_fp.h"
 #include "_TPM_Init_fp.h"
@@ -86,15 +86,16 @@
 #include "TpmTcpProtocol.h"
 #include "Simulator_fp.h"
 #ifdef TPM_WINDOWS
-#include "TcpServer_fp.h"
+#include "TcpServer_fp.h"	/* kgold */
 #endif
 #ifdef TPM_POSIX
-#include "TcpServerPosix_fp.h"
+#include "TcpServerPosix_fp.h"	/* kgold */
 #endif
+#include "TpmProfile.h"		/* kgold */
 
 static BOOL     s_isPowerOn = FALSE;
-/* D.5.3. Functions */
-/* D.5.3.1. Signal_PowerOn() */
+/* D.4.3. Functions */
+/* D.4.3.1. Signal_PowerOn() */
 /* This function processes a power-on indication. Among other things, it calls the _TPM_Init()
    handler. */
 void
@@ -116,7 +117,7 @@ _rpc__Signal_PowerOn(
     // Set state as power on
     s_isPowerOn = TRUE;
 }
-/* D.5.3.2. Signal_Restart() */
+/* D.4.3.2. Signal_Restart() */
 /* This function processes the clock restart indication. All it does is call the platform
    function. */
 void
@@ -126,7 +127,7 @@ _rpc__Signal_Restart(
 {
     _plat__TimerRestart();
 }
-/* D.5.3.3. Signal_PowerOff() */
+/* D.4.3.3. Signal_PowerOff() */
 /* This function processes the power off indication. Its primary function is to set a flag
    indicating that the next power on indication should cause _TPM_Init() to be called. */
 void
@@ -134,13 +135,14 @@ _rpc__Signal_PowerOff(
 		      void
 		      )
 {
-    if(!s_isPowerOn) return;
-    // Pass power off signal to platform
-    _plat__Signal_PowerOff();
+    if(s_isPowerOn)
+	// Pass power off signal to platform
+	_plat__Signal_PowerOff();
+    // This could be redundant, but...
     s_isPowerOn = FALSE;
     return;
 }
-/* D.5.3.4. _rpc__ForceFailureMode() */
+/* D.4.3.4. _rpc__ForceFailureMode() */
 /* This function is used to debug the Failure Mode logic of the TPM. It will set a flag in the TPM
    code such that the next call to TPM2_SelfTest() will result in a failure, putting the TPM into
    Failure Mode. */
@@ -150,73 +152,74 @@ _rpc__ForceFailureMode(
 		       )
 {
     SetForceFailureMode();
+    return;
 }
-/* D.5.3.5. _rpc__Signal_PhysicalPresenceOn() */
+/* D.4.3.5. _rpc__Signal_PhysicalPresenceOn() */
 /* This function is called to simulate activation of the physical presence pin. */
 void
 _rpc__Signal_PhysicalPresenceOn(
 				void
 				)
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    // Pass physical presence on to platform
-    _plat__Signal_PhysicalPresenceOn();
+    // If TPM power is on
+    if(s_isPowerOn)
+	// Pass physical presence on to platform
+	_plat__Signal_PhysicalPresenceOn();
     return;
 }
-/* D.5.3.6. _rpc__Signal_PhysicalPresenceOff() */
+/* D.4.3.6. _rpc__Signal_PhysicalPresenceOff() */
 /* This function is called to simulate deactivation of the physical presence pin. */
 void
 _rpc__Signal_PhysicalPresenceOff(
 				 void
 				 )
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    // Pass physical presence off to platform
-    _plat__Signal_PhysicalPresenceOff();
+    // If TPM power is on
+    if(s_isPowerOn)
+	// Pass physical presence off to platform
+	_plat__Signal_PhysicalPresenceOff();
     return;
 }
-/* D.5.3.7. _rpc__Signal_Hash_Start() */
+/* D.4.3.7. _rpc__Signal_Hash_Start() */
 /* This function is called to simulate a _TPM_Hash_Start() event. It will call */
 void
 _rpc__Signal_Hash_Start(
 			void
 			)
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    // Pass _TPM_Hash_Start signal to TPM
-    _TPM_Hash_Start();
+    // If TPM power is on
+    if(s_isPowerOn)
+	// Pass _TPM_Hash_Start signal to TPM
+	_TPM_Hash_Start();
     return;
 }
-/* D.5.3.8. _rpc__Signal_Hash_Data() */
+/* D.4.3.8. _rpc__Signal_Hash_Data() */
 /* This function is called to simulate a _TPM_Hash_Data() event. */
 void
 _rpc__Signal_Hash_Data(
 		       _IN_BUFFER       input
 		       )
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    // Pass _TPM_Hash_Data signal to TPM
-    _TPM_Hash_Data(input.BufferSize, input.Buffer);
+    // If TPM power is on
+    if(s_isPowerOn)
+	// Pass _TPM_Hash_Data signal to TPM
+	_TPM_Hash_Data(input.BufferSize, input.Buffer);
     return;
 }
-/* D.5.3.9. _rpc__Signal_HashEnd() */
+/* D.4.3.9. _rpc__Signal_HashEnd() */
 /* This function is called to simulate a _TPM_Hash_End() event. */
 void
 _rpc__Signal_HashEnd(
 		     void
 		     )
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    // Pass _TPM_HashEnd signal to TPM
-    _TPM_Hash_End();
+    // If TPM power is on
+    if(s_isPowerOn)
+	// Pass _TPM_HashEnd signal to TPM
+	_TPM_Hash_End();
     return;
 }
-/* D.5.3.10. rpc_Send_Command() */
+/* D.4.3.10. rpc_Send_Command() */
 /* This is the interface to the TPM code. */
 void
 _rpc__Send_Command(
@@ -238,7 +241,7 @@ _rpc__Send_Command(
 		      &response->BufferSize, &response->Buffer);
     return;
 }
-/* D.5.3.10. _rpc__Signal_CancelOn() */
+/* D.4.3.10. _rpc__Signal_CancelOn() */
 /* This function is used to turn on the indication to cancel a command in process. An executing
    command is not interrupted. The command code may periodically check this indication to see if it
    should abort the current command processing and returned TPM_RC_CANCELLED. */
@@ -248,25 +251,25 @@ _rpc__Signal_CancelOn(
 		      )
 {
     // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    // Set the platform canceling flag.
-    _plat__SetCancel();
+    if(s_isPowerOn)
+	// Set the platform canceling flag.
+	_plat__SetCancel();
     return;
 }
-/* D.5.3.11. _rpc__Signal_CancelOff() */
+/* D.4.3.11. _rpc__Signal_CancelOff() */
 /* This function is used to turn off the indication to cancel a command in process. */
 void
 _rpc__Signal_CancelOff(
 		       void
 		       )
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    // Set the platform canceling flag.
-    _plat__ClearCancel();
+    // If TPM power is n
+    if(s_isPowerOn)
+	// Set the platform canceling flag.
+	_plat__ClearCancel();
     return;
 }
-/* D.5.3.12. _rpc__Signal_NvOn() */
+/* D.4.3.12. _rpc__Signal_NvOn() */
 /* In a system where the NV memory used by the TPM is not within the TPM, the NV may not always be
    available. This function turns on the indicator that indicates that NV is available. */
 void
@@ -274,25 +277,27 @@ _rpc__Signal_NvOn(
 		  void
 		  )
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    _plat__SetNvAvail();
+    // If TPM power is on
+    if(s_isPowerOn)
+	// Make the NV available
+	_plat__SetNvAvail();
     return;
 }
-/* D.5.3.13. _rpc__Signal_NvOff() */
+/* D.4.3.13. _rpc__Signal_NvOff() */
 /* This function is used to set the indication that NV memory is no longer available. */
 void
 _rpc__Signal_NvOff(
 		   void
 		   )
 {
-    // If TPM is power off, reject this signal
-    if(!s_isPowerOn) return;
-    _plat__ClearNvAvail();
+    // If TPM power is on
+    if(s_isPowerOn)
+	// Make NV not available
+	_plat__ClearNvAvail();
     return;
 }
 void RsaKeyCacheControl(int state);
-/* D.5.3.14. _rpc__RsaKeyCacheControl() */
+/* D.4.3.14. _rpc__RsaKeyCacheControl() */
 /* This function is used to enable/disable the use of the RSA key cache during simulation. */
 void
 _rpc__RsaKeyCacheControl(
@@ -305,29 +310,19 @@ _rpc__RsaKeyCacheControl(
     NOT_REFERENCED(state);
 #endif
 }
-/* D.5.3.15. _rpc__Shutdown() */
-/* This function is used to stop the TPM simulator. */
-void
-_rpc__Shutdown(
-	       void
-	       )
+
+#define TPM_RH_ACT_0        0x40000110
+
+/* D.4.2.15.	_rpc__ACT_GetSignaled() */
+/* This function is used to count the ACT second tick. */
+BOOL
+_rpc__ACT_GetSignaled(
+		      UINT32 actHandle
+		      )
 {
-#if 0	/* kgold bypass for now */
-    RPC_STATUS status;
-    // Stop TPM
-    TPM_TearDown();
-    status = RpcMgmtStopServerListening(NULL);
-    if(status != RPC_S_OK)
-	{
-	    printf("RpcMgmtStopServerListening returned: 0x%x\n", status);
-	    exit(status);
-	}
-    status = RpcServerUnregisterIf(NULL, NULL, FALSE);
-    if(status != RPC_S_OK)
-	{
-	    printf("RpcServerUnregisterIf returned 0x%x\n", status);
-	    exit(status);
-	}
-#endif
-    return;
+    // If TPM power is on
+    if (s_isPowerOn)
+	// Query the platform
+	return _plat__ACT_GetSignaled(actHandle - TPM_RH_ACT_0);
+    return FALSE;
 }

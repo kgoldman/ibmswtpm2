@@ -3,7 +3,7 @@
 /*		Manage the object store of the TPM.    				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Object.c 1272 2018-07-20 17:46:57Z kgoldman $		*/
+/*            $Id: Object.c 1529 2019-11-21 23:29:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -88,7 +88,7 @@ ObjectSetInUse(
 }
 /* 8.6.3.3 ObjectStartup() */
 /* This function is called at TPM2_Startup() to initialize the object subsystem. */
-void
+BOOL
 ObjectStartup(
 	      void
 	      )
@@ -100,7 +100,7 @@ ObjectStartup(
 	    //Set the slot to not occupied
 	    ObjectFlush(&s_objects[i]);
 	}
-    return;
+    return TRUE;
 }
 /* 8.6.3.4 ObjectCleanupEvict() */
 /* In this implementation, a persistent object is moved from NV into an object slot for
@@ -182,16 +182,6 @@ HandleToObject(
     pAssert(s_objects[index].attributes.occupied);
     return &s_objects[index];
 }
-/* 8.6.3.8 ObjectGetNameAlg() */
-/* This function is used to get the Name algorithm of a object. */
-/* This function requires that object references a loaded object. */
-TPMI_ALG_HASH
-ObjectGetNameAlg(
-		 OBJECT          *object         // IN: handle of the object
-		 )
-{
-    return object->publicArea.nameAlg;
-}
 /* 8.6.3.9 GetQualifiedName() */
 /* This function returns the Qualified Name of the object. In this implementation, the Qualified
    Name is computed when the object is loaded and is saved in the internal representation of the
@@ -251,8 +241,8 @@ ObjectGetHierarchy(
 }
 /* 8.6.3.11 GetHeriarchy() */
 /* This function returns the handle of the hierarchy to which a handle belongs. This function is
-   similar to ObjectGetHierarchy() but this routine takes a handle but ObjectGetHierarchy() takes an
-   pointer to an object. */
+   similar to ObjectGetHierarchy() but this routine takes a handle while ObjectGetHierarchy() takes
+   an pointer to an object. */
 /* This function requires that handle references a loaded object. */
 TPMI_RH_HIERARCHY
 GetHeriarchy(

@@ -3,7 +3,7 @@
 /*			     The RSA key cache 					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: RsaKeyCache.c 1314 2018-08-28 14:25:12Z kgoldman $		*/
+/*            $Id: RsaKeyCache.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -65,7 +65,6 @@
 #include "Tpm.h"
 #if USE_RSA_KEY_CACHE
 #include  <stdio.h>
-#include "Platform_fp.h"
 #include "RsaKeyCache_fp.h"
 #if CRT_FORMAT_RSA == YES
 #define CACHE_FILE_NAME "RsaKeyCacheCrt.data"
@@ -75,52 +74,26 @@
 typedef struct _RSA_KEY_CACHE_
 {
     TPM2B_PUBLIC_KEY_RSA        publicModulus;
-    TPM2B_PRIVATE_KEY_RSA       privatePrime;
-    privateExponent_t           privateExponent;
+    TPM2B_PRIVATE_KEY_RSA       privateExponent;
 } RSA_KEY_CACHE;
 /* Determine the number of RSA key sizes for the cache */
-#ifdef RSA_KEY_SIZE_BITS_1024
-#define RSA_1024    YES
-#else
-#define RSA_1024    NO
-#endif
-#ifdef RSA_KEY_SIZE_BITS_2048
-#define RSA_2048    YES
-#else
-#define RSA_2048    NO
-#endif
-#ifdef RSA_KEY_SIZE_BITS_3072
-#define RSA_3072    YES
-#else
-#define RSA_3072    NO
-#endif
-#ifdef RSA_KEY_SIZE_BITS_4096
-#define RSA_4096    YES
-#else
-#define RSA_4096    NO
-#endif
-#define comma
 TPMI_RSA_KEY_BITS       SupportedRsaKeySizes[] = {
 #if RSA_1024
-    1024
-#   undef comma
-#   define comma ,
+						  1024,
 #endif
 #if RSA_2048
-    comma 2048
-#   undef comma
-#   define comma ,
+						  2048,
 #endif
 #if RSA_3072
-    comma 3072
-#   undef comma
-#   define comma ,
+						  3072,
 #endif
 #if RSA_4096
-    comma 4096
+						  4096,
 #endif
+						  0
 };
 #define RSA_KEY_CACHE_ENTRIES (RSA_1024 + RSA_2048 + RSA_3072 + RSA_4096)
+
 /* The key cache holds one entry for each of the supported key sizes */
 RSA_KEY_CACHE        s_rsaKeyCache[RSA_KEY_CACHE_ENTRIES];
 /* Indicates if the key cache is loaded. It can be loaded and enabled or disabled. */
@@ -138,6 +111,9 @@ RsaKeyCacheControl(
 }
 /* 10.2.22.2.2 InitializeKeyCache() */
 /* This will initialize the key cache and attempt to write it to a file for later use. */
+/* Return Value	Meaning */
+/* TRUE(1)	success */
+/* FALSE(0)	failure */
 static BOOL
 InitializeKeyCache(
 		   OBJECT              *rsaKey,            // IN/OUT: The object structure in which
@@ -170,7 +146,7 @@ InitializeKeyCache(
 	{
 	    FILE                *cacheFile;
 	    const char          *fn = CACHE_FILE_NAME;
-#if defined _MSC_VER && 1
+#if defined _MSC_VER
 	    if(fopen_s(&cacheFile, fn, "w+b") != 0)
 #else
 		cacheFile = fopen(fn, "w+b");
@@ -194,6 +170,11 @@ InitializeKeyCache(
 #endif
     return s_keyCacheLoaded;
 }
+/* 10.2.22.2.3	KeyCacheLoaded() */
+/* Checks that key cache is loaded. */
+/* Return Value	Meaning */
+/* TRUE(1)	cache loaded */
+/* FALSE(0)	cache not loaded */
 static BOOL
 KeyCacheLoaded(
 	       OBJECT              *rsaKey,            // IN/OUT: The object structure in which
@@ -230,6 +211,10 @@ KeyCacheLoaded(
 	s_rsaKeyCacheEnabled = InitializeKeyCache(rsaKey, rand);
     return s_keyCacheLoaded;
 }
+/* 10.2.22.2.4	GetCachedRsaKey() */
+/* Return Value	Meaning */
+/* TRUE(1)	key loaded */
+/* FALSE(0)	key not loaded */
 BOOL
 GetCachedRsaKey(
 		OBJECT              *key,

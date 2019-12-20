@@ -3,7 +3,7 @@
 /*			 Main Simulator Entry Point		    		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TPMCmds.c 1259 2018-07-10 19:11:09Z kgoldman $		*/
+/*            $Id: TPMCmds.c 1528 2019-11-20 20:31:43Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -73,7 +73,6 @@
 #include <windows.h>
 #include <winsock.h>
 #endif
-#include "Implementation.h"	/* kgold */
 #include "TpmTcpProtocol.h"
 #include "Manufacture_fp.h"
 #include "Platform_fp.h"
@@ -84,13 +83,16 @@
 #ifdef TPM_POSIX
 #include "TcpServerPosix_fp.h"
 #endif
+#include "TpmProfile.h"		/* kgold */
+
 #define PURPOSE							\
     "TPM Reference Simulator.\nCopyright Microsoft Corp.\n"
 #define DEFAULT_TPM_PORT 2321
-void* MainPointer;
+
 /* D.5.3. Functions */
 /* D.5.3.1. Usage() */
 /* This function prints the proper calling sequence for the simulator. */
+
 static void
 Usage(
       char                *pszProgramName
@@ -106,9 +108,13 @@ Usage(
     fprintf(stderr,  "%s -h       - This message\n", pszProgramName);
     exit(1);
 }
+
+
+
 /* D.5.3.2. main() */
 /* This is the main entry point for the simulator. */
 /* It registers the interface and starts listening for clients */
+
 int
 main(
      int              argc,
@@ -116,9 +122,9 @@ main(
      )
 {
     int		i;				/* argc iterator */
-    int 	manufacture = 0;
     
     /* command line argument defaults */
+    int manufacture = 0;
     int portNum = DEFAULT_TPM_PORT;
     int portNumPlat;
 
@@ -147,40 +153,39 @@ main(
 	    Usage(argv[0]);
 	}
     }
-    /* test to see if the NVChip files exists */
-    {
-	FILE *file = fopen("NVChip", "r+b");
-	if (file == NULL) {	/* if not, remanufacture */
-	    manufacture = 1;
-	}
-	else {
-	    fclose(file );
-	}
-    }
+    printf("LIBRARY_COMPATIBILITY_CHECK is %s\n",
+	   (LIBRARY_COMPATIBILITY_CHECK ? "ON" : "OFF"));
+    // Enable NV memory
     _plat__NVEnable(NULL);
-    if (manufacture) {
-	if(TPM_Manufacture(1) != 0)
-	    {
-		exit(1);
-	    }
-	// Coverage test - repeated manufacturing attempt
-	if(TPM_Manufacture(0) != 1)
-	    {
-		exit(2);
-	    }
-	// Coverage test - re-manufacturing
-	TPM_TearDown();
-	if(TPM_Manufacture(1) != 0)
-	    {
-		exit(3);
-	    }
-    }
+    
+    if (manufacture || _plat__NVNeedsManufacture())
+	{
+	    printf("Manufacturing NV state...\n");
+	    if(TPM_Manufacture(1) != 0)
+		{
+		    // if the manufacture didn't work, then make sure that the NV file doesn't
+		    // survive. This prevents manufacturing failures from being ignored the
+		    // next time the code is run.
+		    _plat__NVDisable(1);
+		    exit(1);
+		}
+	    // Coverage test - repeated manufacturing attempt
+	    if(TPM_Manufacture(0) != 1)
+		{
+		    exit(2);
+		}
+	    // Coverage test - re-manufacturing
+	    TPM_TearDown();
+	    if(TPM_Manufacture(1) != 0)
+		{
+		    exit(3);
+		}
+	}
     // Disable NV memory
-    _plat__NVDisable();
-    /* power on the TPM kgold MS simulator comes up powered off */
-    _rpc__Signal_PowerOn(FALSE);
-    _rpc__Signal_NvOn();
+    _plat__NVDisable(0);
+
     portNumPlat = portNum + 1;
     StartTcpServer(&portNum, &portNumPlat);
     return EXIT_SUCCESS;
 }
+

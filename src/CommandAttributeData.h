@@ -3,7 +3,7 @@
 /*		Command code attribute array for GetCapability	    		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CommandAttributeData.h 1259 2018-07-10 19:11:09Z kgoldman $	*/
+/*            $Id: CommandAttributeData.h 1519 2019-11-15 20:43:51Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -434,6 +434,12 @@ const TPMA_CC    s_ccAttr [] = {
 #if (PAD_LIST  || CC_Policy_AC_SendSelect)
     TPMA_CC_INITIALIZER(0x0196, 0, 0, 0, 0, 1, 0, 0, 0),
 #endif
+#if (PAD_LIST || CC_CertifyX509)
+    TPMA_CC_INITIALIZER(0x0197, 0, 0, 0, 0, 2, 0, 0, 0),
+#endif
+#if (PAD_LIST || CC_ACT_SetTimeout)
+    TPMA_CC_INITIALIZER(0x0198, 0, 0, 0, 0, 1, 0, 0, 0),
+#endif
 #if (PAD_LIST  || CC_Vendor_TCG_Test)
     TPMA_CC_INITIALIZER(0x0000, 0, 0, 0, 0, 0, 0, 1, 0),
 #endif
@@ -452,7 +458,7 @@ const TPMA_CC    s_ccAttr [] = {
 
 #endif	/* TPM_NUVOTON */
 
-    TPMA_CC_INITIALIZER(0x0000, 0, 0, 0, 0, 0, 0, 0, 0),     // kg - terminator?
+    TPMA_ZERO_INITIALIZER()
 };
 
 /* This is the command code attribute structure. */
@@ -932,6 +938,14 @@ const COMMAND_ATTRIBUTES    s_commandAttributes [] = {
 #if (PAD_LIST  || CC_Policy_AC_SendSelect)
     (COMMAND_ATTRIBUTES)(CC_Policy_AC_SendSelect        *  // 0x0196
 			 (IS_IMPLEMENTED+DECRYPT_2+ALLOW_TRIAL)),
+#endif
+#if (PAD_LIST || CC_CertifyX509)
+    (COMMAND_ATTRIBUTES)(CC_CertifyX509                 *  // 0x0197
+			 (IS_IMPLEMENTED+DECRYPT_2+HANDLE_1_ADMIN+HANDLE_2_USER+ENCRYPT_2)),
+#endif
+#if (PAD_LIST || CC_ACT_SetTimeout)
+    (COMMAND_ATTRIBUTES)(CC_ACT_SetTimeout              *  // 0x0198
+			 (IS_IMPLEMENTED+HANDLE_1_USER)),
 #endif
 #if (PAD_LIST  || CC_Vendor_TCG_Test)
     (COMMAND_ATTRIBUTES)(CC_Vendor_TCG_Test             *  // 0x0000

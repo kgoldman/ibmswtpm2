@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*			     Failure Mode Handling				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmFail_fp.h 953 2017-03-06 20:31:40Z kgoldman $			*/
+/*            $Id: TpmFail_fp.h 1490 2019-07-26 21:13:22Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -68,6 +68,14 @@ LIB_EXPORT void
 SetForceFailureMode(
 		    void
 		    );
+void
+TpmLogFailure(
+#if FAIL_TRACE
+	      const char      *function,
+	      int              line,
+#endif
+	      int              code
+	      );
 NORETURN void
 TpmFail(
 #ifndef NO_FAIL_TRACE

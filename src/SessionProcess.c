@@ -3,7 +3,7 @@
 /*		Process the Authorization Sessions     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: SessionProcess.c 1262 2018-07-11 21:03:43Z kgoldman $	*/
+/*            $Id: SessionProcess.c 1532 2019-11-26 14:28:36Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -67,6 +67,7 @@
    session area of a response */
 #define SESSION_PROCESS_C
 #include "Tpm.h"
+#include "ACT.h"
 /* 6.4.3.1 IsDAExempted() */
 /* This function indicates if a handle is exempted from DA logic. A handle is exempted if it is */
 /* a) a primary seed handle, */
@@ -297,6 +298,12 @@ IsAuthValueAvailable(
 		  case TPM_RH_NULL:
 		    result = TRUE;
 		    break;
+		    FOR_EACH_ACT(CASE_ACT_HANDLE)
+	                {
+	                    // The ACT auth value is not available if the platform is disabled
+			    result = g_phEnable == SET;
+			    break;
+	                }
 		  default:
 		    // Otherwise authValue is not available.
 		    break;
@@ -414,6 +421,14 @@ IsAuthPolicyAvailable(
 		    if(gc.platformPolicy.t.size != 0)
 			result = TRUE;
 		    break;
+#define ACT_GET_POLICY(N)						\
+		    case TPM_RH_ACT_##N:				\
+		      if(go.ACT_##N.authPolicy.t.size != 0)		\
+			  result = TRUE;				\
+		      break;
+		    
+		    FOR_EACH_ACT(ACT_GET_POLICY)
+			
 		  case TPM_RH_LOCKOUT:
 		    if(gp.lockoutPolicy.t.size != 0)
 			result = TRUE;
@@ -1235,7 +1250,10 @@ CheckAuthSession(
     TPM_HANDLE       sessionHandle = s_sessionHandles[sessionIndex];
     TPM_HANDLE       associatedHandle = s_associatedHandles[sessionIndex];
     TPM_HT           sessionHandleType = HandleGetType(sessionHandle);
+    BOOL             authUsed;
+
     pAssert(sessionHandle != TPM_RH_UNASSIGNED);
+    
     // Take care of physical presence
     if(associatedHandle == TPM_RH_PLATFORM)
 	{
@@ -1265,11 +1283,14 @@ CheckAuthSession(
 		    session->attributes.includeAuth =
 			!IsSessionBindEntity(s_associatedHandles[sessionIndex], session);
 		}
+	    authUsed = session->attributes.includeAuth;
 	}
+    else
+        // Password session
+        authUsed = TRUE;
     // If the authorization session is going to use an authValue, then make sure
     // that access to that authValue isn't locked out.
-    // Note: session == NULL for a PW session.
-    if(session == NULL || session->attributes.includeAuth)
+    if(authUsed)
 	{
 	    // See if entity is subject to lockout.
 	    if(!IsDAExempted(associatedHandle))
@@ -1305,24 +1326,21 @@ CheckAuthSession(
 		return result;
 	}
     // Check authorization according to the type
-    if(session == NULL || session->attributes.isPasswordNeeded == SET)
+    if((TPM_RS_PW == sessionHandle) || (session->attributes.isPasswordNeeded == SET))
 	result = CheckPWAuthSession(sessionIndex);
     else
 	result = CheckSessionHMAC(command, sessionIndex);
     // Do processing for PIN Indexes are only three possibilities for 'result' at
-    // this point.
-    //  TPM_RC_SUCCESS
-    //  TPM_RC_AUTH_FAIL
-    //  TPM_RC_BAD_AUTH
+    // this point: TPM_RC_SUCCESS, TPM_RC_AUTH_FAIL, TPM_RC_BAD_AUTH
     // For all these cases, we would have to process a PIN index if the
     // authValue of the index was used for authorization.
-    // See if we need to do anything to a PIN index
-    if(TPM_HT_NV_INDEX == HandleGetType(associatedHandle))
+    if((TPM_HT_NV_INDEX == HandleGetType(associatedHandle)) && authUsed)
 	{
 	    NV_REF           locator;
 	    NV_INDEX        *nvIndex = NvGetIndexInfo(associatedHandle, &locator);
 	    NV_PIN           pinData;
 	    TPMA_NV          nvAttributes;
+	    
 	    pAssert(nvIndex != NULL);
 	    nvAttributes = nvIndex->publicArea.attributes;
 	    // If this is a PIN FAIL index and the value has been written
@@ -1338,7 +1356,7 @@ CheckAuthSession(
 		    NvWriteUINT64Data(nvIndex, pinData.intVal);
 		}
 	    // If this is a PIN PASS Index, increment if we have used the
-	    // authorization value for anything other than NV_Read.
+	    // authorization value.
 	    // NOTE: If the counter has already hit the limit, then we
 	    // would not get here because the authorization value would not
 	    // be available and the TPM would have returned before it gets here
@@ -1563,7 +1581,7 @@ CheckAuthNoSession(
 }
 /* 6.4.5 Response Session Processing */
 /* 6.4.5.1 Introduction */
-/* The following functions build the session area in a response, and handle the audit sessions (if
+/* The following functions build the session area in a response and handle the audit sessions (if
    present). */
 /* 6.4.5.2 ComputeRpHash() */
 /* Function to compute rpHash (Response Parameter Hash). The rpHash is only computed if there is an

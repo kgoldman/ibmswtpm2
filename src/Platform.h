@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptHashData.h 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: Platform.h 1521 2019-11-15 21:00:47Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,39 +55,21 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2019.				  	*/
 /*										*/
 /********************************************************************************/
 
-#ifndef CRYPTHASHDATA_H
-#define CRYPTHASHDATA_H
+/* C.14	Platform.h */
 
-
-/* 10.1.4 CryptHashData.h */
-#ifdef GLOBAL_C
-const HASH_INFO   g_hashData[HASH_COUNT + 1] = {
-#if ALG_SHA1
-    {TPM_ALG_SHA1,    SHA1_DIGEST_SIZE,   SHA1_BLOCK_SIZE,
-     SHA1_DER_SIZE,   {SHA1_DER}},
-#endif
-#if ALG_SHA256
-    {TPM_ALG_SHA256,    SHA256_DIGEST_SIZE,   SHA256_BLOCK_SIZE,
-     SHA256_DER_SIZE,   {SHA256_DER}},
-#endif
-#if ALG_SHA512
-    {TPM_ALG_SHA512,    SHA512_DIGEST_SIZE,   SHA512_BLOCK_SIZE,
-     SHA512_DER_SIZE,   {SHA512_DER}},
-#endif
-#if ALG_SHA384
-    {TPM_ALG_SHA384,    SHA384_DIGEST_SIZE,   SHA384_BLOCK_SIZE,
-     SHA384_DER_SIZE,   {SHA384_DER}},
-#endif
-#if ALG_SM3_256
-    {TPM_ALG_SM3_256,    SM3_256_DIGEST_SIZE,   SM3_256_BLOCK_SIZE,
-     SM3_256_DER_SIZE,   {SM3_256_DER}},
-#endif
-    {TPM_ALG_NULL,0,0,0,{0}}
-};
-#endif // GLOBAL_C
-
-#endif
+#ifndef    _PLATFORM_H_
+#define    _PLATFORM_H_
+#include "TpmBuildSwitches.h"
+#include "BaseTypes.h"
+#include "TPMB.h"
+#include "MinMax.h"
+#include "TpmProfile.h"
+#include "PlatformACT.h"
+#include "PlatformClock.h"
+#include "PlatformData.h"
+#include "Platform_fp.h"
+#endif  // _PLATFORM_H_

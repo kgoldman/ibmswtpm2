@@ -1,11 +1,11 @@
 #################################################################################
 #										#
-#			Windows MinGW TPM2 Makefile				#
+#		Windows MinGW TPM2 MakefileOpenSSL 1.1.1 32-bit			#
 #			     Written by Ken Goldman				#
 #		       IBM Thomas J. Watson Research Center			#
-#	      $Id: makefile.mak 1259 2018-07-10 19:11:09Z kgoldman $		#
+#	      $Id: makefile.mak 1540 2019-12-04 22:33:10Z kgoldman $		#
 #										#
-# (c) Copyright IBM Corporation 2014 - 2018					#
+# (c) Copyright IBM Corporation 2014 - 2019					#
 # 										#
 # All rights reserved.								#
 # 										#
@@ -39,26 +39,34 @@
 #################################################################################
 
 
+# Windows OpenSSL 1.1.1 32-bit with mingw
+
+# Please contribute a solution for OpenSSL 64-bit (Shining Light),
+# which does not include the mingw .a files.
+
+# For this to work, copy the file .../openssl/bin/libcrypto-1.1.dll to
+# libcrypto.dll.  Please contribute a solution that does not require
+# this step.
+
 CC = "c:/program files/mingw/bin/gcc.exe"
 
 CCFLAGS = -Wall  				\
 	-Wnested-externs -ggdb -O0 -c 		\
 	-DTPM_WINDOWS				\
+	-D__USE_MINGW_ANSI_STDIO		\
 	-I"c:/program files/MinGW/include"	\
 	-I"c:/program files/openssl/include"	\
-	-I../utils			\
 	-I.
 
 LNFLAGS = -D_MT					\
 	-DTPM_WINDOWS				\
-	-I"c:/program files/MinGW/include"	\
-	-I"c:/program files/openssl/include"	\
 	-I.					\
 	-ggdb 					\
 	-L.
 
-LNLIBS = 	"c:/program files/openssl/lib/mingw/libeay32.a" \
-		"c:/program files/openssl/lib/mingw/ssleay32.a" \
+# Shining Light OpenSSL 1.1 32-bit
+
+LNLIBS =  	"c:/program files/openssl/lib/mingw/libcrypto.a" \
 		"c:/program files/MinGW/lib/libws2_32.a"
 
 all:	tpm_server.exe
@@ -70,10 +78,6 @@ OBJFILES += TcpServer.o
 
 .PHONY:		clean
 .PRECIOUS:	%.o
-
-
-#OBJFILES += applink.o
-
 
 tpm_server.exe:	$(OBJFILES) applink.o
 		$(CC) $(LNFLAGS) $(OBJFILES) -o tpm_server.exe applink.o $(LNLIBS) 

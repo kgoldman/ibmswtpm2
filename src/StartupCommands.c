@@ -3,7 +3,7 @@
 /*			 	Startup Commands   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: StartupCommands.c 1314 2018-08-28 14:25:12Z kgoldman $	*/
+/*            $Id: StartupCommands.c 1559 2019-12-19 15:41:01Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,12 +55,13 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
 /* 9.2	_TPM_Init */
 #include "Tpm.h"
+#include "PlatformACT_fp.h"		/* added kgold */
 #include "_TPM_Init_fp.h"
 // This function is used to process a _TPM_Init indication.
 LIB_EXPORT void
@@ -69,7 +70,7 @@ _TPM_Init(
 	  )
 {
     g_powerWasLost = g_powerWasLost | _plat__WasPowerLost();
-#if SIMULATION && !NDEBUG
+#if SIMULATION && DEBUG
     // If power was lost and this was a simulation, put canary in RAM used by NV
     // so that uninitialized memory can be detected more easily
     if(g_powerWasLost)
@@ -84,6 +85,8 @@ _TPM_Init(
     // Clear the flag that forces failure on self-test
     g_forceFailureMode = FALSE;
 #endif
+    // Disable the tick processing
+    _plat__ACT_EnableTicks(FALSE);
     // Set initialization state
     TPMInit();
     // Set g_DRTMHandle as unassigned
@@ -116,7 +119,7 @@ TPM2_Startup(
 {
     STARTUP_TYPE         startup;
     BYTE                 locality = _plat__LocalityGet();
-    // The command needs NV update.
+    BOOL                 OK = TRUE;    // The command needs NV update.
     RETURN_IF_NV_IS_NOT_AVAILABLE;
     // Get the flags for the current startup locality and the H-CRTM.
     // Rather than generalizing the locality setting, this code takes advantage
@@ -194,10 +197,10 @@ TPM2_Startup(
 	startup = SU_RESET;
     // Startup for cryptographic library. Don't do this until after the orderly
     // state has been read in from NV.
-    CryptStartup(startup);
+    OK = OK && CryptStartup(startup);
     // When the cryptographic library has been started, indicate that a TPM2_Startup
     // command has been received.
-    TPMRegisterStartup();
+    OK = OK && TPMRegisterStartup();
     // Read the platform unique value that is used as VENDOR_PERMANENT
     // authorization value
     g_platformUniqueDetails.t.size
@@ -205,67 +208,73 @@ TPM2_Startup(
 				   g_platformUniqueDetails.t.buffer);
     // Start up subsystems
     // Start set the safe flag
-    TimeStartup(startup);
+    OK = OK && TimeStartup(startup);
     // Start dictionary attack subsystem
-    DAStartup(startup);
+    OK = OK && DAStartup(startup);
     // Enable hierarchies
-    HierarchyStartup(startup);
+    OK = OK && HierarchyStartup(startup);
     // Restore/Initialize PCR
-    PCRStartup(startup, locality);
+    OK = OK && PCRStartup(startup, locality);
     // Restore/Initialize command audit information
-    CommandAuditStartup(startup);
+    OK = OK && CommandAuditStartup(startup);
+    // Restore the ACT
+    OK = OK && ActStartup(startup);
     //// The following code was moved from Time.c where it made no sense
-    switch (startup)
+    if (OK)
 	{
-	  case SU_RESUME:
-	    // Resume sequence
-	    gr.restartCount++;
-	    break;
-	  case SU_RESTART:
-	    // Hibernate sequence
-	    gr.clearCount++;
-	    gr.restartCount++;
-	    break;
-	  default:
-	    // Reset object context ID to 0
-	    gr.objectContextID = 0;
-	    // Reset clearCount to 0
-	    gr.clearCount = 0;
-	    // Reset sequence
-	    // Increase resetCount
-	    gp.resetCount++;
-	    // Write resetCount to NV
-	    NV_SYNC_PERSISTENT(resetCount);
-	    gp.totalResetCount++;
-	    // We do not expect the total reset counter overflow during the life
-	    // time of TPM.  if it ever happens, TPM will be put to failure mode
-	    // and there is no way to recover it.
-	    // The reason that there is no recovery is that we don't increment
-	    // the NV totalResetCount when incrementing would make it 0. When the
-	    // TPM starts up again, the old value of totalResetCount will be read
-	    // and we will get right back to here with the increment failing.
-	    if(gp.totalResetCount == 0)
-		FAIL(FATAL_ERROR_INTERNAL);
-	    // Write total reset counter to NV
-	    NV_SYNC_PERSISTENT(totalResetCount);
-	    // Reset restartCount
-	    gr.restartCount = 0;
-	    break;
+	    switch (startup)
+		{
+		  case SU_RESUME:
+		    // Resume sequence
+		    gr.restartCount++;
+		    break;
+		  case SU_RESTART:
+		    // Hibernate sequence
+		    gr.clearCount++;
+		    gr.restartCount++;
+		    break;
+		  default:
+		    // Reset object context ID to 0
+		    gr.objectContextID = 0;
+		    // Reset clearCount to 0
+		    gr.clearCount = 0;
+		    // Reset sequence
+		    // Increase resetCount
+		    gp.resetCount++;
+		    // Write resetCount to NV
+		    NV_SYNC_PERSISTENT(resetCount);
+		    gp.totalResetCount++;
+		    // We do not expect the total reset counter overflow during the life
+		    // time of TPM.  if it ever happens, TPM will be put to failure mode
+		    // and there is no way to recover it.
+		    // The reason that there is no recovery is that we don't increment
+		    // the NV totalResetCount when incrementing would make it 0. When the
+		    // TPM starts up again, the old value of totalResetCount will be read
+		    // and we will get right back to here with the increment failing.
+		    if(gp.totalResetCount == 0)
+			FAIL(FATAL_ERROR_INTERNAL);
+		    // Write total reset counter to NV
+		    NV_SYNC_PERSISTENT(totalResetCount);
+		    // Reset restartCount
+		    gr.restartCount = 0;
+		    break;
+		}
 	}
     // Initialize session table
-    SessionStartup(startup);
+    OK = OK && SessionStartup(startup);
     // Initialize object table
-    ObjectStartup();
+    OK = OK && ObjectStartup();
     // Initialize index/evict data.  This function clears read/write locks
     // in NV index
-    NvEntityStartup(startup);
+    OK = OK && NvEntityStartup(startup);
     // Initialize the orderly shut down flag for this cycle to SU_NONE_VALUE.
     gp.orderlyState = SU_NONE_VALUE;
-    NV_SYNC_PERSISTENT(orderlyState);
+    OK = OK && NV_SYNC_PERSISTENT(orderlyState);
     // This can be reset after the first completion of a TPM2_Startup() after
     // a power loss. It can probably be reset earlier but this is an OK place.
-    g_powerWasLost = FALSE;
-    return TPM_RC_SUCCESS;
+    if (OK) 
+	g_powerWasLost = FALSE;
+    return (OK) ? TPM_RC_SUCCESS : TPM_RC_FAILURE;
 }
 #endif // CC_Startup
 #include "Tpm.h"
@@ -286,8 +295,19 @@ TPM2_Shutdown(
 	return TPM_RCS_TYPE + RC_Shutdown_shutdownType;
     // Internal Data Update
     gp.orderlyState = in->shutdownType;
+#if USE_DA_USED
+    // CLEAR g_daUsed so that any future DA-protected access will cause the
+    // shutdown to become non-orderly. It is not sufficient to invalidate the 
+    // shutdown state after a DA failure because an attacker can inhibit access 
+    // to NV and use the fact that an update of failedTries was attempted as an 
+    // indication of an authorization failure. By making sure that the orderly state
+    // is CLEAR before any DA attempt, this prevents the possibility of this 'attack.'
+    g_daUsed = FALSE;
+#endif
     // PCR private date state save
     PCRStateSave(in->shutdownType);
+    // Save the ACT state
+    ActShutdown(in->shutdownType);
     // Save RAM backed NV index data
     NvUpdateIndexOrderlyData();
 #if ACCUMULATE_SELF_HEAL_TIMER
@@ -307,13 +327,11 @@ TPM2_Shutdown(
 	    else if(g_StartupLocality3)
 		gp.orderlyState = TPM_SU_STATE | STARTUP_LOCALITY_3;
 	}
-    else if(in->shutdownType == TPM_SU_CLEAR)
+    // only two shutdown options
+    else if(in->shutdownType != TPM_SU_CLEAR)
 	{
-	    // Save STATE_RESET data
-	    NvWrite(NV_STATE_RESET_DATA, sizeof(STATE_RESET_DATA), &gr);
+	    return TPM_RCS_VALUE + RC_Shutdown_shutdownType;
 	}
-    else
-	FAIL(FATAL_ERROR_INTERNAL);
     NV_SYNC_PERSISTENT(orderlyState);
     return TPM_RC_SUCCESS;
 }

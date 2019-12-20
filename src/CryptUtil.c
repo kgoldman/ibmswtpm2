@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			Interfaces to the CryptoEngine()			*/
+/*			Interfaces to the Crypto Engine				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptUtil.c 1262 2018-07-11 21:03:43Z kgoldman $		*/
+/*            $Id: CryptUtil.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -142,9 +142,10 @@ CryptGenerateKeyedHash(
 {
     TPMT_KEYEDHASH_SCHEME   *scheme;
     TPM_ALG_ID               hashAlg;
-    UINT16                   hashBlockSize;
     UINT16                   digestSize;
+    
     scheme = &publicArea->parameters.keyedHashDetail.scheme;
+    
     if(publicArea->type != TPM_ALG_KEYEDHASH)
 	return TPM_RC_FAILURE;
     // Pick the limiting hash algorithm
@@ -154,8 +155,9 @@ CryptGenerateKeyedHash(
 	hashAlg = scheme->details.xorr.hashAlg;
     else
 	hashAlg = scheme->details.hmac.hashAlg;
-    hashBlockSize = CryptHashGetBlockSize(hashAlg);
+    /* hashBlockSize = CryptHashGetBlockSize(hashAlg); */
     digestSize = CryptHashGetDigestSize(hashAlg);
+    
     // if this is a signing or a decryption key, then the limit
     // for the data size is the block size of the hash. This limit
     // is set because larger values have lower entropy because of the
@@ -167,7 +169,7 @@ CryptGenerateKeyedHash(
 	    if(IS_ATTRIBUTE(publicArea->objectAttributes, TPMA_OBJECT, decrypt)
 	       || IS_ATTRIBUTE(publicArea->objectAttributes, TPMA_OBJECT, sign))
 		{
-		    if(sensitiveCreate->data.t.size > hashBlockSize)
+		    if(sensitiveCreate->data.t.size > CryptHashGetBlockSize(hashAlg))
 			return TPM_RC_SIZE;
 #if 0   // May make this a FIPS-mode requirement
 		    if(sensitiveCreate->data.t.size < (digestSize / 2))
@@ -181,12 +183,12 @@ CryptGenerateKeyedHash(
 	}
     else
 	{
-	    // The TPM is going to generate the data, so set the size to be the
+	    // The TPM is going to generate the data so set the size to be the
 	    // size of the digest of the algorithm
 	    sensitive->sensitive.bits.t.size =
 		DRBG_Generate(rand, sensitive->sensitive.bits.t.buffer, digestSize);
 	    if(sensitive->sensitive.bits.t.size == 0)
-		return TPM_RC_NO_RESULT;
+		return (g_inFailureMode) ? TPM_RC_FAILURE : TPM_RC_NO_RESULT;
 	}
     return TPM_RC_SUCCESS;
 }
@@ -308,15 +310,17 @@ CryptGenerateKeySymmetric(
 	}
 #endif
     else
-	{
-	    {
-		sensitive->sensitive.sym.t.size =
-		    DRBG_Generate(rand, sensitive->sensitive.sym.t.buffer,
-				  BITS_TO_BYTES(keyBits));
-		result = (sensitive->sensitive.sym.t.size == 0)
-			 ? TPM_RC_NO_RESULT : TPM_RC_SUCCESS;
-	    }
-	}
+    {
+	sensitive->sensitive.sym.t.size =
+	    DRBG_Generate(rand, sensitive->sensitive.sym.t.buffer,
+			  BITS_TO_BYTES(keyBits));
+	if(g_inFailureMode)
+	    result = TPM_RC_FAILURE;
+	else if(sensitive->sensitive.sym.t.size == 0)
+	    result = TPM_RC_NO_RESULT;
+	else
+	    result = TPM_RC_SUCCESS;
+    }
     return result;
 }
 /* 10.2.6.4.4 CryptXORObfuscation() */
@@ -931,15 +935,16 @@ CryptCreateObject(
 		  )
 {
     TPMT_PUBLIC             *publicArea = &object->publicArea;
+    TPMT_SENSITIVE          *sensitive = &object->sensitive;
     TPM_RC                   result = TPM_RC_SUCCESS;
     //
     // Set the sensitive type for the object
-    object->sensitive.sensitiveType = publicArea->type;
+    sensitive->sensitiveType = publicArea->type;
     // For all objects, copy the initial authorization data
-    object->sensitive.authValue = sensitiveCreate->userAuth;
+    sensitive->authValue = sensitiveCreate->userAuth;
     // If the TPM is the source of the data, set the size of the provided data to
     // zero so that there's no confusion about what to do.
-    if(IS_ATTRIBUTE(object->publicArea.objectAttributes,
+    if(IS_ATTRIBUTE(publicArea->objectAttributes,
 		    TPMA_OBJECT, sensitiveDataOrigin))
 	sensitiveCreate->data.t.size = 0;
     // Generate the key and unique fields for the asymmetric keys and just the
@@ -957,17 +962,15 @@ CryptCreateObject(
 #if ALG_ECC
 	    // Create ECC key
 	  case TPM_ALG_ECC:
-	    result = CryptEccGenerateKey(&object->publicArea, &object->sensitive,
-					 rand);
+	    result = CryptEccGenerateKey(publicArea, sensitive, rand);
 	    break;
 #endif // TPM_ALG_ECC
 	  case TPM_ALG_SYMCIPHER:
-	    result = CryptGenerateKeySymmetric(&object->publicArea,
-					       &object->sensitive,
+	    result = CryptGenerateKeySymmetric(publicArea, sensitive,
 					       sensitiveCreate, rand);
 	    break;
 	  case TPM_ALG_KEYEDHASH:
-	    result = CryptGenerateKeyedHash(&object->publicArea, &object->sensitive,
+	    result = CryptGenerateKeyedHash(publicArea, sensitive,
 					    sensitiveCreate, rand);
 	    break;
 	  default:
@@ -986,17 +989,19 @@ CryptCreateObject(
 	    DRBG_AdditionalData((DRBG_STATE *)rand, &gp.ehProof.b);
 	}
     // Generate a seedValue that is the size of the digest produced by nameAlg
-    object->sensitive.seedValue.t.size =
+    sensitive->seedValue.t.size =
 	DRBG_Generate(rand, object->sensitive.seedValue.t.buffer,
 		      CryptHashGetDigestSize(publicArea->nameAlg));
-    if(object->sensitive.seedValue.t.size == 0)
+    if(g_inFailureMode)
+	return TPM_RC_FAILURE;
+    else if(sensitive->seedValue.t.size == 0)
 	return TPM_RC_NO_RESULT;
     // For symmetric objects, need to compute the unique value for the public area
     if(publicArea->type == TPM_ALG_SYMCIPHER
        || publicArea->type == TPM_ALG_KEYEDHASH)
 	{
-	    CryptComputeSymmetricUnique(&object->publicArea, &object->sensitive,
-					&object->publicArea.unique.sym);
+	    CryptComputeSymmetricUnique(publicArea, sensitive,
+					&publicArea->unique.sym);
 	}
     else
 	{
@@ -1004,11 +1009,11 @@ CryptCreateObject(
 	    // get rid of the seed.
 	    if(IS_ATTRIBUTE(publicArea->objectAttributes, TPMA_OBJECT, sign)
 	       || !IS_ATTRIBUTE(publicArea->objectAttributes, TPMA_OBJECT, restricted))
-		memset(&object->sensitive.seedValue, 0,
-		       sizeof(object->sensitive.seedValue));
+		memset(&sensitive->seedValue, 0,
+		       sizeof(sensitive->seedValue));
 	}
     // Compute the name
-    PublicMarshalAndComputeName(&object->publicArea, &object->name);
+    PublicMarshalAndComputeName(publicArea, &object->name);
     return result;
 }
 /* 10.2.6.6.9 CryptGetSignHashAlg() */
@@ -1199,10 +1204,10 @@ CryptIsAsymDecryptScheme(
    scheme algorithm, if the schemes are compatible, the input scheme will be chosen. */
 /* This function should not be called if 'signObject->publicArea.type' == TPM_ALG_SYMCIPHER. */
 /* Return Values Meaning */
+/* TRUE scheme selected */
 /* FALSE both scheme and key's default scheme are empty; or scheme is empty while key's default
    scheme requires explicit input scheme (split signing); or non-empty default key scheme differs
    from scheme */
-/* TRUE scheme selected */
 BOOL
 CryptSelectSignScheme(
 		      OBJECT              *signObject,    // IN: signing key
@@ -1396,99 +1401,7 @@ CryptGetTestResult(
     outData->t.size = 0;
     return TPM_RC_SUCCESS;
 }
-/* 10.2.6.6.17 CryptIsUniqueSizeValid() */
-/* This function validates that the unique values are consistent. */
-/* NOTE: This is not a comprehensive test of the public key. */
-/* Return Values Meaning */
-/* TRUE sizes are consistent */
-/* FALSE sizes are not consistent */
-BOOL
-CryptIsUniqueSizeValid(
-		       TPMT_PUBLIC     *publicArea     // IN: the public area to check
-		       )
-{
-    BOOL            consistent = FALSE;
-    UINT16          keySizeInBytes;
-    switch(publicArea->type)
-	{
-#if ALG_RSA
-	  case TPM_ALG_RSA:
-	    keySizeInBytes = BITS_TO_BYTES(
-					   publicArea->parameters.rsaDetail.keyBits);
-	    consistent = publicArea->unique.rsa.t.size == keySizeInBytes;
-	    break;
-#endif //TPM_ALG_RSA
-#if ALG_ECC
-	  case TPM_ALG_ECC:
-	      {
-		  keySizeInBytes = BITS_TO_BYTES(CryptEccGetKeySizeForCurve(
-									    publicArea->parameters.eccDetail.curveID));
-		  consistent = keySizeInBytes > 0
-			       && publicArea->unique.ecc.x.t.size <= keySizeInBytes
-			       && publicArea->unique.ecc.y.t.size <= keySizeInBytes;
-	      }
-	      break;
-#endif //TPM_ALG_ECC
-	  default:
-	    // For SYMCIPHER and KEYDEDHASH objects, the unique field is the size
-	    // of the nameAlg digest.
-	    consistent = publicArea->unique.sym.t.size
-			 == CryptHashGetDigestSize(publicArea->nameAlg);
-	    break;
-	}
-    return consistent;
-}
-/* 10.2.6.6.18 CryptIsSensitiveSizeValid() */
-/* This function is used by TPM2_LoadExternal() to validate that the sensitive area contains a
-   sensitive value that is consistent with the values in the public area. */
-BOOL
-CryptIsSensitiveSizeValid(
-			  TPMT_PUBLIC             *publicArea,        // IN: the object's public part
-			  TPMT_SENSITIVE          *sensitiveArea      // IN: the object's sensitive part
-			  )
-{
-    BOOL                     consistent;
-    UINT16                   keySizeInBytes;
-    switch(publicArea->type)
-	{
-#if ALG_RSA
-	  case TPM_ALG_RSA:
-	    // sensitive prime value has to be half the size of the public modulus
-	    keySizeInBytes = BITS_TO_BYTES(publicArea->parameters.rsaDetail.keyBits);
-	    consistent = ((sensitiveArea->sensitive.rsa.t.size * 2)
-			  == keySizeInBytes);
-	    break;
-#endif
-#if ALG_ECC
-	  case TPM_ALG_ECC:
-	    keySizeInBytes = BITS_TO_BYTES(CryptEccGetKeySizeForCurve(
-								      publicArea->parameters.eccDetail.curveID));
-	    consistent = (keySizeInBytes > 0)
-			 && (sensitiveArea->sensitive.ecc.t.size == keySizeInBytes);
-	    break;
-#endif
-	  case TPM_ALG_SYMCIPHER:
-	    keySizeInBytes = BITS_TO_BYTES(
-					   publicArea->parameters.symDetail.sym.keyBits.sym);
-	    consistent = keySizeInBytes == sensitiveArea->sensitive.sym.t.size;
-	    break;
-	  case TPM_ALG_KEYEDHASH:
-	    keySizeInBytes = CryptHashGetBlockSize(publicArea->nameAlg);
-	    // if the block size is 0, then the algorithm is TPM_ALG_NULL and the
-	    // size of the private part is limited to 128. If the algorithm block
-	    // size is over 128 bytes, then the size is limited to 128 bytes for
-	    // interoperability reasons.
-	    if((keySizeInBytes == 0) || (keySizeInBytes > 128))
-		keySizeInBytes = 128;
-	    consistent = sensitiveArea->sensitive.bits.t.size <= keySizeInBytes;
-	    break;
-	  default:
-	    consistent = TRUE;
-	    break;
-	}
-    return consistent;
-}
-/* 10.2.6.6.19 CryptValidateKeys() */
+/* 10.2.6.6.17 CryptValidateKeys() */
 /* This function is used to verify that the key material of and object is valid. For a publicOnly
    object, the key is verified for size and, if it is an ECC key, it is verified to be on the
    specified curve. For a key with a sensitive area, the binding between the public and private
@@ -1685,19 +1598,7 @@ CryptValidateKeys(
 	}
     return TPM_RC_SUCCESS;
 }
-/* 10.2.6.6.20 CryptAlgSetImplemented() */
-/* This function initializes the bit vector with one bit for each implemented algorithm. This
-   function is called from _TPM_Init(). The vector of implemented algorithms should be generated by
-   the part 2 parser so that the g_implementedAlgorithms vector can be a constant. That's not how it
-   is now */
-void
-CryptAlgsSetImplemented(
-			void
-			)
-{
-    AlgorithmGetImplementedVector(&g_implementedAlgorithms);
-}
-/* 10.2.6.6.21 CryptSelectMac() */
+/* 10.2.6.6.18 CryptSelectMac() */
 /* This function is used to set the MAC scheme based on the key parameters and the input scheme. */
 /* Error Returns Meaning */
 /* TPM_RC_SCHEME the scheme is not a valid mac scheme */
@@ -1754,7 +1655,7 @@ CryptSelectMac(
 	return TPM_RCS_SCHEME;
     return TPM_RC_SUCCESS;
 }
-/* 10.2.6.6.22 CryptMacIsValidForKey() */
+/* 10.2.6.6.19 CryptMacIsValidForKey() */
 /* Check to see if the key type is compatible with the mac type */
 BOOL
 CryptMacIsValidForKey(
@@ -1776,7 +1677,7 @@ CryptMacIsValidForKey(
 	}
     return FALSE;
 }
-/* 10.2.6.6.23 CryptSmacIsValidAlg() */
+/* 10.2.6.6.20 CryptSmacIsValidAlg() */
 /* This function is used to test if an algorithm is a supported SMAC algorithm. It needs to be
    updated as new algorithms are added. */
 BOOL
@@ -1799,7 +1700,7 @@ CryptSmacIsValidAlg(
 	    return FALSE;
 	}
 }
-/* 10.2.6.6.24 CryptSymModeIsValid() */
+/* 10.2.6.6.21 CryptSymModeIsValid() */
 /* Function checks to see if an algorithm ID is a valid, symmetric block cipher mode for the TPM. If
    flag is SET, them TPM_ALG_NULL is a valid mode. not include the modes used for SMAC */
 BOOL

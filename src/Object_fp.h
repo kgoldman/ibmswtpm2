@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*		Functions That Manage the Object Store of the TPM	  	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Object_fp.h 809 2016-11-16 18:31:54Z kgoldman $			*/
+/*            $Id: Object_fp.h 1490 2019-07-26 21:13:22Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -70,7 +70,7 @@ void
 ObjectSetInUse(
 	       OBJECT          *object
 	       );
-void
+BOOL
 ObjectStartup(
 	      void
 	      );
@@ -95,10 +95,6 @@ GetName(
 	TPMI_DH_OBJECT   handle,        // IN: handle of the object
 	NAME            *name           // OUT: name of the object
 	);
-TPMI_ALG_HASH
-ObjectGetNameAlg(
-		 OBJECT          *object         // IN: handle of the object
-		 );
 void
 GetQualifiedName(
 		 TPMI_DH_OBJECT   handle,        // IN: handle of the object

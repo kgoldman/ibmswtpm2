@@ -3,7 +3,7 @@
 /*			    Hash structure definitions  			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptHash.h 1265 2018-07-15 18:29:22Z kgoldman $		*/
+/*            $Id: CryptHash.h 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,26 +55,24 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
 #ifndef CRYPTHASH_H
 #define CRYPTHASH_H
 
+/* 10.1.3.1	Introduction */
+
 /* This header contains the hash structure definitions used in the TPM code to define the amount of
    space to be reserved for the hash state. This allows the TPM code to not have to import all of
    the symbols used by the hash computations. This lets the build environment of the TPM code not to
    have include the header files associated with the CryptoEngine() code. */
-typedef struct
-{
-    const TPM_ALG_ID     alg;
-    const UINT16         digestSize;
-    const UINT16         blockSize;
-    const UINT16         derSize;
-    const BYTE           der[20];
-} HASH_INFO;
+
+/* 10.1.3.2	Hash-related Structures */
+
 union SMAC_STATES;
+
 /* These definitions add the high-level methods for processing state that may be an SMAC */
 typedef void(* SMAC_DATA_METHOD)(
 				 union SMAC_STATES       *state,
@@ -90,7 +88,7 @@ typedef struct sequenceMethods {
     SMAC_DATA_METHOD          data;
     SMAC_END_METHOD           end;
 } SMAC_METHODS;
-#define SMAC_IMPLEMENTED (defined TPM_CC_MAC || defined TPM_CC_MAC_Start)
+#define SMAC_IMPLEMENTED (defined CC_MAC || defined CC_MAC_Start)
 
 /* These definitions are here because the SMAC state is in the union of hash states. */
 
@@ -124,6 +122,9 @@ typedef union
 #endif
 #if ALG_SHA512
     tpmHashStateSHA512_t       Sha512;
+#endif
+#if ALG_SM3_256
+    tpmHashStateSM3_256_t      Sm3_256;
 #endif
     // Additions for symmetric block cipher MAC
 #if SMAC_IMPLEMENTED
@@ -203,6 +204,27 @@ TPM2B_TYPE(SHA512_DIGEST, SHA512_DIGEST_SIZE);
 #if ALG_SM3_256
 TPM2B_TYPE(SM3_256_DIGEST, SM3_256_DIGEST_SIZE);
 #endif
+
+/* When the TPM implements RSA, the hash-dependent OID pointers are part of the HASH_DEF. These
+   macros conditionally add the OID reference to the HASH_DEF and the HASH_DEF_TEMPLATE. */
+#if ALG_RSA
+#define PKCS1_HASH_REF   const BYTE  *PKCS1;
+#define PKCS1_OID(NAME)  , OID_PKCS1_##NAME
+#else
+#define PKCS1_HASH_REF
+#define PKCS1_OID(NAME)
+#endif
+
+/* When the TPM implements ECC, the hash-dependent OID pointers are part of the HASH_DEF. These
+   macros conditionally add the OID reference to the HASH_DEF and the HASH_DEF_TEMPLATE. */
+#if ALG_ECDSA
+#define ECDSA_HASH_REF    const BYTE  *ECDSA;
+#define ECDSA_OID(NAME)  , OID_ECDSA_##NAME
+#else
+#define ECDSA_HASH_REF
+#define ECDSA_OID(NAME)
+#endif
+
 typedef const struct
 {
     HASH_METHODS         method;
@@ -210,23 +232,30 @@ typedef const struct
     uint16_t             digestSize;
     uint16_t             contextSize;
     uint16_t             hashAlg;
+    const BYTE          *OID;
+    PKCS1_HASH_REF      // PKCS1 OID
+    ECDSA_HASH_REF      // ECDSA OID
 } HASH_DEF, *PHASH_DEF;
+
 /* Macro to fill in the HASH_DEF for an algorithm. For SHA1, the instance would be:
    HASH_DEF_TEMPLATE(Sha1, SHA1) This handles the difference in capitalization for the various
    pieces. */
-#define HASH_DEF_TEMPLATE(HASH)						\
-    HASH_DEF    HASH##_Def= {						\
-	{(HASH_START_METHOD *)&tpmHashStart_##HASH,			\
-	 (HASH_DATA_METHOD *)&tpmHashData_##HASH,			\
-	 (HASH_END_METHOD *)&tpmHashEnd_##HASH,				\
-	 (HASH_STATE_COPY_METHOD *)&tpmHashStateCopy_##HASH,		\
-	 (HASH_STATE_EXPORT_METHOD *)&tpmHashStateExport_##HASH,	\
-	 (HASH_STATE_IMPORT_METHOD *)&tpmHashStateImport_##HASH,	\
-	},								\
-	HASH##_BLOCK_SIZE,     /*block size */				\
-	HASH##_DIGEST_SIZE,    /*data size */				\
-	sizeof(tpmHashState##HASH##_t),					\
-	TPM_ALG_##HASH}
+
+#define HASH_DEF_TEMPLATE(HASH, Hash)					\
+    HASH_DEF    Hash##_Def= {						\
+			     {(HASH_START_METHOD *)&tpmHashStart_##HASH, \
+			      (HASH_DATA_METHOD *)&tpmHashData_##HASH,	\
+			      (HASH_END_METHOD *)&tpmHashEnd_##HASH,	\
+			      (HASH_STATE_COPY_METHOD *)&tpmHashStateCopy_##HASH, \
+			      (HASH_STATE_EXPORT_METHOD *)&tpmHashStateExport_##HASH, \
+			      (HASH_STATE_IMPORT_METHOD *)&tpmHashStateImport_##HASH, \
+			     },						\
+			     HASH##_BLOCK_SIZE,     /*block size */	\
+			     HASH##_DIGEST_SIZE,    /*data size */	\
+			     sizeof(tpmHashState##HASH##_t),		\
+			     TPM_ALG_##HASH, OID_##HASH			\
+			     PKCS1_OID(HASH) ECDSA_OID(HASH)};
+
 /* These definitions are for the types that can be in a hash state structure. These types are used
    in the cryptographic utilities. This is a define rather than an enum so that the size of this
    field can be explicit. */
@@ -256,7 +285,7 @@ typedef struct _HASH_STATE
 } HASH_STATE, *PHASH_STATE;
 typedef const HASH_STATE *PCHASH_STATE;
 
-/* 10.1.3.2 HMAC State Structures */
+/* 10.1.3.3 HMAC State Structures */
 /* This header contains the hash structure definitions used in the TPM code to define the amount of
    space to be reserved for the hash state. This allows the TPM code to not have to import all of
    the symbols used by the hash computations. This lets the build environment of the TPM code not to
@@ -270,10 +299,8 @@ typedef struct hmacState
     HASH_STATE           hashState;          // the hash state
     TPM2B_HASH_BLOCK     hmacKey;            // the HMAC key
 } HMAC_STATE, *PHMAC_STATE;
-extern const HASH_INFO   g_hashData[HASH_COUNT + 1];
 /* This is for the external hash state. This implementation assumes that the size of the exported
-   hash state is no larger than the internal hash state. There is a run time check that makes sure
-   that this i. */
+   hash state is no larger than the internal hash state. */
 typedef struct
 {
     BYTE                     buffer[sizeof(HASH_STATE)];

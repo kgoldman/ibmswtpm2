@@ -3,7 +3,7 @@
 /*		 Used by the simulator to mimic a hardware clock  		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Clock.c 1311 2018-08-23 21:39:29Z kgoldman $			*/
+/*            $Id: Clock.c 1529 2019-11-21 23:29:01Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -71,10 +71,9 @@
    TPM. In this implementation, all the time values are measured in millisecond. However, the
    precision of the clock functions may be implementation dependent. */
 /* C.3.2. Includes and Data Definitions */
-#include "PlatformData.h"
-#include "Platform_fp.h"
-#include "TpmFail_fp.h"
 #include <assert.h>
+#include "Platform.h"
+#include "TpmFail_fp.h"
 /* C.3.3. Simulator Functions */
 /* C.3.3.1. Introduction */
 /* This set of functions is intended to be called by the simulator environment in order to simulate
@@ -116,7 +115,7 @@ clock_t     debugTime;
 /* C.3.4.2.	_plat__Time() */
 /* This is another, probably futile, attempt to define a portable function that will return a 64-bit
    clock value that has mSec resolution. */
-uint64_t
+LIB_EXPORT uint64_t
 _plat__RealTime(
 		void
 		)
@@ -124,7 +123,7 @@ _plat__RealTime(
     clock64_t           time;
     //#ifdef _MSC_VER	kgold
 #ifdef TPM_WINDOWS
-    #include <SYS/Timeb.h>
+    #include <sys/timeb.h>
     struct _timeb       sysTime;
     //
     _ftime(&sysTime);	/* kgold, mingw doesn't have _ftime_s */
@@ -222,12 +221,12 @@ _plat__TimerRead(
 /* C.3.4.3. _plat__TimerWasReset() */
 /* This function is used to interrogate the flag indicating if the tick timer has been reset. */
 /* If the resetFlag parameter is SET, then the flag will be CLEAR before the function returns. */
-LIB_EXPORT BOOL
+LIB_EXPORT int
 _plat__TimerWasReset(
 		     void
 		     )
 {
-    BOOL         retVal = s_timerReset;
+    int retVal = s_timerReset;
     s_timerReset = FALSE;
     return retVal;
 }
@@ -239,7 +238,7 @@ _plat__TimerWasReset(
    it is the one that has the most impact on the TPM code as the flag can only be accessed by one
    entity in the TPM. Any other implementation of the hardware can be made to look like a read-once
    register. */
-LIB_EXPORT BOOL
+LIB_EXPORT int
 _plat__TimerWasStopped(
 		       void
 		       )

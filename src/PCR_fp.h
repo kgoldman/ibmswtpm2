@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*		Functions Needed for PCR Access and Manipulation		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: PCR_fp.h 809 2016-11-16 18:31:54Z kgoldman $			*/
+/*            $Id: PCR_fp.h 1519 2019-11-15 20:43:51Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -112,7 +112,7 @@ void
 PCR_ClearAuth(
 	      void
 	      );
-void
+BOOL
 PCRStartup(
 	   STARTUP_TYPE     type,          // IN: startup type
 	   BYTE             locality       // IN: startup locality
@@ -159,12 +159,6 @@ PCRRead(
 	UINT32              *pcrCounter     // OUT: the current value of PCR generation
 	//     number
 	);
-void
-PcrWrite(
-	 TPMI_DH_PCR      handle,        // IN: PCR handle to be extended
-	 TPMI_ALG_HASH    hash,          // IN: hash algorithm of PCR
-	 TPM2B_DIGEST    *digest         // IN: the new value
-	 );
 TPM_RC
 PCRAllocate(
 	    TPML_PCR_SELECTION  *allocate,      // IN: required allocation

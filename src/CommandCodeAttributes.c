@@ -3,7 +3,7 @@
 /*		Functions for testing various command properties		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CommandCodeAttributes.c 1311 2018-08-23 21:39:29Z kgoldman $	*/
+/*            $Id: CommandCodeAttributes.c 1529 2019-11-21 23:29:01Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -73,7 +73,7 @@ typedef UINT16          ATTRIBUTE_TYPE;
 /* The following file is produced from the command tables in part 3 of the specification. It defines
    the attributes for each of the commands. */
 /* NOTE: This file is currently produced by an automated process. Files produced from Part 2 or Part
-   3 tables through automated processes are not included in the specification so that their is no
+   3 tables through automated processes are not included in the specification so that there is no
    ambiguity about the table containing the information being the normative definition. */
 #define _COMMAND_CODE_ATTRIBUTES_
 #include    "CommandAttributeData.h"

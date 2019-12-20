@@ -3,7 +3,7 @@
 /*		Structure definitions for the self-test				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: SelfTest.h 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: SelfTest.h 1529 2019-11-21 23:29:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,52 +55,37 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
 #ifndef SELFTEST_H
 #define SELFTEST_H
 
-/* 5.16.1 Introduction */
+/* 10.1.10	SelfTest.h */
+/* 10.1.10.1	Introduction */
+
 /* This file contains the structure definitions for the self-test. It also contains macros for use
    when the self-test is implemented. */
-/* 5.16.2 Defines */
-/* Was typing this a lot */
+
 #define SELF_TEST_FAILURE   FAIL(FATAL_ERROR_SELF_TEST)
-/* Use the definition of key sizes to set algorithm values for key size. Need to do this to avoid a
-   lot of #ifdefs in the code. Also, define the index for each of the algorithms. */
-#if ALG_AES && defined  AES_KEY_SIZE_BITS_128
-#   define  AES_128     YES
-#   define  AES_128_INDEX   0
-#else
-#   define  AES_128     NO
-#endif
-#if ALG_AES && defined  AES_KEY_SIZE_BITS_192
-#   define  AES_192     YES
-#   define  AES_192_INDEX   (AES_128)
-#else
-#   define  AES_192     NO
-#endif
-#if ALG_AES && defined  AES_KEY_SIZE_BITS_256
-#   define  AES_256     YES
-#   define  AES_256_INDEX   (AES_128 + AES_192)
-#else
-#   define  AES_256     NO
-#endif
-#if ALG_SM4 && defined SM4_KEY_SIZE_BITS_128
-#   define  SM4_128     YES
-#   define  SM4_128_INDEX   (AES_128 + AES_192 + AES_256)
-#else
-#   define  SM4_128     NO
-#endif
-#define NUM_SYMS    (AES_128 + AES_192 + AES_256 + SM4_128)
+
+// Use the definition of key sizes to set algorithm values for key size.
+
+#define AES_ENTRIES (AES_128 + AES_192 + AES_256)
+#define SM4_ENTRIES (SM4_128)
+#define CAMELLIA_ENTRIES (CAMELLIA_128 + CAMELLIA_192 + CAMELLIA_256)
+#define TDES_ENTRIES (TDES_128 + TDES_192)
+#define NUM_SYMS    (AES_ENTRIES + SM4_ENTRIES + CAMELLIA_ENTRIES + TDES_ENTRIES)
 typedef UINT32      SYM_INDEX;
+
 /* These two defines deal with the fact that the TPM_ALG_ID table does not delimit the symmetric
    mode values with a TPM_SYM_MODE_FIRST and TPM_SYM_MODE_LAST */
+
 #define TPM_SYM_MODE_FIRST       ALG_CTR_VALUE
 #define TPM_SYM_MODE_LAST        ALG_ECB_VALUE
 #define NUM_SYM_MODES   (TPM_SYM_MODE_LAST - TPM_SYM_MODE_FIRST + 1)
+
 /* Define a type to hold a bit vector for the modes. */
 #if NUM_SYM_MODES <= 0
 #error  "No symmetric modes implemented"
@@ -113,7 +98,7 @@ typedef UINT32  SYM_MODES;
 #else
 #error "Too many symmetric modes"
 #endif
-typedef struct {
+typedef struct SYMMETRIC_TEST_VECTOR {
     const TPM_ALG_ID     alg;                   // the algorithm
     const UINT16         keyBits;               // bits in the key
     const BYTE          *key;                   // The test key
@@ -122,16 +107,6 @@ typedef struct {
     const BYTE          *dataIn;                // data to encrypt
     const BYTE          *dataOut[NUM_SYM_MODES];// data to decrypt
 } SYMMETRIC_TEST_VECTOR;
-#if ALG_RSA
-extern const RSA_KEY        c_rsaTestKey; // This is a constant structure
-#endif
-#define SYM_TEST_VALUE_REF(value, alg, keyBits, mode)		\
-    SIZED_REFERENCE(value##_##alg##keyBits##_##mode)
-typedef struct {
-    TPM_ALG_ID      alg;
-    UINT16          keySizeBits;
-} SYM_ALG;
-#define SET_ALG(ALG, v)  MemorySetBit((v), ALG, sizeof(v) * 8)
 #if ALG_SHA512
 #       define  DEFAULT_TEST_HASH               ALG_SHA512_VALUE
 #       define  DEFAULT_TEST_DIGEST_SIZE        SHA512_DIGEST_SIZE

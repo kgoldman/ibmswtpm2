@@ -3,7 +3,7 @@
 /*		TPM variables that are not stack allocated			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: PlatformData.c 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: PlatformData.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,40 +55,16 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
-/* C.10 PlatformData.c */
-/* C.10.1. Description */
+/* C.9 PlatformData.c */
+/* C.9.1. Description */
 /* This file will instance the TPM variables that are not stack allocated. The descriptions for
    these variables are in Global.h for this project. */
-/* C.10.2. Includes */
-#include    "Implementation.h"
-#include    "PlatformData.h"
-/* From Cancel.c */
-BOOL                 s_isCanceled;
-/* From Clock.c */
-unsigned int         s_adjustRate;
-BOOL                 s_timerReset;
-BOOL                 s_timerStopped;
-#ifndef HARDWARE_CLOCK
-clock64_t            s_realTimePrevious;
-clock64_t            s_tpmTime;
-clock64_t            s_lastSystemTime;
-clock64_t            s_lastReportedTime;
-#endif
-/* From LocalityPlat.c */
-unsigned char        s_locality;
-/* From Power.c */
-BOOL                 s_powerLost;
-/* From Entropy.c This values is used to determine if the entropy generator is broken. If two
-   consecutive values are the same, then the entropy generator is considered to be broken.*/
-uint32_t             lastEntropy;
-/* From NVMem.c */
-unsigned char        s_NV[NV_MEMORY_SIZE];
-BOOL                 s_NvIsAvailable;
-BOOL                 s_NV_unrecoverable;
-BOOL                 s_NV_recoverable;
-/* From PPPlat.c */
-BOOL  s_physicalPresence;
+/* C.9.2. Includes */
+
+#define _PLATFORM_DATA_C_
+#include    "Platform.h"
+

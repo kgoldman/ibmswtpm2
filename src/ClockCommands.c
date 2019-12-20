@@ -3,7 +3,7 @@
 /*			    Clocks and Timers	 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: ClockCommands.c 1259 2018-07-10 19:11:09Z kgoldman $		*/
+/*            $Id: ClockCommands.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -81,7 +81,6 @@ TPM2_ClockSet(
 	      ClockSet_In     *in             // IN: input parameter list
 	      )
 {
-#define CLOCK_UPDATE_MASK  ~((1ULL << NV_CLOCK_UPDATE_INTERVAL)- 1)
     // Input Validation
     // new time can not be bigger than 0xFFFF000000000000 or smaller than
     // current clock

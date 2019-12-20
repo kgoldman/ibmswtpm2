@@ -3,7 +3,7 @@
 /*			    Object Command Support 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Object_spt.c 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: Object_spt.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -569,7 +569,7 @@ PublicAttributesValidation(
 			   )
 {
     TPMA_OBJECT      attributes = publicArea->objectAttributes;
-    TPMA_OBJECT      parentAttributes = {0};
+    TPMA_OBJECT      parentAttributes = TPMA_ZERO_INITIALIZER();
     //
     if(parentObject != NULL)
 	parentAttributes = parentObject->publicArea.objectAttributes;
@@ -872,7 +872,7 @@ UnwrapOuter(
 }
 /* 7.6.3.10 MarshalSensitive() */
 /* This function is used to marshal a sensitive area. Among other things, it adjusts the size of the
-   authValue to be no smaller than the digest of nameAlg Returns the size of the marshaled area. */
+   authValue to be no smaller than the digest of nameAlg.  Returns the size of the marshaled area. */
 static UINT16
 MarshalSensitive(
 		 BYTE                *buffer,            // OUT: receiving buffer
@@ -901,7 +901,7 @@ MarshalSensitive(
 void
 SensitiveToPrivate(
 		   TPMT_SENSITIVE  *sensitive,     // IN: sensitive structure
-		   TPM2B           *name,          // IN: the name of the object
+		   TPM2B_NAME      *name,          // IN: the name of the object
 		   OBJECT          *parent,        // IN: The parent object
 		   TPM_ALG_ID       nameAlg,       // IN: hash algorithm in public area.  This
 		   //     parameter is used when parentHandle is
@@ -916,7 +916,7 @@ SensitiveToPrivate(
     UINT16              integritySize;
     UINT16              ivSize;
     //
-    pAssert(name != NULL && name->size != 0);
+    pAssert(name != NULL && name->t.size != 0);
     // Find the hash algorithm for integrity computation
     if(parent == NULL)
 	{
@@ -926,7 +926,7 @@ SensitiveToPrivate(
     else
 	{
 	    // Otherwise, using parent's name algorithm
-	    hashAlg = ObjectGetNameAlg(parent);
+	    hashAlg = parent->publicArea.nameAlg;
 	}
     // Starting of sensitive data without wrappers
     sensitiveData = outPrivate->t.buffer;
@@ -941,7 +941,7 @@ SensitiveToPrivate(
     // Marshal the sensitive area including authValue size adjustments.
     dataSize = MarshalSensitive(sensitiveData, sensitive, nameAlg);
     //Produce outer wrap, including encryption and HMAC
-    outPrivate->t.size = ProduceOuterWrap(parent, name, hashAlg, NULL,
+    outPrivate->t.size = ProduceOuterWrap(parent, &name->b, hashAlg, NULL,
 					  TRUE, dataSize, outPrivate->t.buffer);
     return;
 }
@@ -993,7 +993,7 @@ PrivateToSensitive(
     else
 	{
 	    // Otherwise, using parent's name algorithm
-	    hashAlg = ObjectGetNameAlg(parent);
+	    hashAlg = parent->publicArea.nameAlg;
 	}
     // unwrap outer
     result = UnwrapOuter(parent, name, hashAlg, NULL, TRUE,
@@ -1083,7 +1083,7 @@ SensitiveToDuplicate(
 	{
 	    doOuterWrap = TRUE;
 	    // Use parent nameAlg as outer hash algorithm
-	    outerHash = ObjectGetNameAlg(parent);
+	    outerHash = parent->publicArea.nameAlg;
 	    // Adjust sensitive data pointer
 	    sensitiveData += sizeof(UINT16) + CryptHashGetDigestSize(outerHash);
 	}
@@ -1247,7 +1247,7 @@ SecretToCredential(
     UINT16               dataSize;      // data blob size
     pAssert(secret != NULL && outIDObject != NULL);
     // use protector's name algorithm as outer hash
-    outerHash = ObjectGetNameAlg(protector);
+    outerHash = protector->publicArea.nameAlg;
     // Marshal secret area to credential buffer, leave space for integrity
     sensitiveData = outIDObject->t.credential
 		    + sizeof(UINT16) + CryptHashGetDigestSize(outerHash);
@@ -1286,7 +1286,7 @@ CredentialToSecret(
     BYTE                    *sensitiveData; // pointer to the sensitive data
     UINT16                   dataSize;
     // use protector's name algorithm as outer hash
-    outerHash = ObjectGetNameAlg(protector);
+    outerHash = protector->publicArea.nameAlg;
     // Unwrap outer, a TPM_RC_INTEGRITY error may be returned at this point
     result = UnwrapOuter(protector, name, outerHash, seed, FALSE,
 			 inIDObject->size, inIDObject->buffer);

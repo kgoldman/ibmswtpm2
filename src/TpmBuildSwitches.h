@@ -3,7 +3,7 @@
 /*			    Build Switches	 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmBuildSwitches.h 1311 2018-08-23 21:39:29Z kgoldman $	*/
+/*            $Id: TpmBuildSwitches.h 1559 2019-12-19 15:41:01Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,9 +55,11 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
+
+/* 5.19	TpmBuildSwitches.h */
 
 /* This file contains the build switches. This contains switches for multiple versions of the
    crypto-library so some may not apply to your environment. */
@@ -80,6 +82,14 @@
 #define YES 1
 #undef NO
 #define NO 0
+
+/* Allow the command line to specify a profile file */
+
+#ifdef PROFILE
+#   define PROFILE_QUOTE(a) #a
+#   define PROFILE_INCLUDE(a) PROFILE_QUOTE(a)
+#   include PROFILE_INCLUDE(PROFILE)
+#endif
 
 // Need an unambiguous definition for DEBUG. Don't change this
 #ifndef DEBUG
@@ -115,18 +125,25 @@
 
 // Define this to run the function that checks the compatibility between the chosen big number math
 // library and the TPM code. Not all ports use this.
-#if !(defined LIBRARY_COMPATABILITY_CHECK)				\
-    || ((LIBRARY_COMPATABILITY_CHECK != NO) && (LIBRARY_COMPATABILITY_CHECK != YES))
-#   undef   LIBRARY_COMPATABILITY_CHECK
-#   define  LIBRARY_COMPATABILITY_CHECK     YES     // Default: Either YES or NO
+
+#if !(defined LIBRARY_COMPATIBILITY_CHECK)				\
+    || (( LIBRARY_COMPATIBILITY_CHECK != NO)				\
+	&& (LIBRARY_COMPATIBILITY_CHECK != YES))
+#   undef   LIBRARY_COMPATIBILITY_CHECK
+#   define  LIBRARY_COMPATIBILITY_CHECK YES     // Default: Either YES or NO
 #endif
 #if !(defined FIPS_COMPLIANT) || ((FIPS_COMPLIANT != NO) && (FIPS_COMPLIANT != YES))
 #   undef   FIPS_COMPLIANT
-#   define  FIPS_COMPLIANT      YES     // Default: Either YES or NO
+#   define  FIPS_COMPLIANT              YES     // Default: Either YES or NO
 #endif
 
 // Definition to allow alternate behavior for non-orderly startup. If there is a chance that the TPM
 // could not update failedTries
+
+/* Removes the behavior of automatically incrementing the failed tries counter after any non-orderly
+   shutdown.  When YES, the failed counter is incremented on non-orderly shutdown only if an attempt
+   to access a DA protected object was made on the previous cycle. */
+
 #if !(defined USE_DA_USED) || ((USE_DA_USED != NO) && (USE_DA_USED != YES))
 #   undef   USE_DA_USED
 #   define  USE_DA_USED     YES         // Default: Either YES or NO
@@ -200,6 +217,12 @@
 // The switches in this group can only be enabled when doing debug during simulation
 #if SIMULATION && DEBUG
 
+/* This forces the use of a smaller context slot size. This reduction reduces the range of the epoch
+   allowing the tester to force the epoch to occur faster than the normal defined in TpmProfile.h */
+#   if !(defined CONTEXT_SLOT)
+#       define CONTEXT_SLOT             UINT8
+#   endif
+
 // Enables use of the key cache. Default is YES
 #   if !(defined USE_RSA_KEY_CACHE)					\
     || ((USE_RSA_KEY_CACHE != NO) && (USE_RSA_KEY_CACHE != YES))
@@ -254,13 +277,13 @@
 #   endif
 
 // Some of the values (such as sizes) are the result of different options set in
-// Implementation.h. The combination might not be consistent. A function is defined
+// TpmProfile.h. The combination might not be consistent. A function is defined
 // (TpmSizeChecks()) that is used to verify the sizes at run time. To enable the function, define
 // this parameter.
 #   if !(defined RUNTIME_SIZE_CHECKS)					\
     || ((RUNTIME_SIZE_CHECKS != NO) && (RUNTIME_SIZE_CHECKS != YES))
 #       undef RUNTIME_SIZE_CHECKS
-#       define RUNTIME_SIZE_CHECKS      NO      // Default: Either YES or NO
+#       define RUNTIME_SIZE_CHECKS      YES      // Default: Either YES or NO
 #   endif
 
 // If doing debug, can set the DRBG to print out the intermediate test values. Before enabling this,
@@ -317,6 +340,19 @@
     || ((USE_BIT_FIELD_STRUCTURES != NO) && (USE_BIT_FIELD_STRUCTURES != YES))
 #   undef   USE_BIT_FIELD_STRUCTURES
 #   define  USE_BIT_FIELD_STRUCTURES    YES        // Default: Either YES or NO
+#endif
+
+// This define is used to control the debug for the CertifyX509() command.
+#if !(defined CERTIFYX509_DEBUG)					\
+    || ((CERTIFYX509_DEBUG != NO) && (CERTIFYX509_DEBUG != YES))
+#   undef   CERTIFYX509_DEBUG
+#   define  CERTIFYX509_DEBUG YES               // Default: Either YES or NO
+#endif
+
+#if !(defined TABLE_DRIVEN_MARSHAL)					\
+    || ((TABLE_DRIVEN_MARSHAL != NO) && (TABLE_DRIVEN_MARSHAL != YES))
+#   undef   TABLE_DRIVEN_MARSHAL
+#   define  TABLE_DRIVEN_MARSHAL NO    // Default: Either YES or NO
 #endif
 
 /* Change these definitions to turn all algorithms or commands ON or OFF. That is, to turn all

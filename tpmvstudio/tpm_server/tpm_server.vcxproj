@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -14,18 +14,19 @@
     <ProjectGuid>{6DC26888-4343-4B0F-8A56-4B026B4B20F3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>tpm_server</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -51,14 +52,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO;TPM_NUVOTON</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>c:/program files/openssl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libeay32mdd.lib;ssleay32mdd.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcrypto32mdd.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>c:\program files\openssl\lib\vc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -70,16 +72,17 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO;TPM_NUVOTON</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>c:/program files/openssl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>libeay32md.lib;ssleay32md.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcrypto32md.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>c:\program files\openssl\lib\vc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -87,6 +90,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\ACTCommands.c" />
+    <ClCompile Include="..\..\src\ACT_spt.c" />
     <ClCompile Include="..\..\src\AlgorithmCap.c" />
     <ClCompile Include="..\..\src\AlgorithmTests.c" />
     <ClCompile Include="..\..\src\AsymmetricCommands.c" />
@@ -95,7 +100,6 @@
     <ClCompile Include="..\..\src\AuditCommands.c" />
     <ClCompile Include="..\..\src\Bits.c" />
     <ClCompile Include="..\..\src\BnConvert.c" />
-    <ClCompile Include="..\..\src\BnEccData.c" />
     <ClCompile Include="..\..\src\BnMath.c" />
     <ClCompile Include="..\..\src\BnMemory.c" />
     <ClCompile Include="..\..\src\Cancel.c" />
@@ -109,11 +113,11 @@
     <ClCompile Include="..\..\src\Context_spt.c" />
     <ClCompile Include="..\..\src\CryptCmac.c" />
     <ClCompile Include="..\..\src\CryptDes.c" />
+    <ClCompile Include="..\..\src\CryptEccData.c" />
     <ClCompile Include="..\..\src\CryptEccKeyExchange.c" />
     <ClCompile Include="..\..\src\CryptEccMain.c" />
     <ClCompile Include="..\..\src\CryptEccSignature.c" />
     <ClCompile Include="..\..\src\CryptHash.c" />
-    <ClCompile Include="..\..\src\CryptHashData.c" />
     <ClCompile Include="..\..\src\CryptPrime.c" />
     <ClCompile Include="..\..\src\CryptPrimeSieve.c" />
     <ClCompile Include="..\..\src\CryptRand.c" />
@@ -123,6 +127,7 @@
     <ClCompile Include="..\..\src\CryptSym.c" />
     <ClCompile Include="..\..\src\CryptUtil.c" />
     <ClCompile Include="..\..\src\DA.c" />
+    <ClCompile Include="..\..\src\DebugHelpers.c" />
     <ClCompile Include="..\..\src\DictionaryCommands.c" />
     <ClCompile Include="..\..\src\DuplicationCommands.c" />
     <ClCompile Include="..\..\src\EACommands.c" />
@@ -145,6 +150,8 @@
     <ClCompile Include="..\..\src\Marshal.c" />
     <ClCompile Include="..\..\src\MathOnByteBuffers.c" />
     <ClCompile Include="..\..\src\Memory.c" />
+    <ClCompile Include="..\..\src\ntc2.c" />
+    <ClCompile Include="..\..\src\ntc2lib.c" />
     <ClCompile Include="..\..\src\NVCommands.c" />
     <ClCompile Include="..\..\src\NVDynamic.c" />
     <ClCompile Include="..\..\src\NVMem.c" />
@@ -154,6 +161,7 @@
     <ClCompile Include="..\..\src\ObjectCommands.c" />
     <ClCompile Include="..\..\src\Object_spt.c" />
     <ClCompile Include="..\..\src\PCR.c" />
+    <ClCompile Include="..\..\src\PlatformACT.c" />
     <ClCompile Include="..\..\src\PlatformData.c" />
     <ClCompile Include="..\..\src\Policy_spt.c" />
     <ClCompile Include="..\..\src\Power.c" />
@@ -177,6 +185,7 @@
     <ClCompile Include="..\..\src\TestingCommands.c" />
     <ClCompile Include="..\..\src\Ticket.c" />
     <ClCompile Include="..\..\src\Time.c" />
+    <ClCompile Include="..\..\src\TpmAsn1.c" />
     <ClCompile Include="..\..\src\TPMCmdp.c" />
     <ClCompile Include="..\..\src\TPMCmds.c" />
     <ClCompile Include="..\..\src\TpmFail.c" />
@@ -185,8 +194,13 @@
     <ClCompile Include="..\..\src\TpmToOsslMath.c" />
     <ClCompile Include="..\..\src\TpmToOsslSupport.c" />
     <ClCompile Include="..\..\src\Unique.c" />
-    <ClCompile Include="..\..\src\Unmarshal.c" />
+    <ClCompile Include="..\..\src\Unmarshal.c">
+      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ShowIncludes>
+    </ClCompile>
     <ClCompile Include="..\..\src\Vendor_TCG_Test.c" />
+    <ClCompile Include="..\..\src\X509_ECC.c" />
+    <ClCompile Include="..\..\src\X509_RSA.c" />
+    <ClCompile Include="..\..\src\X509_spt.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

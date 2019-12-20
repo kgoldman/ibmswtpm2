@@ -3,7 +3,7 @@
 /*		Dynamic space for user defined NV      				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: NVDynamic.c 1265 2018-07-15 18:29:22Z kgoldman $		*/
+/*            $Id: NVDynamic.c 1525 2019-11-18 20:04:03Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -63,7 +63,7 @@
 /* 8.4.2 Includes, Defines and Data Definitions */
 #define NV_C
 #include "Tpm.h"
-#include "PlatformData.h"
+
 /* 8.4.3 Local Functions */
 /* 8.4.3.1 NvNext() */
 /* This function provides a method to traverse every data entry in NV dynamic area. */
@@ -387,7 +387,7 @@ NvRamTestSpaceIndex(
 		    UINT32           size           // IN: size of the data to be added to RAM
 		    )
 {
-    UINT32          remaining = RAM_ORDERLY_END - NvRamGetEnd();
+    UINT32          remaining = (UINT32)(RAM_ORDERLY_END - NvRamGetEnd());
     UINT32          needed = sizeof(NV_RAM_HEADER) + size;
     // NvRamGetEnd points to the next available byte.
     return remaining >= needed;
@@ -474,7 +474,7 @@ NvDeleteRAM(
     // Get the offset of next node
     nextNode = nodeAddress + size;
     // Copy the data
-    MemoryCopy(nodeAddress, nextNode, lastUsed - nextNode);
+    MemoryCopy(nodeAddress, nextNode, (int)(lastUsed - nextNode));
     // Clear out the reclaimed space
     MemorySet(lastUsed - size, 0, size);
     // Write reserved RAM space to NV to reflect the newly delete NV Index
@@ -616,9 +616,9 @@ NvWriteRamIndexAttributes(
 /* This function indicates if a handle references a persistent object in the range belonging to the
    platform. */
 /* Return Values Meaning */
-/* TRUE handle references a platform persistent object */
-/* FALSE handle does not reference platform persistent object and may reference an owner persistent
-   object either */
+/* TRUE handle references a platform persistent object and may reference an owner persistent object
+   either*/
+/* FALSE handle does not reference platform persistent object */
 BOOL
 NvIsPlatformPersistentHandle(
 			     TPM_HANDLE       handle         // IN: handle
@@ -755,7 +755,8 @@ NvGetIndexData(
 	    // Get data from RAM buffer
 	    NV_RAM_REF           ramAddr = NvRamGetIndex(nvIndex->publicArea.nvIndex);
 	    pAssert(ramAddr != 0 && (size <=
-				     ((NV_RAM_HEADER *)ramAddr)->size - sizeof(NV_RAM_HEADER) - offset));
+				     ((NV_RAM_HEADER *)ramAddr)->size -
+				     sizeof(NV_RAM_HEADER) - offset));
 	    MemoryCopy(data, ramAddr + sizeof(NV_RAM_HEADER) + offset, size);
 	}
     else
@@ -766,6 +767,42 @@ NvGetIndexData(
 	    NvRead(data, locator + sizeof(NV_INDEX) + offset, size);
 	}
     return;
+}
+/* 8.4.5.7	NvHashIndexData() */
+/* This function adds Index data to a hash. It does this in parts to avoid large stack buffers. */
+void
+NvHashIndexData(
+		HASH_STATE          *hashState,     // IN: Initialized hash state
+		NV_INDEX            *nvIndex,       // IN: Index
+		NV_REF               locator,       // IN: where the data is located
+		UINT32               offset,        // IN: starting offset
+		UINT16               size           // IN: amount to hash
+		)
+{
+#define BUFFER_SIZE     64
+    BYTE                 buffer[BUFFER_SIZE];
+    if (offset > nvIndex->publicArea.dataSize)
+	return;
+    // Make sure that we don't try to read off the end.
+    if ((offset + size) > nvIndex->publicArea.dataSize)
+	size = nvIndex->publicArea.dataSize - (UINT16)offset;
+#if BUFFER_SIZE >= MAX_NV_INDEX_SIZE
+    NvGetIndexData(nvIndex, locator, offset, size, buffer);
+    CryptDigestUpdate(hashState, size, buffer);
+#else
+    {
+	INT16                i;
+	UINT16               readSize;
+	//
+	for (i = size; i > 0; offset += readSize, i -= readSize)
+	    {
+		readSize = (i < BUFFER_SIZE) ? i : BUFFER_SIZE;
+		NvGetIndexData(nvIndex, locator, offset, readSize, buffer);
+		CryptDigestUpdate(hashState, readSize, buffer);
+	    }
+    }
+#endif // BUFFER_SIZE >= MAX_NV_INDEX_SIZE
+#undef  BUFFER_SIZE
 }
 /* 8.4.5.7 NvGetUINT64Data() */
 /* Get data in integer format of a bit or counter NV Index. */
@@ -1479,7 +1516,7 @@ NvSetStartupAttributes(
 /* b) reset NV Index data that has TPMA_NV_CLEAR_STCLEAR SET; and */
 /* c) set the lower bits in orderly counters to 1 for a non-orderly startup */
 /* It is a prerequisite that NV be available for writing before this function is called. */
-void
+BOOL
 NvEntityStartup(
 		STARTUP_TYPE     type           // IN: start up type
 		)
@@ -1496,7 +1533,7 @@ NvEntityStartup(
     NvSetMaxCount(NvGetMaxCount());
     // If recovering from state save, do nothing else
     if(type == SU_RESUME)
-	return;
+	return TRUE;
     // Iterate all the NV Index to clear the locks
     while((currentAddr = NvNextIndex(&nvHandle, &iter)) != 0)
 	{
@@ -1530,7 +1567,7 @@ NvEntityStartup(
 		    UINT64_TO_BYTE_ARRAY(counter, currentRamAddr + sizeof(NV_RAM_HEADER));
 		}
 	}
-    return;
+    return TRUE;
 }
 /* 8.4.5.30 NvCapGetCounterAvail() */
 /* This function returns an estimate of the number of additional counter type NV Indexes that can be
@@ -1556,7 +1593,7 @@ NvCapGetCounterAvail(
 		availNVSpace -= reserved;
 	}
     // Compute the available space in RAM
-    availRAMSpace = RAM_ORDERLY_END - NvRamGetEnd();
+    availRAMSpace = (RAM_ORDERLY_END - NvRamGetEnd());	/* kgold - removed cast */
     // Return the min of counter number in NV and in RAM
     if(availNVSpace / NV_INDEX_COUNTER_SIZE
        > availRAMSpace / NV_RAM_INDEX_COUNTER_SIZE)

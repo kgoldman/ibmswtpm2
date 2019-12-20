@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*		NV read and write access methods     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Platform_fp.h 1311 2018-08-23 21:39:29Z kgoldman $		*/
+/*            $Id: Platform_fp.h 1529 2019-11-21 23:29:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
 /*										*/
 /********************************************************************************/
 
@@ -104,7 +104,7 @@ _plat__TimerRestart(
 		    );
 // C.8.2.3. _plat__Time() This is another, probably futile, attempt to define a portable function
 // that will return a 64-bit clock value that has mSec resolution.
-uint64_t
+LIB_EXPORT uint64_t
 _plat__RealTime(
 		void
 		);
@@ -125,7 +125,7 @@ _plat__TimerRead(
 /* C.8.2.5. _plat__TimerWasReset() */
 /* This function is used to interrogate the flag indicating if the tick timer has been reset. */
 /* If the resetFlag parameter is SET, then the flag will be CLEAR before the function returns. */
-LIB_EXPORT BOOL
+LIB_EXPORT int
 _plat__TimerWasReset(
 		     void
 		     );
@@ -137,7 +137,7 @@ _plat__TimerWasReset(
    it is the one that has the most impact on the TPM code as the flag can only be accessed by one
    entity in the TPM. Any other implementation of the hardware can be made to look like a read-once
    register. */
-LIB_EXPORT BOOL
+LIB_EXPORT int
 _plat__TimerWasStopped(
 		       void
 		       );
@@ -202,7 +202,7 @@ _plat__NVEnable(
 /* Disable NV memory */
 LIB_EXPORT void
 _plat__NVDisable(
-		 void
+		 int             delete           // IN: If TRUE, delete the NV contents.
 		 );
 /* C.8.6.4. _plat__IsNvAvailable() */
 /* Check if NV is available */
@@ -240,7 +240,7 @@ _plat__NvIsDifferent(
 /* NOTE: A useful optimization would be for this code to compare the current contents of NV with the
    local copy and note the blocks that have changed. Then only write those blocks when
    _plat__NvCommit() is called. */
-LIB_EXPORT void
+LIB_EXPORT int
 _plat__NvMemoryWrite(
 		     unsigned int     startOffset,   // IN: write start
 		     unsigned int     size,          // IN: size of bytes to write
@@ -287,6 +287,15 @@ LIB_EXPORT void
 _plat__ClearNvAvail(
 		    void
 		    );
+
+/* C.6.2.15.	_plat__NVNeedsManufacture() */
+/* This function is used by the simulator to determine when the TPM's NV state needs to be manufactured. */
+
+LIB_EXPORT int
+_plat__NVNeedsManufacture(
+			  void
+			  );
+
 /* C.8.6. From PowerPlat.c */
 /* C.8.6.1. _plat__Signal_PowerOn() */
 /* Signal platform power on */
