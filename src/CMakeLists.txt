@@ -1,0 +1,158 @@
+test_big_endian(BIG_ENDIAN)
+
+add_executable(tpm_server
+    ACTCommands.c
+    ACT_spt.c
+    AlgorithmCap.c
+    AlgorithmTests.c
+    AsymmetricCommands.c
+    Attest_spt.c
+    AttestationCommands.c
+    AuditCommands.c
+    Bits.c
+    BnConvert.c
+    BnMath.c
+    BnMemory.c
+    Cancel.c
+    CapabilityCommands.c
+    Clock.c
+    ClockCommands.c
+    CommandAudit.c
+    CommandCodeAttributes.c
+    CommandDispatcher.c
+    ContextCommands.c
+    Context_spt.c
+    CryptDes.c
+    CryptCmac.c
+    CryptEccData.c
+    CryptEccKeyExchange.c
+    CryptEccMain.c
+    CryptEccSignature.c
+    CryptHash.c
+    CryptPrime.c
+    CryptPrimeSieve.c
+    CryptRand.c
+    CryptRsa.c
+    CryptSelfTest.c
+    CryptSmac.c
+    CryptSym.c
+    CryptUtil.c
+    DA.c
+    DebugHelpers.c
+    DictionaryCommands.c
+    DuplicationCommands.c
+    EACommands.c
+    EncryptDecrypt_spt.c
+    Entity.c
+    Entropy.c
+    EphemeralCommands.c
+    ExecCommand.c
+    Global.c
+    Handle.c
+    HashCommands.c
+    Hierarchy.c
+    HierarchyCommands.c
+    IoBuffers.c
+    IntegrityCommands.c
+    Locality.c
+    LocalityPlat.c
+    ManagementCommands.c
+    Manufacture.c
+    Marshal.c
+    MathOnByteBuffers.c
+    Memory.c
+    NVCommands.c
+    NVDynamic.c
+    NVMem.c
+    NVReserved.c
+    NV_spt.c
+    Object.c
+    ObjectCommands.c
+    Object_spt.c
+    PCR.c
+    PP.c
+    PPPlat.c
+    PlatformACT.c
+    PlatformData.c
+    Policy_spt.c
+    Power.c
+    PowerPlat.c
+    PrimeData.c
+    PropertyCap.c
+    RandomCommands.c
+    Response.c
+    ResponseCodeProcessing.c
+    RsaKeyCache.c
+    RunCommand.c
+    Session.c
+    SessionCommands.c
+    SessionProcess.c
+    SigningCommands.c
+    StartupCommands.c
+    SymmetricCommands.c
+    TPMCmdp.c
+    TPMCmds.c
+    TestingCommands.c
+    Ticket.c
+    Time.c
+    TpmAsn1.c
+    TpmFail.c
+    TpmSizeChecks.c
+    TpmToOsslDesSupport.c
+    TpmToOsslMath.c
+    TpmToOsslSupport.c
+    Unique.c
+    Unmarshal.c
+    Vendor_TCG_Test.c
+    X509_ECC.c
+    X509_RSA.c
+    X509_spt.c
+    ntc2lib.c
+    ntc2.c
+    $<$<BOOL:${UNIX}>:TcpServerPosix.c>
+    $<$<BOOL:${WIN32}>:applink.c>
+)
+
+target_compile_definitions(tpm_server
+    PRIVATE
+        # Unix defines
+        $<$<BOOL:${UNIX}>:_POSIX_>
+        $<$<BOOL:${UNIX}>:TPM_NUVOTON>
+        $<$<BOOL:${UNIX}>:TPM_POSIX>
+        # Big endian
+        $<$<BOOL:${BIG_ENDIAN}>:BIG_ENDIAN_TPM=YES>
+        # Common
+        USE_BIT_FIELD_STRUCTURES=NO
+)
+
+# Common compile options
+target_compile_options(tpm_server
+    PRIVATE
+        -Wall
+        -Wnested-externs
+)
+
+if(UNIX)
+    target_compile_options(tpm_server
+        PRIVATE
+            -Werror
+            -Wmissing-declarations
+            -Wmissing-prototypes
+            -Wsign-compare
+    )
+endif()
+
+target_include_directories(tpm_server
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(tpm_server
+    PRIVATE
+        OpenSSL::Crypto
+        $<$<BOOL:${UNIX}>:Threads::Threads>
+)
+
+install(TARGETS tpm_server
+    RUNTIME DESTINATION ${CMAKE_INSTALL_SBINDIR}
+)

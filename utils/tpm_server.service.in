@@ -1,0 +1,8 @@
+[Unit]
+Description=Implementation of the TCG TPM 2.0 specification
+
+[Service]
+ExecStart=@CMAKE_INSTALL_FULL_SBINDIR@/tpm_server
+
+[Install]
+WantedBy=multi-user.target
