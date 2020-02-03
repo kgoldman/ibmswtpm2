@@ -110,6 +110,7 @@ add_executable(tpm_server
     ntc2lib.c
     ntc2.c
     $<$<BOOL:${UNIX}>:TcpServerPosix.c>
+    $<$<BOOL:${WIN32}>:TcpServer.c>
     $<$<BOOL:${WIN32}>:applink.c>
 )
 
@@ -117,28 +118,35 @@ target_compile_definitions(tpm_server
     PRIVATE
         # Unix defines
         $<$<BOOL:${UNIX}>:_POSIX_>
-        $<$<BOOL:${UNIX}>:TPM_NUVOTON>
         $<$<BOOL:${UNIX}>:TPM_POSIX>
+        # Windows defines
+        $<$<BOOL:${WIN32}>:WIN32>
+        $<$<BOOL:${WIN32}>:TPM_WINDOWS>
+        $<$<BOOL:${WIN32}>:_CRT_SECURE_NO_WARNINGS>
+        $<$<AND:${WIN32},$<CONFIG:Release>>:NO_FAIL_TRACE>
         # Big endian
         $<$<BOOL:${BIG_ENDIAN}>:BIG_ENDIAN_TPM=YES>
         # Common
         USE_BIT_FIELD_STRUCTURES=NO
+        TPM_NUVOTON
 )
 
-# Common compile options
-target_compile_options(tpm_server
-    PRIVATE
-        -Wall
-        -Wnested-externs
-)
-
-if(UNIX)
+if(UNIX OR MINGW)
     target_compile_options(tpm_server
         PRIVATE
+            -Wall
             -Werror
             -Wmissing-declarations
             -Wmissing-prototypes
             -Wsign-compare
+            -Wnested-externs
+    )
+else(MSVC)
+    target_compile_options(tpm_server
+        PRIVATE
+            /W3
+            # Enable if you want warning as error
+            # /WX
     )
 endif()
 
@@ -151,6 +159,9 @@ target_link_libraries(tpm_server
     PRIVATE
         OpenSSL::Crypto
         $<$<BOOL:${UNIX}>:Threads::Threads>
+        $<$<BOOL:${WIN32}>:wsock32>
+        $<$<BOOL:${WIN32}>:ws2_32>
+        $<$<BOOL:${WIN32}>:crypt32>
 )
 
 install(TARGETS tpm_server
