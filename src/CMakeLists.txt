@@ -123,7 +123,7 @@ target_compile_definitions(tpm_server
         $<$<BOOL:${WIN32}>:WIN32>
         $<$<BOOL:${WIN32}>:TPM_WINDOWS>
         $<$<BOOL:${WIN32}>:_CRT_SECURE_NO_WARNINGS>
-        $<$<AND:${WIN32},$<CONFIG:Release>>:NO_FAIL_TRACE>
+        $<$<BOOL:${WIN32}>:$<BOOL:$<CONFIG:Release>:NO_FAIL_TRACE>>
         # Big endian
         $<$<BOOL:${BIG_ENDIAN}>:BIG_ENDIAN_TPM=YES>
         # Common
