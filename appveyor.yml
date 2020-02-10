@@ -1,6 +1,5 @@
 version: 1.0.{build}
 image: Visual Studio 2019
-verbosity: normal
 
 install:
 - cmd: echo "Downloading conan..."
