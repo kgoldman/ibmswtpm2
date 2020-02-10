@@ -1,0 +1,4 @@
+ibmswtpm2 (0.1.1563) unstable; urgency=low
+  * First cmake port release
+
+ -- Helio Chissini de Castro <helio@kde.org>  Mon, 10 Feb 2020 20:20:00 +0100

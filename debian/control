@@ -1,0 +1,19 @@
+Source: ibmswtpm2
+Maintainer: Helio Chissini de Castro <helio@kde.org>
+Description: TPM2 Simulator
+Priority: optional
+Homepage: https://github.com/heliocastro/ibmswtpm2
+Build-Depends: cmake (>= 3.0~),
+               libssl-dev (>= 1.1.0~),
+               debhelper-compat (= 12)
+Section: Miscellaneous
+Rules-Requires-Root: no
+Standards-Version: 4.4.0
+
+Package: tpm-server
+Architecture: any
+Section: Miscellaneous
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: This project is an implementation of the TCG TPM 2.0 specification.
+ It is based on the TPM specification Parts 3 and 4 source code
+ donated by Microsoft, with additional files to complete the implementation.

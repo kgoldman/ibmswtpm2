@@ -140,6 +140,7 @@ if(UNIX OR MINGW)
             -Wmissing-prototypes
             -Wsign-compare
             -Wnested-externs
+            $<$<STREQUAL:"${CMAKE_SIZEOF_VOID_P}","8">:-fno-strict-aliasing>
     )
 else(MSVC)
     target_compile_options(tpm_server
