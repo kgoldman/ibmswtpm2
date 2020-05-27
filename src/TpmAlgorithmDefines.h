@@ -3,7 +3,7 @@
 /*		Algorithm Values from the TCG Algorithm Registry 		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmAlgorithmDefines.h 1519 2019-11-15 20:43:51Z kgoldman $	*/
+/*            $Id: TpmAlgorithmDefines.h 1594 2020-03-26 22:15:48Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -63,7 +63,7 @@
 // This file contains the algorithm values from the TCG Algorithm Registry.
 #ifndef _TPM_ALGORITHM_DEFINES_H_
 #define _TPM_ALGORITHM_DEFINES_H_
-// Table 2:3 - Definition of Base Types Base Types are in BaseTypes.h
+// Table 2:3 - Definition of Base Types
 #define ECC_CURVES							\
     {TPM_ECC_BN_P256,   TPM_ECC_BN_P638,   TPM_ECC_NIST_P192,		\
      TPM_ECC_NIST_P224, TPM_ECC_NIST_P256, TPM_ECC_NIST_P384,		\
@@ -113,8 +113,10 @@
 // Table 1:00 - Defines for RSA Asymmetric Cipher Algorithm Constants
 #define RSA_KEY_SIZES_BITS						\
     (1024 * RSA_1024),  (2048 * RSA_2048), (3072 * RSA_3072),		\
-	(4096 * RSA_4096)
-#if   RSA_4096
+	(4096 * RSA_4096), (16384 * RSA_16384)
+#if   RSA_16384
+#   define RSA_MAX_KEY_SIZE_BITS    16384
+#elif   RSA_4096
 #   define RSA_MAX_KEY_SIZE_BITS    4096
 #elif RSA_3072
 #   define RSA_MAX_KEY_SIZE_BITS    3072
@@ -219,7 +221,7 @@
 #define MAX_TDES_BLOCK_SIZE_BYTES   TDES_MAX_BLOCK_SIZE
 // Additional values for benefit of code
 #define TPM_CC_FIRST                        0x0000011F
-#define TPM_CC_LAST                         0x00000198
+#define TPM_CC_LAST                         0x0000019A
 #if COMPRESSED_LISTS
 #define ADD_FILL            0
 #else
@@ -350,6 +352,8 @@
 					  + (ADD_FILL || CC_Policy_AC_SendSelect)                 /* 0x00000196 */ \
 					  + (ADD_FILL || CC_CertifyX509)                          /* 0x00000197 */ \
 					  + (ADD_FILL || CC_ACT_SetTimeout)                       /* 0x00000198 */ \
+					  + (ADD_FILL || CC_ECC_Encrypt)                          /* 0x00000199 */ \
+					  + (ADD_FILL || CC_ECC_Decrypt)                          /* 0x0000019A */ \
 					  )
 #ifndef TPM_NUVOTON
 #define VENDOR_COMMAND_ARRAY_SIZE   (0 + CC_Vendor_TCG_Test)

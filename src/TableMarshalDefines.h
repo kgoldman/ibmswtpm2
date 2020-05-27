@@ -3,7 +3,7 @@
 /*			Table Marshal Defines					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TableMarshalDefines.h 1531 2019-11-21 23:54:38Z kgoldman $	*/
+/*            $Id: TableMarshalDefines.h 1594 2020-03-26 22:15:48Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -130,7 +130,7 @@
 #define TPM_AUTHORIZATION_SIZE_MARSHAL_REF          UINT32_MARSHAL_REF
 #define TPM_PARAMETER_SIZE_MARSHAL_REF              UINT32_MARSHAL_REF
 #define TPM_SPEC_MARSHAL_REF                        UINT32_MARSHAL_REF
-#define TPM_GENERATED_MARSHAL_REF                   UINT32_MARSHAL_REF
+#define TPM_CONSTANTS32_MARSHAL_REF                 UINT32_MARSHAL_REF
 #define TPM_CC_MARSHAL_REF                          UINT32_MARSHAL_REF
 #define TPM_RC_MARSHAL_REF                          UINT32_MARSHAL_REF
 #define TPM_PT_MARSHAL_REF                          UINT32_MARSHAL_REF
@@ -410,10 +410,10 @@
 #define TPMS_ENC_SCHEME_OAEP_MARSHAL_REF            TPMS_SCHEME_HASH_MARSHAL_REF
 #define TPMS_KEY_SCHEME_ECDH_MARSHAL_REF            TPMS_SCHEME_HASH_MARSHAL_REF
 #define TPMS_KEY_SCHEME_ECMQV_MARSHAL_REF           TPMS_SCHEME_HASH_MARSHAL_REF
-#define TPMS_SCHEME_MGF1_MARSHAL_REF                TPMS_SCHEME_HASH_MARSHAL_REF
-#define TPMS_SCHEME_KDF1_SP800_56A_MARSHAL_REF      TPMS_SCHEME_HASH_MARSHAL_REF
-#define TPMS_SCHEME_KDF2_MARSHAL_REF                TPMS_SCHEME_HASH_MARSHAL_REF
-#define TPMS_SCHEME_KDF1_SP800_108_MARSHAL_REF      TPMS_SCHEME_HASH_MARSHAL_REF
+#define TPMS_KDF_SCHEME_MGF1_MARSHAL_REF            TPMS_SCHEME_HASH_MARSHAL_REF
+#define TPMS_KDF_SCHEME_KDF1_SP800_56A_MARSHAL_REF  TPMS_SCHEME_HASH_MARSHAL_REF
+#define TPMS_KDF_SCHEME_KDF2_MARSHAL_REF            TPMS_SCHEME_HASH_MARSHAL_REF
+#define TPMS_KDF_SCHEME_KDF1_SP800_108_MARSHAL_REF  TPMS_SCHEME_HASH_MARSHAL_REF
 #define TPMS_SCHEME_ECDAA_MARSHAL_REF					\
     ((UINT16)(offsetof(MarshalData_st, TPMS_SCHEME_ECDAA_DATA)))
 #define TPMS_SIG_SCHEME_ECDAA_MARSHAL_REF           TPMS_SCHEME_ECDAA_MARSHAL_REF
@@ -628,6 +628,7 @@
 #define Type44_MARSHAL_REF						\
     ((UINT16)(offsetof(MarshalData_st, Type44_DATA)))
 //#defines to change calling sequence for code using marshaling
+
 #define UINT8_Unmarshal(target, buffer, size)				\
     Unmarshal(UINT8_MARSHAL_REF, (target), (buffer), (size))
 #define UINT8_Marshal(source, buffer, size)				\
@@ -688,8 +689,8 @@
     Unmarshal(TPM_KEY_BITS_MARSHAL_REF, (target), (buffer), (size))
 #define TPM_KEY_BITS_Marshal(source, buffer, size)			\
     Marshal(TPM_KEY_BITS_MARSHAL_REF, (source), (buffer), (size))
-#define TPM_GENERATED_Marshal(source, buffer, size)			\
-    Marshal(TPM_GENERATED_MARSHAL_REF, (source), (buffer), (size))
+#define TPM_CONSTANTS32_Marshal(source, buffer, size)			\
+    Marshal(TPM_CONSTANTS32_MARSHAL_REF, (source), (buffer), (size))
 #define TPM_ALG_ID_Unmarshal(target, buffer, size)			\
     Unmarshal(TPM_ALG_ID_MARSHAL_REF, (target), (buffer), (size))
 #define TPM_ALG_ID_Marshal(source, buffer, size)			\
@@ -928,7 +929,7 @@
 #define TPMU_HA_Unmarshal(target, buffer, size, selector)		\
     UnmarshalUnion(TPMU_HA_MARSHAL_REF, (target), (buffer), (size), (selector))
 #define TPMU_HA_Marshal(source, buffer, size, selector)			\
-    MarshalUnion(TPMU_HA_MARSHAL_REF, (target), (buffer), (size), (selector))
+    MarshalUnion(TPMU_HA_MARSHAL_REF, (source), (buffer), (size), (selector))
 #define TPMT_HA_Unmarshal(target, buffer, size, flag)			\
     Unmarshal(TPMT_HA_MARSHAL_REF|(flag ? NULL_FLAG : 0), (target), (buffer), \
 	      (size))
@@ -1049,7 +1050,7 @@
 #define TPML_ACT_DATA_Marshal(source, buffer, size)			\
     Marshal(TPML_ACT_DATA_MARSHAL_REF, (source), (buffer), (size))
 #define TPMU_CAPABILITIES_Marshal(source, buffer, size, selector)	\
-    MarshalUnion(TPMU_CAPABILITIES_MARSHAL_REF, (target), (buffer), (size), \
+    MarshalUnion(TPMU_CAPABILITIES_MARSHAL_REF, (source), (buffer), (size), \
 		 (selector))
 #define TPMS_CAPABILITY_DATA_Marshal(source, buffer, size)		\
     Marshal(TPMS_CAPABILITY_DATA_MARSHAL_REF, (source), (buffer), (size))
@@ -1080,7 +1081,7 @@
 #define TPMI_ST_ATTEST_Marshal(source, buffer, size)			\
     Marshal(TPMI_ST_ATTEST_MARSHAL_REF, (source), (buffer), (size))
 #define TPMU_ATTEST_Marshal(source, buffer, size, selector)		\
-    MarshalUnion(TPMU_ATTEST_MARSHAL_REF, (target), (buffer), (size), (selector))
+    MarshalUnion(TPMU_ATTEST_MARSHAL_REF, (source), (buffer), (size), (selector))
 #define TPMS_ATTEST_Marshal(source, buffer, size)			\
     Marshal(TPMS_ATTEST_MARSHAL_REF, (source), (buffer), (size))
 #define TPM2B_ATTEST_Marshal(source, buffer, size)			\
@@ -1109,13 +1110,13 @@
     UnmarshalUnion(TPMU_SYM_KEY_BITS_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_SYM_KEY_BITS_Marshal(source, buffer, size, selector)	\
-    MarshalUnion(TPMU_SYM_KEY_BITS_MARSHAL_REF, (target), (buffer), (size), \
+    MarshalUnion(TPMU_SYM_KEY_BITS_MARSHAL_REF, (source), (buffer), (size), \
 		 (selector))
 #define TPMU_SYM_MODE_Unmarshal(target, buffer, size, selector)		\
     UnmarshalUnion(TPMU_SYM_MODE_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_SYM_MODE_Marshal(source, buffer, size, selector)		\
-    MarshalUnion(TPMU_SYM_MODE_MARSHAL_REF, (target), (buffer), (size), (selector))
+    MarshalUnion(TPMU_SYM_MODE_MARSHAL_REF, (source), (buffer), (size), (selector))
 #define TPMT_SYM_DEF_Unmarshal(target, buffer, size, flag)		\
     Unmarshal(TPMT_SYM_DEF_MARSHAL_REF|(flag ? NULL_FLAG : 0), (target), (buffer), \
 	      (size))
@@ -1179,7 +1180,7 @@
     UnmarshalUnion(TPMU_SCHEME_KEYEDHASH_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_SCHEME_KEYEDHASH_Marshal(source, buffer, size, selector)	\
-    MarshalUnion(TPMU_SCHEME_KEYEDHASH_MARSHAL_REF, (target), (buffer), (size),	\
+    MarshalUnion(TPMU_SCHEME_KEYEDHASH_MARSHAL_REF, (source), (buffer), (size),	\
 		 (selector))
 #define TPMT_KEYEDHASH_SCHEME_Unmarshal(target, buffer, size, flag)	\
     Unmarshal(TPMT_KEYEDHASH_SCHEME_MARSHAL_REF|(flag ? NULL_FLAG : 0), (target), \
@@ -1214,7 +1215,7 @@
     UnmarshalUnion(TPMU_SIG_SCHEME_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_SIG_SCHEME_Marshal(source, buffer, size, selector)		\
-    MarshalUnion(TPMU_SIG_SCHEME_MARSHAL_REF, (target), (buffer), (size), \
+    MarshalUnion(TPMU_SIG_SCHEME_MARSHAL_REF, (source), (buffer), (size), \
 		 (selector))
 #define TPMT_SIG_SCHEME_Unmarshal(target, buffer, size, flag)		\
     Unmarshal(TPMT_SIG_SCHEME_MARSHAL_REF|(flag ? NULL_FLAG : 0), (target), \
@@ -1237,27 +1238,29 @@
     Unmarshal(TPMS_KEY_SCHEME_ECMQV_MARSHAL_REF, (target), (buffer), (size))
 #define TPMS_KEY_SCHEME_ECMQV_Marshal(source, buffer, size)		\
     Marshal(TPMS_KEY_SCHEME_ECMQV_MARSHAL_REF, (source), (buffer), (size))
-#define TPMS_SCHEME_MGF1_Unmarshal(target, buffer, size)		\
-    Unmarshal(TPMS_SCHEME_MGF1_MARSHAL_REF, (target), (buffer), (size))
-#define TPMS_SCHEME_MGF1_Marshal(source, buffer, size)			\
-    Marshal(TPMS_SCHEME_MGF1_MARSHAL_REF, (source), (buffer), (size))
-#define TPMS_SCHEME_KDF1_SP800_56A_Unmarshal(target, buffer, size)	\
-    Unmarshal(TPMS_SCHEME_KDF1_SP800_56A_MARSHAL_REF, (target), (buffer), (size))
-#define TPMS_SCHEME_KDF1_SP800_56A_Marshal(source, buffer, size)	\
-    Marshal(TPMS_SCHEME_KDF1_SP800_56A_MARSHAL_REF, (source), (buffer), (size))
-#define TPMS_SCHEME_KDF2_Unmarshal(target, buffer, size)		\
-    Unmarshal(TPMS_SCHEME_KDF2_MARSHAL_REF, (target), (buffer), (size))
-#define TPMS_SCHEME_KDF2_Marshal(source, buffer, size)			\
-    Marshal(TPMS_SCHEME_KDF2_MARSHAL_REF, (source), (buffer), (size))
-#define TPMS_SCHEME_KDF1_SP800_108_Unmarshal(target, buffer, size)	\
-    Unmarshal(TPMS_SCHEME_KDF1_SP800_108_MARSHAL_REF, (target), (buffer), (size))
-#define TPMS_SCHEME_KDF1_SP800_108_Marshal(source, buffer, size)	\
-    Marshal(TPMS_SCHEME_KDF1_SP800_108_MARSHAL_REF, (source), (buffer), (size))
+#define TPMS_KDF_SCHEME_MGF1_Unmarshal(target, buffer, size)		\
+    Unmarshal(TPMS_KDF_SCHEME_MGF1_MARSHAL_REF, (target), (buffer), (size))
+#define TPMS_KDF_SCHEME_MGF1_Marshal(source, buffer, size)		\
+    Marshal(TPMS_KDF_SCHEME_MGF1_MARSHAL_REF, (source), (buffer), (size))
+#define TPMS_KDF_SCHEME_KDF1_SP800_56A_Unmarshal(target, buffer, size)	\
+    Unmarshal(TPMS_KDF_SCHEME_KDF1_SP800_56A_MARSHAL_REF, (target), (buffer), \
+	      (size))
+#define TPMS_KDF_SCHEME_KDF1_SP800_56A_Marshal(source, buffer, size)	\
+    Marshal(TPMS_KDF_SCHEME_KDF1_SP800_56A_MARSHAL_REF, (source), (buffer), (size))
+#define TPMS_KDF_SCHEME_KDF2_Unmarshal(target, buffer, size)		\
+    Unmarshal(TPMS_KDF_SCHEME_KDF2_MARSHAL_REF, (target), (buffer), (size))
+#define TPMS_KDF_SCHEME_KDF2_Marshal(source, buffer, size)		\
+    Marshal(TPMS_KDF_SCHEME_KDF2_MARSHAL_REF, (source), (buffer), (size))
+#define TPMS_KDF_SCHEME_KDF1_SP800_108_Unmarshal(target, buffer, size)	\
+    Unmarshal(TPMS_KDF_SCHEME_KDF1_SP800_108_MARSHAL_REF, (target), (buffer), \
+	      (size))
+#define TPMS_KDF_SCHEME_KDF1_SP800_108_Marshal(source, buffer, size)	\
+    Marshal(TPMS_KDF_SCHEME_KDF1_SP800_108_MARSHAL_REF, (source), (buffer), (size))
 #define TPMU_KDF_SCHEME_Unmarshal(target, buffer, size, selector)	\
     UnmarshalUnion(TPMU_KDF_SCHEME_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_KDF_SCHEME_Marshal(source, buffer, size, selector)		\
-    MarshalUnion(TPMU_KDF_SCHEME_MARSHAL_REF, (target), (buffer), (size), \
+    MarshalUnion(TPMU_KDF_SCHEME_MARSHAL_REF, (source), (buffer), (size), \
 		 (selector))
 #define TPMT_KDF_SCHEME_Unmarshal(target, buffer, size, flag)		\
     Unmarshal(TPMT_KDF_SCHEME_MARSHAL_REF|(flag ? NULL_FLAG : 0), (target), \
@@ -1273,7 +1276,7 @@
     UnmarshalUnion(TPMU_ASYM_SCHEME_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_ASYM_SCHEME_Marshal(source, buffer, size, selector)	\
-    MarshalUnion(TPMU_ASYM_SCHEME_MARSHAL_REF, (target), (buffer), (size), \
+    MarshalUnion(TPMU_ASYM_SCHEME_MARSHAL_REF, (source), (buffer), (size), \
 		 (selector))
 #define TPMI_ALG_RSA_SCHEME_Unmarshal(target, buffer, size, flag)	\
     Unmarshal(TPMI_ALG_RSA_SCHEME_MARSHAL_REF|(flag ? NULL_FLAG : 0), (target),	\
@@ -1371,7 +1374,7 @@
     UnmarshalUnion(TPMU_SIGNATURE_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_SIGNATURE_Marshal(source, buffer, size, selector)		\
-    MarshalUnion(TPMU_SIGNATURE_MARSHAL_REF, (target), (buffer), (size), (selector))
+    MarshalUnion(TPMU_SIGNATURE_MARSHAL_REF, (source), (buffer), (size), (selector))
 #define TPMT_SIGNATURE_Unmarshal(target, buffer, size, flag)		\
     Unmarshal(TPMT_SIGNATURE_MARSHAL_REF|(flag ? NULL_FLAG : 0), (target), (buffer), \
 	      (size))
@@ -1381,7 +1384,7 @@
     UnmarshalUnion(TPMU_ENCRYPTED_SECRET_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_ENCRYPTED_SECRET_Marshal(source, buffer, size, selector)	\
-    MarshalUnion(TPMU_ENCRYPTED_SECRET_MARSHAL_REF, (target), (buffer), (size),	\
+    MarshalUnion(TPMU_ENCRYPTED_SECRET_MARSHAL_REF, (source), (buffer), (size),	\
 		 (selector))
 #define TPM2B_ENCRYPTED_SECRET_Unmarshal(target, buffer, size)		\
     Unmarshal(TPM2B_ENCRYPTED_SECRET_MARSHAL_REF, (target), (buffer), (size))
@@ -1395,7 +1398,7 @@
     UnmarshalUnion(TPMU_PUBLIC_ID_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_PUBLIC_ID_Marshal(source, buffer, size, selector)		\
-    MarshalUnion(TPMU_PUBLIC_ID_MARSHAL_REF, (target), (buffer), (size), (selector))
+    MarshalUnion(TPMU_PUBLIC_ID_MARSHAL_REF, (source), (buffer), (size), (selector))
 #define TPMS_KEYEDHASH_PARMS_Unmarshal(target, buffer, size)		\
     Unmarshal(TPMS_KEYEDHASH_PARMS_MARSHAL_REF, (target), (buffer), (size))
 #define TPMS_KEYEDHASH_PARMS_Marshal(source, buffer, size)		\
@@ -1412,7 +1415,7 @@
     UnmarshalUnion(TPMU_PUBLIC_PARMS_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_PUBLIC_PARMS_Marshal(source, buffer, size, selector)	\
-    MarshalUnion(TPMU_PUBLIC_PARMS_MARSHAL_REF, (target), (buffer), (size), \
+    MarshalUnion(TPMU_PUBLIC_PARMS_MARSHAL_REF, (source), (buffer), (size), \
 		 (selector))
 #define TPMT_PUBLIC_PARMS_Unmarshal(target, buffer, size)		\
     Unmarshal(TPMT_PUBLIC_PARMS_MARSHAL_REF, (target), (buffer), (size))
@@ -1440,7 +1443,7 @@
     UnmarshalUnion(TPMU_SENSITIVE_COMPOSITE_MARSHAL_REF, (target), (buffer), (size), \
 		   (selector))
 #define TPMU_SENSITIVE_COMPOSITE_Marshal(source, buffer, size, selector) \
-    MarshalUnion(TPMU_SENSITIVE_COMPOSITE_MARSHAL_REF, (target), (buffer), (size), \
+    MarshalUnion(TPMU_SENSITIVE_COMPOSITE_MARSHAL_REF, (source), (buffer), (size), \
 		 (selector))
 #define TPMT_SENSITIVE_Unmarshal(target, buffer, size)			\
     Unmarshal(TPMT_SENSITIVE_MARSHAL_REF, (target), (buffer), (size))
@@ -1507,4 +1510,5 @@
     Marshal(TPMS_AC_OUTPUT_MARSHAL_REF, (source), (buffer), (size))
 #define TPML_AC_CAPABILITIES_Marshal(source, buffer, size)		\
     Marshal(TPML_AC_CAPABILITIES_MARSHAL_REF, (source), (buffer), (size))
+
 #endif // _TABLE_MARSHAL_DEFINES_H_

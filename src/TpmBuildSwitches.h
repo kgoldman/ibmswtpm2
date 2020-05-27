@@ -3,7 +3,7 @@
 /*			    Build Switches	 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmBuildSwitches.h 1559 2019-12-19 15:41:01Z kgoldman $	*/
+/*            $Id: TpmBuildSwitches.h 1619 2020-05-19 16:51:47Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -146,7 +146,7 @@
 
 #if !(defined USE_DA_USED) || ((USE_DA_USED != NO) && (USE_DA_USED != YES))
 #   undef   USE_DA_USED
-#   define  USE_DA_USED     YES         // Default: Either YES or NO
+#   define  USE_DA_USED     NO         // Default: Either YES or NO
 #endif
 
 // Define TABLE_DRIVEN_DISPATCH to use tables rather than case statements for command dispatch and
@@ -339,7 +339,7 @@
 #if !(defined USE_BIT_FIELD_STRUCTURES)					\
     || ((USE_BIT_FIELD_STRUCTURES != NO) && (USE_BIT_FIELD_STRUCTURES != YES))
 #   undef   USE_BIT_FIELD_STRUCTURES
-#   define  USE_BIT_FIELD_STRUCTURES    YES        // Default: Either YES or NO
+#   define  USE_BIT_FIELD_STRUCTURES    NO        // Default: Either YES or NO
 #endif
 
 // This define is used to control the debug for the CertifyX509() command.

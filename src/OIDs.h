@@ -3,7 +3,7 @@
 /*			OID values						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: OIDs.h 1529 2019-11-21 23:29:01Z kgoldman $			*/
+/*            $Id: OIDs.h 1628 2020-05-27 19:35:29Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -98,7 +98,7 @@
 #if ALG_SHA384
 #define SHA384_OID(NAME)  MAKE_OID(NAME##SHA384)
 #else
-#define SHA#84_OID(NAME)
+#define SHA384_OID(NAME)
 #endif
 #ifndef ALG_SHA512
 #   define ALG_SHA512 NO
@@ -136,7 +136,7 @@
 #   define ALG_SHA3_512 NO
 #endif
 #if ALG_SHA3_512
-#define SSHA3_512_OID(NAME) MAKE_OID(NAME##SHA3_512)
+#define SHA3_512_OID(NAME) MAKE_OID(NAME##SHA3_512)
 #else
 #define SHA3_512_OID(NAME)
 #endif
@@ -146,15 +146,18 @@
 
 // These hash OIDs used in a lot of places.
 #define OID_SHA1_VALUE              0x06, 0x05, 0x2B, 0x0E, 0x03, 0x02, 0x1A
-SHA1_OID(_);        // Expands to
-//      MAKE_OID(_SHA1)
+SHA1_OID(_);        // Expands to:
+//     MAKE_OID(_SHA1)
 // which expands to:
-//      extern BYTE     OID_SHA1[]
+//     EXTERN  const BYTE OID_SHA1[] INITIALIZER({OID_SHA1_VALUE})
+// which, depending on the setting of EXTERN and
+// INITIALIZER, expands to either:
+//      extern const BYTE    OID_SHA1[]
 // or
-//      const BYTE      OID_SHA1[] = {OID_SHA1_VALUE}
+//      const BYTE           OID_SHA1[] = {OID_SHA1_VALUE}
 // which is:
-//      const BYTE      OID_SHA1[] = {0x06, 0x05, 0x2B, 0x0E,
-//                                    0x03, 0x02, 0x1A}
+//      const BYTE           OID_SHA1[] = {0x06, 0x05, 0x2B, 0x0E,
+//                                         0x03, 0x02, 0x1A}
 #define OID_SHA256_VALUE            NIST_HASH, 1
 SHA256_OID(_);
 #define OID_SHA384_VALUE            NIST_HASH, 2
@@ -201,7 +204,7 @@ SM3_256_OID(_PKCS1_);   // 1.2.156.10197.1.504
 #define OID_PKCS1_SHA3_256_VALUE    NIST_SIG, 14
 SHA3_256_OID(_PKCS1_);
 #define OID_PKCS1_SHA3_384_VALUE    NIST_SIG, 15
-SHA3_256_OID(_PKCS1_);
+SHA3_384_OID(_PKCS1_);
 #define OID_PKCS1_SHA3_512_VALUE    NIST_SIG, 16
 SHA3_512_OID(_PKCS1_);
 #endif // ALG_RSA

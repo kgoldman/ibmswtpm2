@@ -3,7 +3,7 @@
 /*			Table Marshal Types					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TableMarshalTypes.h 1531 2019-11-21 23:54:38Z kgoldman $	*/
+/*            $Id: TableMarshalTypes.h 1628 2020-05-27 19:35:29Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -124,7 +124,6 @@ typedef const struct ValuesMarshal_mst
     UINT8           marshalType;        // VALUES_MTYPE
     UINT8           modifiers;
     UINT8           errorCode;
-    UINT8           ranges;
     UINT8           singles;
     UINT32          values[1];
 } ValuesMarshal_mst;

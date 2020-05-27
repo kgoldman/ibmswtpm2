@@ -3,7 +3,7 @@
 /*		DRBG with a behavior according to SP800-90A			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptRand.c 1532 2019-11-26 14:28:36Z kgoldman $		*/
+/*            $Id: CryptRand.c 1603 2020-04-03 17:48:43Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -636,7 +636,9 @@ DRBG_InstantiateSeeded(
     return TPM_RC_SUCCESS;
 }
 /* 10.2.16.3.7 CryptRandStartup() */
-/* This function is called when TPM_Startup() is executed. This function always returns TRUE. */
+/* This function is called when TPM_Startup() is executed. */
+/* TRUE instantiation succeeded */	/* kgold */
+/* FALSE instantiation failed */
 LIB_EXPORT BOOL
 CryptRandStartup(
 		 void
@@ -644,14 +646,14 @@ CryptRandStartup(
 {
 #if ! _DRBG_STATE_SAVE
     // If not saved in NV, re-instantiate on each startup
-    DRBG_Instantiate(&drbgDefault, 0, NULL);
+    return DRBG_Instantiate(&drbgDefault, 0, NULL);	/* kgold */
 #else
     // If the running state is saved in NV, NV has to be loaded before it can
     // be updated
     if(go.drbgState.magic == DRBG_MAGIC)
-	DRBG_Reseed(&go.drbgState, NULL, NULL);
+	return DRBG_Reseed(&go.drbgState, NULL, NULL);		/* kgold */
     else
-	DRBG_Instantiate(&go.drbgState, 0, NULL);
+	return DRBG_Instantiate(&go.drbgState, 0, NULL);	/* kgold */
 #endif
     return TRUE;
 }

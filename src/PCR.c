@@ -3,7 +3,7 @@
 /*			   PCR access and manipulation 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: PCR.c 1529 2019-11-21 23:29:01Z kgoldman $			*/
+/*            $Id: PCR.c 1628 2020-05-27 19:35:29Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -163,12 +163,19 @@ PCRBelongsTCBGroup(
 		   )
 {
 #if ENABLE_PCR_NO_INCREMENT == YES
+#if 0
     // Platform specification decides if a PCR belongs to a TCB group.  In this
     // implementation, we assume PCR[20-22] belong to TCB group.  If the platform
     // specification requires differently, the implementation should be
     // changed accordingly
     if(handle >= 20 && handle <= 22)
 	return TRUE;
+#endif
+    /* kgold - changed for PC Client, 16, 12-23 no increment */
+    if ((handle == 16) ||
+	((handle >= 21) && (handle <= 23))) {
+	return  TRUE;
+    }
 #endif
     return FALSE;
 }

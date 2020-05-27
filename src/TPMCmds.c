@@ -3,7 +3,7 @@
 /*			 Main Simulator Entry Point		    		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TPMCmds.c 1528 2019-11-20 20:31:43Z kgoldman $		*/
+/*            $Id: TPMCmds.c 1604 2020-04-03 18:50:29Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -183,6 +183,9 @@ main(
 	}
     // Disable NV memory
     _plat__NVDisable(0);
+    /* power on the TPM  - kgold MS simulator comes up powered off */
+    _rpc__Signal_PowerOn(FALSE);
+    _rpc__Signal_NvOn();
 
     portNumPlat = portNum + 1;
     StartTcpServer(&portNum, &portNumPlat);

@@ -3,7 +3,7 @@
 /*			Table Marshal						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TableMarshal.h 1529 2019-11-21 23:29:01Z kgoldman $		*/
+/*            $Id: TableMarshal.h 1594 2020-03-26 22:15:48Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,13 +55,13 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
 /*										*/
 /********************************************************************************/
 
 /* 9.10.7.1	TableMarshal.h */
-#ifndef _TABLE_DRIVEN_MARSHAL_H_
-#define _TABLE_DRIVEN_MARSHAL_H_
+#ifndef _TABLE_MARSHAL_H_
+#define _TABLE_MARSHAL_H_
 
 /* These are the basic unmarshaling types. This is in the first byte of each structure descriptor
    that is passed to Marshal()/Unmarshal() for processing. */
@@ -97,9 +97,67 @@
 #define NULL_MASK       ~(NULL_FLAG)
 
 /* When looking up the value to marshal, the upper two bits of the marshal index are masked to yield
-   the actual index. */
+   the actual index. The MSb is the flag bit that indicates if a null flag is set. Code does not
+   veify that the bit is clear when the called object does not take a flag as this is a benign
+   error.
 
-typedef unsigned int        uint;
+   The modifier byte as used by each MTYPE shown as a structure. They are expressed as a bit maps
+   below. However, the code uses masking and not bit fields. The types show below are just to help
+   in understanding.
+
+   NOTE LSb0 bit numbering is assumed in these typedefs When used in an UINT_MTYPE
+*/
+
+typedef struct integerModifier {
+    unsigned            size : 2;
+    unsigned            sign : 1;
+    unsigned            unused : 7;
+} integerModifier;
+/* When used in a VALUES_MTYPE */
+typedef struct valuesModifier {
+    unsigned            size : 2;
+    unsigned            sign : 1;
+    unsigned            unused : 5;
+    unsigned            takesNull : 1;
+} valuesModifier;
+/* When used in a TABLE_MTYPE */
+typedef struct tableModifier {
+    unsigned            size : 2;
+    unsigned            sign : 1;
+    unsigned            unused : 3;
+    unsigned            hasBits : 1;
+    unsigned            takesNull : 1;
+} tableModifier;
+/* the modifier byte for MIN_MAX_MTYPE */
+typedef struct minMaxModifier {
+    unsigned            size : 2;
+    unsigned            sign : 1;
+    unsigned            unused : 3;
+    unsigned            hasBits : 1;
+    unsigned            takesNull : 1;
+} minMaxModifier;
+/* the modifier byte for ATTRIBUTES_MTYPE */
+typedef struct attributesModifier {
+    unsigned            size : 2;
+    unsigned            sign : 1;
+    unsigned            unused : 5;
+} attributesModifier;
+/* the modifier byte is not present in a STRUCTURE_MTYPE */
+/* the modifier byte is not present in a TPM2B_MTYPE */
+/* the modifier byte for a TPM2BS_MTYPE */
+typedef struct tpm2bsModifier {
+    unsigned            offset : 4;
+    unsigned            unused : 2;
+    unsigned            sizeEqual : 1;
+    unsigned            propigateNull : 1;
+} tpm2bsModifier;
+/* the modifier byte for a LIST_MTYPE */
+typedef struct listModifier {
+    unsigned            offset : 4;
+    unsigned            unused : 2;
+    unsigned            sizeEqual : 1;
+    unsigned            propigateNull : 1;
+} listModifier;
 
 /* 9.10.7.1.1.2	Modifier Octet Values */
 /* These are in used in anything that is an integer value. Theses would not be in structure modifier
@@ -120,8 +178,7 @@ typedef unsigned int        uint;
 /* When referencing a structure, this flag indicates if a null is to be propagated to the referenced
    structure or type. */
 
-#define PROPAGATE_SHIFT     7
-#define PROPAGATE_NULL      (1 << PROPAGATE_SHIFT)
+#define PROPAGATE_NULL      (TAKES_NULL)
 
 /* Can be used in min-max or table structures. */
 
@@ -134,8 +191,9 @@ typedef unsigned int        uint;
 /* In a TPM2BS_MTYPE */
 
 #define SIZE_EQUAL          (1 << 6)
+#define OFFSET_MASK         (0xF)
 
-/* Right now, there are two spare bits in the modifiers field. Within the descriptor word of each
+/* Right now, there are three spare bits in the modifiers field. Within the descriptor word of each
    entry in a StructMarsh_mst(), there is a selector field to determine which of the sub-types the
    entry represents and a field that is used to reference another structure entry. This is a 6-bit
    field allowing a structure to have 64 entries. This should be more than enough as the structures
@@ -168,7 +226,9 @@ typedef unsigned int        uint;
 /* This determines if the null flag is propagated to this type. If generate, the NULL_FLAG is SET in
    the index value. This flag is one bit (7) */
 
-#define ELEMENT_PROPAGATE           (1 << PROPAGATE_SHIFT)
+
+#define ELEMENT_PROPAGATE           (PROPAGATE_NULL)
+
 #define INDEX_MASK                  ((UINT16)NULL_MASK)
 
 /* This is used in all bit-field checks. These are used when a value that is checked is conditional
@@ -189,7 +249,7 @@ typedef unsigned int        uint;
 #define SET_ELEMENT_COUNT(count)    ((count & 0x1F) << 3)
 #define GET_ELEMENT_COUNT(val)      ((val  >> 3) & 0x1F)
 
-#endif // _TABLE_DRIVEN_MARSHAL_H_
+#endif // _TABLE_MARSHAL_H_
 
 
 

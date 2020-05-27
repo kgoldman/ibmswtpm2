@@ -3,7 +3,7 @@
 /*			  Code to perform the various self-test functions.	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: AlgorithmTests.c 1519 2019-11-15 20:43:51Z kgoldman $	*/
+/*            $Id: AlgorithmTests.c 1594 2020-03-26 22:15:48Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -132,7 +132,7 @@ TestHash(
 #endif
 #if ALG_SM3_256
 	  case ALG_SM3_256_VALUE:
-	    // There are currently not test vectors for SM3
+	    // There are currently no test vectors for SM3
 	    //            testDigest = &c_SM3_256_digest.b;
 	    testDigest = NULL;
 	    break;
@@ -243,7 +243,7 @@ AllModesAreDone(
 		)
 {
     TPM_ALG_ID                  alg;
-    for(alg = TPM_SYM_MODE_FIRST; alg <= TPM_SYM_MODE_LAST; alg++)
+    for(alg = SYM_MODE_FIRST; alg <= SYM_MODE_LAST; alg++)
 	if(TEST_BOTH(alg))
 	    return FALSE;
     return TRUE;
@@ -271,8 +271,8 @@ TestSymmetric(
 		{
 		    if(c_symTestValues[index].alg == alg)
 			{
-			    for(mode = TPM_SYM_MODE_FIRST;
-				mode <= TPM_SYM_MODE_LAST;
+			    for(mode = SYM_MODE_FIRST;
+				mode <= SYM_MODE_LAST;
 				mode++)
 				{
 				    if(TEST_BIT(mode, *toTest))
@@ -284,11 +284,11 @@ TestSymmetric(
 	    if(AllSymsAreDone(toTest))
 		{
 		    // all symmetric algorithms tested so no modes should be set
-		    for(alg = TPM_SYM_MODE_FIRST; alg <= TPM_SYM_MODE_LAST; alg++)
+		    for(alg = SYM_MODE_FIRST; alg <= SYM_MODE_LAST; alg++)
 			CLEAR_BOTH(alg);
 		}
 	}
-    else if(TPM_SYM_MODE_FIRST <= alg && alg <= TPM_SYM_MODE_LAST)
+    else if(SYM_MODE_FIRST <= alg && alg <= SYM_MODE_LAST)
 	{
 	    // Test this mode for all key sizes and algorithms
 	    for(index = 0; index < NUM_SYMS; index++)

@@ -3,7 +3,7 @@
 /*			 TPM to OpenSSL BigNum Shim Layer			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslMath.c 1536 2019-11-27 22:21:35Z kgoldman $		*/
+/*            $Id: TpmToOsslMath.c 1598 2020-03-27 21:59:49Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -81,12 +81,6 @@
 #include "Tpm.h"
 #ifdef MATH_LIB_OSSL
 #include "TpmToOsslMath_fp.h"
-
-#if OPENSSL_VERSION_NUMBER < 0x10101000		/* kgold */
-#define EC_POINT_set_affine_coordinates(a,b,c,d,e)  EC_POINT_set_affine_coordinates_GFp(a,b,c,d,e)
-#define EC_POINT_get_affine_coordinates(a,b,c,d,e)  EC_POINT_get_affine_coordinates_GFp(a,b,c,d,e)
-#endif
-
 
 /* B.2.3.2.3.1.	OsslToTpmBn() */
 /* This function converts an OpenSSL BIGNUM to a TPM bignum. In this implementation it is assumed
@@ -455,7 +449,7 @@ PointFromOssl(
     if(y == NULL)
 	FAIL(FATAL_ERROR_ALLOCATION);
     // If this returns false, then the point is at infinity
-    OK = EC_POINT_get_affine_coordinates(E->G, pIn, x, y, E->CTX);
+    OK = EC_POINT_get_affine_coordinates_GFp(E->G, pIn, x, y, E->CTX);
     if(OK)
 	{
 	    OsslToTpmBn(pOut->x, x);
@@ -482,10 +476,10 @@ EcPointInitialized(
 	{
 	    BIG_INITIALIZED(bnX, initializer->x);
 	    BIG_INITIALIZED(bnY, initializer->y);
-	    P = EC_POINT_new(E->G);
 	    if(E == NULL)
 		FAIL(FATAL_ERROR_ALLOCATION);
-	    if(!EC_POINT_set_affine_coordinates(E->G, P, bnX, bnY, E->CTX))
+	    P = EC_POINT_new(E->G);
+	    if(!EC_POINT_set_affine_coordinates_GFp(E->G, P, bnX, bnY, E->CTX))
 		P = NULL;
 	}
     return P;
@@ -536,7 +530,7 @@ BnCurveInitialize(
 	    VERIFY(P != NULL);
 	    
 	    // Need to use this in case Montgomery method is being used
-	    VERIFY(EC_POINT_set_affine_coordinates(E->G, P, bnX, bnY, CTX));
+	    VERIFY(EC_POINT_set_affine_coordinates_GFp(E->G, P, bnX, bnY, CTX));
 	    // Now set the generator
 	    VERIFY(EC_GROUP_set_generator(E->G, P, bnN, bnH));
 	    

@@ -3,7 +3,7 @@
 /*			  TPM Part 2 Headers	   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmTypes.h 1532 2019-11-26 14:28:36Z kgoldman $		*/
+/*            $Id: TpmTypes.h 1606 2020-04-14 16:26:05Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -64,7 +64,7 @@
 #ifndef TPMTYPES_H
 #define TPMTYPES_H
 
-/* Table 1:2 - Definition of TPM_ALG_ID Constants */
+/* TCG Algorithm Registry: Table 1:2 - Definition of TPM_ALG_ID Constants */
 
 typedef UINT16                          TPM_ALG_ID;
 #define TYPE_OF_TPM_ALG_ID              UINT16
@@ -157,7 +157,7 @@ typedef UINT16                          TPM_ALG_ID;
 #define     ALG_LAST_VALUE              0x0044
 #define TPM_ALG_LAST                    (TPM_ALG_ID)(ALG_LAST_VALUE)
 
-/* Table 1:3 - Definition of TPM_ECC_CURVE Constants */
+/* TCG Algorithm Registry: Table 1:3 - Definition of TPM_ECC_CURVE Constants */
 typedef UINT16              TPM_ECC_CURVE;
 #define TYPE_OF_TPM_ECC_CURVE   UINT16
 #define TPM_ECC_NONE        (TPM_ECC_CURVE)(0x0000)
@@ -170,7 +170,7 @@ typedef UINT16              TPM_ECC_CURVE;
 #define TPM_ECC_BN_P638     (TPM_ECC_CURVE)(0x0011)
 #define TPM_ECC_SM2_P256    (TPM_ECC_CURVE)(0x0020)
 
-/* Table 2:12 - Definition of TPM_CC Constants */
+/* TPM 2.0 Part 2: Table 2:12 - Definition of TPM_CC Constants */
 typedef UINT32                              TPM_CC;
 #define TYPE_OF_TPM_CC                      UINT32
 #define TPM_CC_NV_UndefineSpaceSpecial      (TPM_CC)(0x0000011F)
@@ -292,6 +292,8 @@ typedef UINT32                              TPM_CC;
 #define TPM_CC_Policy_AC_SendSelect         (TPM_CC)(0x00000196)
 #define TPM_CC_CertifyX509                  (TPM_CC)(0x00000197)
 #define TPM_CC_ACT_SetTimeout               (TPM_CC)(0x00000198)
+#define TPM_CC_ECC_Encrypt		    (TPM_CC)(0x00000199)
+#define TPM_CC_ECC_Decrypt		    (TPM_CC)(0x0000019A)
 #define CC_VEND                             0x20000000
 #define TPM_CC_Vendor_TCG_Test              (TPM_CC)(0x20000000)
 
@@ -320,18 +322,19 @@ typedef  UINT32             TPM_SPEC;
 #define TPM_SPEC_FAMILY         (TPM_SPEC)(SPEC_FAMILY)
 #define SPEC_LEVEL              00
 #define TPM_SPEC_LEVEL          (TPM_SPEC)(SPEC_LEVEL)
-#define SPEC_VERSION            159
+#define SPEC_VERSION            162
 #define TPM_SPEC_VERSION        (TPM_SPEC)(SPEC_VERSION)
-#define SPEC_YEAR               2019
+#define SPEC_YEAR               2020
 #define TPM_SPEC_YEAR           (TPM_SPEC)(SPEC_YEAR)
-#define SPEC_DAY_OF_YEAR        312
+#define SPEC_DAY_OF_YEAR        53
 #define TPM_SPEC_DAY_OF_YEAR    (TPM_SPEC)(SPEC_DAY_OF_YEAR)
 
-/* Table 2:7 - Definition of TPM_GENERATED Constants */
+/* Table 2:7 - Definition of TPM_CONSTANTS32 Constants */
 
-typedef UINT32                  TPM_GENERATED;
-#define TYPE_OF_TPM_GENERATED   UINT32
-#define TPM_GENERATED_VALUE     (TPM_GENERATED)(0xFF544347)
+typedef UINT32			TPM_CONSTANTS32;
+#define TYPE_OF_TPM_CONSTANTS32 UINT32
+#define TPM_GENERATED_VALUE     (TPM_CONSTANTS32)(0xFF544347)
+#define TPM_MAX_DERIVATION_BITS	(TPM_CONSTANTS32)8192
 
 /* Table 2:16 - Definition of TPM_RC Constants */
 typedef UINT32             TPM_RC;
@@ -739,11 +742,6 @@ typedef  TPM_HANDLE         TPM_HC;
 #define  HR_TRANSIENT		 (TPM_HC)((((UINT32)TPM_HT_TRANSIENT) << HR_SHIFT))
 #define  HR_PERSISTENT           (TPM_HC)((((UINT32)TPM_HT_PERSISTENT) << HR_SHIFT))
 
-#if 0
-#define  HR_TRANSIENT            (TPM_HC)((TPM_HT_TRANSIENT<<HR_SHIFT))
-#define  HR_PERSISTENT           (TPM_HC)((TPM_HT_PERSISTENT<<HR_SHIFT))
-#endif
-
 #define  HR_NV_INDEX             (TPM_HC)((TPM_HT_NV_INDEX<<HR_SHIFT))
 #define  HR_PERMANENT            (TPM_HC)((TPM_HT_PERMANENT<<HR_SHIFT))
 #define  PCR_FIRST               (TPM_HC)((HR_PCR+0))
@@ -816,12 +814,14 @@ typedef UINT32 TPMA_ALGORITHM;
 #define TPMA_ALGORITHM_method            ((TPMA_ALGORITHM)1 << 10)
 #define TPMA_ALGORITHM_reserved		 0xfffff8f0
 
+// This is the initializer for a TPMA_ALGORITHM bit array.
 #define TPMA_ALGORITHM_INITIALIZER(					\
 				   asymmetric, symmetric,  hash,       object,     bits_at_4, \
 				   signing,    encrypting, method,     bits_at_11) \
-    (asymmetric << 0) + (symmetric << 1)  + (hash << 2)       +	\
+    (TPMA_ALGORITHM) (								\
+            (asymmetric << 0) + (symmetric << 1)  + (hash << 2)       +	\
 	    (object << 3)     + (signing << 8)    + (encrypting << 9) +	\
-	    (method << 10)
+	    (method << 10))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_OBJECT UINT32
@@ -892,13 +892,14 @@ typedef UINT32                              TPMA_OBJECT;
              userwithauth,         adminwithpolicy,      bits_at_8,                \
              noda,                 encryptedduplication, bits_at_12,               \
              restricted,           decrypt,              sign,                     \
-             x509sign,             bits_at_20)                                     \
-            {(fixedtpm << 1)              + (stclear << 2)               +         \
+             x509sign,             bits_at_20)					   \
+      (TPMA_OBJECT)(								   \
+	     (fixedtpm << 1)              + (stclear << 2)               +         \
              (fixedparent << 4)           + (sensitivedataorigin << 5)   +         \
              (userwithauth << 6)          + (adminwithpolicy << 7)       +         \
              (noda << 10)                 + (encryptedduplication << 11) +         \
              (restricted << 16)           + (decrypt << 17)              +         \
-             (sign << 18)                 + (x509sign << 19)}
+             (sign << 18)                 + (x509sign << 19))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_SESSION    UINT8
@@ -939,9 +940,10 @@ typedef UINT8                           TPMA_SESSION;
 #define TPMA_SESSION_INITIALIZER(					\
 				 continuesession, auditexclusive,  auditreset,      bits_at_3, \
 				 decrypt,         encrypt,         audit) \
-           {(continuesession << 0) + (auditexclusive << 1)  +			\
+        (TPMA_SESSION) (							\
+            (continuesession << 0) + (auditexclusive << 1)  +			\
 	    (auditreset << 2)      + (decrypt << 5)         +		\
-	    (encrypt << 6)         + (audit << 7)}
+	    (encrypt << 6)         + (audit << 7))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_LOCALITY   UINT8
@@ -981,8 +983,9 @@ typedef UINT8                           TPMA_LOCALITY;
 #define TPMA_LOCALITY_INITIALIZER(					\
 				  tpm_loc_zero,  tpm_loc_one,   tpm_loc_two,   tpm_loc_three, \
 				  tpm_loc_four,  extended)		\
-           {(tpm_loc_zero << 0)  + (tpm_loc_one << 1)   + (tpm_loc_two << 2)   + \
-	    (tpm_loc_three << 3) + (tpm_loc_four << 4)  + (extended << 5)}
+     (TPMA_LOCALITY)(                  					\
+            (tpm_loc_zero << 0)  + (tpm_loc_one << 1)   + (tpm_loc_two << 2)   + \
+	    (tpm_loc_three << 3) + (tpm_loc_four << 4)  + (extended << 5))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_PERMANENT  UINT32
@@ -1030,9 +1033,10 @@ typedef UINT32                              TPMA_PERMANENT;
 				   ownerauthset,       endorsementauthset, lockoutauthset, \
 				   bits_at_3,          disableclear,       inlockout, \
 				   tpmgeneratedeps,    bits_at_11)	\
-    {(ownerauthset << 0)       + (endorsementauthset << 1) +		\
+    (TPMA_PERMANENT) (							\
+            (ownerauthset << 0)       + (endorsementauthset << 1) +		\
 	    (lockoutauthset << 2)     + (disableclear << 8)       +	\
-	    (inlockout << 9)          + (tpmgeneratedeps << 10)}
+	    (inlockout << 9)          + (tpmgeneratedeps << 10))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_STARTUP_CLEAR  UINT32
@@ -1071,8 +1075,9 @@ typedef UINT32                          TPMA_STARTUP_CLEAR;
 // This is the initializer for a TPMA_STARTUP_CLEAR bit array.
 #define TPMA_STARTUP_CLEAR_INITIALIZER(					\
 				       phenable, shenable, ehenable, phenablenv, bits_at_4, orderly) \
-    {(phenable << 0)   + (shenable << 1)   + (ehenable << 2)   +	\
-	    (phenablenv << 3) + (orderly << 31)}
+    (TPMA_STARTUP_CLEAR) (						\
+	(phenable << 0)   + (shenable << 1)   + (ehenable << 2)   +	\
+	(phenablenv << 3) + (orderly << 31))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_MEMORY UINT32
@@ -1103,7 +1108,8 @@ typedef UINT32                          TPMA_MEMORY;
 // This is the initializer for a TPMA_MEMORY bit array.
 #define TPMA_MEMORY_INITIALIZER(					\
 				sharedram, sharednv, objectcopiedtoram, bits_at_3) \
-    {(sharedram << 0) + (sharednv << 1) + (objectcopiedtoram << 2)}
+    (TPMA_MEMORY)(                                                                 \
+		  (sharedram << 0) + (sharednv << 1) + (objectcopiedtoram << 2))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_CC     UINT32
@@ -1149,9 +1155,10 @@ typedef UINT32                      TPMA_CC;
 #define TPMA_CC_INITIALIZER(						\
 			    commandindex, bits_at_16,   nv,           extensive,    flushed, \
 			    chandles,     rhandle,      v,            bits_at_30) \
+    (TPMA_CC)(								\
     (commandindex << 0) + (nv << 22)          + (extensive << 23)   +	\
-     (flushed << 24)     + (chandles << 25)    + (rhandle << 28)     +	\
-	    (v << 29)
+    (flushed << 24)     + (chandles << 25)    + (rhandle << 28)     +	\
+    (v << 29))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_MODES  UINT32
@@ -1174,7 +1181,9 @@ typedef UINT32                  TPMA_MODES;
 #define TYPE_OF_TPMA_MODES      UINT32
 #define TPMA_MODES_FIPS_140_2   ((TPMA_MODES)1 << 0)
 // This is the initializer for a TPMA_MODES bit array.
-#define TPMA_MODES_INITIALIZER(fips_140_2, bits_at_1) {(fips_140_2 << 0)}
+#define TPMA_MODES_INITIALIZER(fips_140_2, bits_at_1) 	\
+    (TPMA_MODES)(					\
+    ((fips_140_2 << 0))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 #define TYPE_OF_TPMA_X509_KEY_USAGE UINT32
@@ -1228,7 +1237,8 @@ typedef UINT32                                  TPMA_X509_KEY_USAGE;
              cRLSign,          keycertsign,      keyagreement,                     \
              dataencipherment, keyencipherment,  nonrepudiation,                   \
              digitalsignature)                                                     \
-    ((decipheronly << 23)     + (encipheronly << 24)     +		\
+    (TPMA_X509_KEY_USAGE)(						\
+     (decipheronly << 23)     + (encipheronly << 24)     +		\
      (cRLSign << 25)          + (keycertsign << 26)      +		\
      (keyagreement << 27)     + (dataencipherment << 28) +		\
      (keyencipherment << 29)  + (nonrepudiation << 30)   +		\
@@ -1259,7 +1269,8 @@ typedef UINT32                      TPMA_ACT;
 #define TPMA_ACT_preserveSignaled   ((TPMA_ACT)1 << 1)
 // This is the initializer for a TPMA_ACT bit array.
 #define TPMA_ACT_INITIALIZER(signaled, preservesignaled, bits_at_2)	\
-    {(signaled << 0) + (preservesignaled << 1)}
+    (TPMA_ACT)(								\
+	       (signaled << 0) + (preservesignaled << 1))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 /* Table 2:39 - Definition of TPMI_YES_NO Type  */
@@ -1666,7 +1677,7 @@ typedef union {
 } TPMU_ATTEST;
 /* Table 2:123 - Definition of TPMS_ATTEST Structure  */
 typedef struct {
-    TPM_GENERATED           magic;
+    TPM_CONSTANTS32         magic;
     TPMI_ST_ATTEST          type;
     TPM2B_NAME              qualifiedSigner;
     TPM2B_DATA              extraData;
@@ -1883,24 +1894,25 @@ typedef  TPMS_EMPTY          TPMS_ENC_SCHEME_RSAES;
 typedef  TPMS_SCHEME_HASH    TPMS_KEY_SCHEME_ECDH;
 typedef  TPMS_SCHEME_HASH    TPMS_KEY_SCHEME_ECMQV;
 /* Table 2:155 - Definition of Types for KDF Schemes */
-typedef  TPMS_SCHEME_HASH    TPMS_SCHEME_MGF1;
-typedef  TPMS_SCHEME_HASH    TPMS_SCHEME_KDF1_SP800_56A;
-typedef  TPMS_SCHEME_HASH    TPMS_SCHEME_KDF2;
-typedef  TPMS_SCHEME_HASH    TPMS_SCHEME_KDF1_SP800_108;
+typedef  TPMS_SCHEME_HASH    TPMS_KDF_SCHEME_MGF1;
+typedef  TPMS_SCHEME_HASH    TPMS_KDF_SCHEME_KDF1_SP800_56A;
+typedef  TPMS_SCHEME_HASH    TPMS_KDF_SCHEME_KDF2;
+typedef  TPMS_SCHEME_HASH    TPMS_KDF_SCHEME_KDF1_SP800_108;
 /* Table 2:156 - Definition of TPMU_KDF_SCHEME Union  */
 typedef union {
 #if 	ALG_MGF1
-    TPMS_SCHEME_MGF1              mgf1;
+    TPMS_KDF_SCHEME_MGF1              mgf1;
 #endif   // ALG_MGF1
 #if 	ALG_KDF1_SP800_56A
-    TPMS_SCHEME_KDF1_SP800_56A    kdf1_sp800_56a;
+    TPMS_KDF_SCHEME_KDF1_SP800_56A    kdf1_sp800_56a;
 #endif   // ALG_KDF1_SP800_56A
 #if 	ALG_KDF2
-    TPMS_SCHEME_KDF2              kdf2;
+    TPMS_KDF_SCHEME_KDF2              kdf2;
 #endif   // ALG_KDF2
 #if 	ALG_KDF1_SP800_108
-    TPMS_SCHEME_KDF1_SP800_108    kdf1_sp800_108;
+    TPMS_KDF_SCHEME_KDF1_SP800_108    kdf1_sp800_108;
 #endif   // ALG_KDF1_SP800_108
+    TPMS_SCHEME_HASH                    anyKdf;
 } TPMU_KDF_SCHEME;
 /* Table 2:157 - Definition of TPMT_KDF_SCHEME Structure  */
 typedef struct {
@@ -2263,7 +2275,9 @@ typedef UINT32                      TPM_NV_INDEX;
 #define TPM_NV_INDEX_RH_NV_SHIFT    24
 #define TPM_NV_INDEX_RH_NV          ((TPM_NV_INDEX)0xff << 24)
 // This is the initializer for a TPM_NV_INDEX bit array.
-#define TPM_NV_INDEX_INITIALIZER(index, rh_nv) {(index << 0) + (rh_nv << 24)}
+#define TPM_NV_INDEX_INITIALIZER(index, rh_nv)				\
+    (TPM_NV_INDEX)(							\
+		   (index << 0) + (rh_nv << 24))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 // Table 2:206 - Definition of TPM_NT Constants
@@ -2365,7 +2379,8 @@ typedef UINT32                  TPMA_NV;
 			    ppread,         ownerread,      authread,       policyread, \
 			    bits_at_20,     no_da,          orderly,        clear_stclear, \
 			    readlocked,     written,        platformcreate, read_stclear) \
-    {(ppwrite << 0)         + (ownerwrite << 1)      +			\
+    (TPMA_NV)(								\
+     (ppwrite << 0)         + (ownerwrite << 1)      +			\
      (authwrite << 2)       + (policywrite << 3)     +			\
      (tpm_nt << 4)          + (policy_delete << 10)  +			\
      (writelocked << 11)    + (writeall << 12)       +			\
@@ -2375,7 +2390,7 @@ typedef UINT32                  TPMA_NV;
      (policyread << 19)     + (no_da << 25)          +			\
      (orderly << 26)        + (clear_stclear << 27)  +			\
      (readlocked << 28)     + (written << 29)        +			\
-     (platformcreate << 30) + (read_stclear << 31)}
+     (platformcreate << 30) + (read_stclear << 31))
 #endif // USE_BIT_FIELD_STRUCTURES
 
 /* Table 2:209 - Definition of TPMS_NV_PUBLIC Structure  */

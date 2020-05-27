@@ -3,7 +3,7 @@
 /*			    Unmarshal Prototypes				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Unmarshal_fp.h 1526 2019-11-18 20:25:45Z kgoldman $		*/
+/*            $Id: Unmarshal_fp.h 1603 2020-04-03 17:48:43Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -87,8 +87,10 @@ extern "C" {
     TPM2B_Unmarshal(TPM2B *target, UINT16 targetSize, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPM_KEY_BITS_Unmarshal(TPM_KEY_BITS *target, BYTE **buffer, INT32 *size);
+#if 0
     LIB_EXPORT TPM_RC
     TPM_GENERATED_Unmarshal(TPM_GENERATED *target, BYTE **buffer, INT32 *size);
+#endif
     LIB_EXPORT TPM_RC
     TPM_ALG_ID_Unmarshal(TPM_ALG_ID *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
@@ -354,13 +356,13 @@ extern "C" {
     LIB_EXPORT TPM_RC
     TPMS_KEY_SCHEME_ECMQV_Unmarshal(TPMS_KEY_SCHEME_ECMQV *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
-    TPMS_SCHEME_KDF1_SP800_108_Unmarshal(TPMS_SCHEME_KDF1_SP800_108 *target, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_KDF1_SP800_108_Unmarshal(TPMS_KDF_SCHEME_KDF1_SP800_108 *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
-    TPMS_SCHEME_KDF1_SP800_56A_Unmarshal(TPMS_SCHEME_KDF1_SP800_56A *target, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_KDF1_SP800_56A_Unmarshal(TPMS_KDF_SCHEME_KDF1_SP800_56A *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
-    TPMS_SCHEME_KDF2_Unmarshal(TPMS_SCHEME_KDF2 *target, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_KDF2_Unmarshal(TPMS_KDF_SCHEME_KDF2 *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
-    TPMS_SCHEME_MGF1_Unmarshal(TPMS_SCHEME_MGF1 *target, BYTE **buffer, INT32 *size);
+    TPMS_KDF_SCHEME_MGF1_Unmarshal(TPMS_KDF_SCHEME_MGF1 *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPMU_KDF_SCHEME_Unmarshal(TPMU_KDF_SCHEME *target, BYTE **buffer, INT32 *size, UINT32 selector);
     LIB_EXPORT TPM_RC

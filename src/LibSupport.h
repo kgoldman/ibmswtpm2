@@ -3,7 +3,7 @@
 /*		 select the library code that gets included in the TPM build 	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: LibSupport.h 1561 2019-12-19 20:58:43Z kgoldman $		*/
+/*            $Id: LibSupport.h 1628 2020-05-27 19:35:29Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -64,11 +64,14 @@
 #ifndef _LIB_SUPPORT_H_
 #define _LIB_SUPPORT_H_
 
+/* kgold added power and s390 */
 #ifndef RADIX_BITS
 #   if defined(__x86_64__) || defined(__x86_64)				\
-    || defined(__amd64__) || defined(__amd64) || defined(_WIN64) || defined(_M_X64) \
-    || defined(_M_ARM64) || defined(__aarch64__) \
-    || defined(__powerpc64__) || defined(__ppc64__)
+    || defined(__amd64__) || defined(__amd64)				\
+    || defined(_WIN64) || defined(_M_X64)		 		\
+    || defined(_M_ARM64) || defined(__aarch64__) 			\
+    || defined(__powerpc64__) || defined(__PPC64__) || defined(__ppc64__) \
+    || defined(__s390x__)
 #       define RADIX_BITS                      64
 #   elif defined(__i386__) || defined(__i386) || defined(i386)		\
     || defined(_WIN32) || defined(_M_IX86)				\
@@ -83,7 +86,7 @@
 #define LIB_QUOTE(_STRING_) #_STRING_
 #define LIB_INCLUDE2(_LIB_, _TYPE_) LIB_QUOTE(TpmTo##_LIB_##_TYPE_.h)
 #define LIB_INCLUDE(_LIB_, _TYPE_) LIB_INCLUDE2(_LIB_, _TYPE_)
-// Include the options for hashing and symmetric. Defer the load of the math package Until the
+// Include the options for hashing and symmetric. Defer the load of the math package until the
 // bignum parameters are defined.
 #include LIB_INCLUDE(SYM_LIB, Sym)
 #include LIB_INCLUDE(HASH_LIB, Hash)

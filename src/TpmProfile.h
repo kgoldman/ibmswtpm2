@@ -3,7 +3,7 @@
 /*	Constants Reflecting a Particular TPM Implementation (e.g. PC Client)	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmProfile.h 1529 2019-11-21 23:29:01Z kgoldman $		*/
+/*            $Id: TpmProfile.h 1594 2020-03-26 22:15:48Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -185,7 +185,8 @@
 #define NUM_AUTHVALUE_PCR_GROUP         1
 #endif
 #ifndef MAX_CONTEXT_SIZE
-#define MAX_CONTEXT_SIZE                1976	/* kgold was 1264 */
+/* #define MAX_CONTEXT_SIZE             1344    */
+#define MAX_CONTEXT_SIZE                2680	/* kgold RSA-3072 */
 #endif
 #ifndef MAX_DIGEST_BUFFER
 #define MAX_DIGEST_BUFFER               1024
@@ -256,9 +257,6 @@
 #ifndef MAX_VENDOR_BUFFER_SIZE
 #define MAX_VENDOR_BUFFER_SIZE          1024
 #endif
-#ifndef MAX_DERIVATION_BITS
-#define MAX_DERIVATION_BITS         8192
-#endif
 #ifndef SIZE_OF_X509_SERIAL_NUMBER
 #define SIZE_OF_X509_SERIAL_NUMBER      20
 #endif
@@ -315,7 +313,7 @@
 #define ALG_KDF1_SP800_56A              (ALG_YES && ALG_ECC)
 #endif
 #ifndef ALG_KDF2
-#define ALG_KDF2                        ALG_NO
+#define ALG_KDF2                        ALG_YES
 #endif
 #ifndef ALG_KEYEDHASH
 #define ALG_KEYEDHASH                   ALG_YES
@@ -391,11 +389,15 @@
 #define RSA_2048                    (ALG_RSA && YES)
 #endif
 #ifndef RSA_3072
-#define RSA_3072                    (ALG_RSA && NO)
+#define RSA_3072                    (ALG_RSA && YES)
 #endif
 #ifndef RSA_4096
 #define RSA_4096                    (ALG_RSA && NO)
 #endif
+#ifndef RSA_16384
+#define RSA_16384                   (ALG_RSA && NO)
+#endif
+
 // Table 1:17 - Defines for AES Symmetric Cipher Algorithm Constants
 #ifndef AES_128
 #define AES_128                     (ALG_AES && YES)
@@ -493,6 +495,12 @@
 #endif
 #ifndef CC_Duplicate
 #define CC_Duplicate                        CC_YES
+#endif
+#ifndef CC_ECC_Decrypt
+#define CC_ECC_Decrypt                      (CC_NO && ALG_ECC)
+#endif
+#ifndef CC_ECC_Encrypt
+#define CC_ECC_Encrypt                      (CC_NO && ALG_ECC)
 #endif
 #ifndef CC_ECC_Parameters
 #define CC_ECC_Parameters                   (CC_YES && ALG_ECC)

@@ -3,7 +3,7 @@
 /*			     TPM Size Checks					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TableMarshalData.c 1529 2019-11-21 23:29:01Z kgoldman $		*/
+/*            $Id: TableMarshalData.c 1628 2020-05-27 19:35:29Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
 /*										*/
 /********************************************************************************/
 
@@ -111,9 +111,9 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_CURVE,
      {TPM_ECC_NONE,
       RANGE(1, 32, UINT16),
-      ((ECC_NIST_P192 << 0) | (ECC_NIST_P224 << 1) | (ECC_NIST_P256 << 2) |
-       (ECC_NIST_P384 << 3) | (ECC_NIST_P521 << 4) | (ECC_BN_P256 << 15)  |
-       (ECC_BN_P638 << 16)  | (ECC_SM2_P256 << 31))}},
+      (UINT32)((ECC_NIST_P192 << 0) | (ECC_NIST_P224 << 1) | (ECC_NIST_P256 << 2) |
+	       (ECC_NIST_P384 << 3) | (ECC_NIST_P521 << 4) | (ECC_BN_P256 << 15)  |
+	       (ECC_BN_P638 << 16)  | (ECC_SM2_P256 << 31))}},
     // TPM_CLOCK_ADJUST_DATA
     {MIN_MAX_MTYPE, ONE_BYTES|IS_SIGNED, (UINT8)TPM_RC_VALUE,
      {RANGE(TPM_CLOCK_COARSE_SLOWER, TPM_CLOCK_COARSE_FASTER, INT8)}},
@@ -241,21 +241,21 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_HASH,
      {TPM_ALG_NULL,
       RANGE(4, 41, UINT16),
-      ((ALG_SHA1 << 0)   | (ALG_SHA256 << 7) | (ALG_SHA384 << 8) |
-       (ALG_SHA512 << 9) | (ALG_SM3_256 << 14)),
-      ((ALG_SHA3_256 << 3)|(ALG_SHA3_384 << 4)|(ALG_SHA3_512 << 5))}},
+      (UINT32)((ALG_SHA1 << 0)   | (ALG_SHA256 << 7) | (ALG_SHA384 << 8) |
+	       (ALG_SHA512 << 9) | (ALG_SM3_256 << 14)),
+      (UINT32)((ALG_SHA3_256 << 3)|(ALG_SHA3_384 << 4)|(ALG_SHA3_512 << 5))}},
     // TPMI_ALG_ASYM_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_ASYMMETRIC,
      {TPM_ALG_NULL,
       RANGE(1, 35, UINT16),
-      ((ALG_RSA << 0)),
-      ((ALG_ECC << 2))}},
+      (UINT32)((ALG_RSA << 0)),
+      (UINT32)((ALG_ECC << 2))}},
     // TPMI_ALG_SYM_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_SYMMETRIC,
      {TPM_ALG_NULL,
       RANGE(3, 38, UINT16),
-      ((ALG_TDES << 0)|(ALG_AES << 3)|(ALG_XOR << 7)|(ALG_SM4 << 16)),
-      ((ALG_CAMELLIA << 3))}},
+      (UINT32)((ALG_TDES << 0)|(ALG_AES << 3)|(ALG_XOR << 7)|(ALG_SM4 << 16)),
+      (UINT32)((ALG_CAMELLIA << 3))}},
     // TPMI_ALG_SYM_OBJECT_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_SYMMETRIC,
      {TPM_ALG_NULL,
@@ -266,26 +266,26 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_MODE,
      {TPM_ALG_NULL,
       RANGE(63, 68, UINT16),
-      ((ALG_CMAC << 0) | (ALG_CTR << 1)  | (ALG_OFB << 2)  | (ALG_CBC << 3)  |
-       (ALG_CFB << 4)  | (ALG_ECB << 5))}},
+      (UINT32)((ALG_CMAC << 0) | (ALG_CTR << 1)  | (ALG_OFB << 2) |
+	       (ALG_CBC << 3) | (ALG_CFB << 4)  | (ALG_ECB << 5))}},
     // TPMI_ALG_KDF_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_KDF,
      {TPM_ALG_NULL,
       RANGE(7, 34, UINT16),
-      ((ALG_MGF1 << 0)            | (ALG_KDF1_SP800_56A << 25) |
-       (ALG_KDF2 << 26)           | (ALG_KDF1_SP800_108 << 27))}},
+      (UINT32)((ALG_MGF1 << 0)            | (ALG_KDF1_SP800_56A << 25) |
+	       (ALG_KDF2 << 26)           | (ALG_KDF1_SP800_108 << 27))}},
     // TPMI_ALG_SIG_SCHEME_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_SCHEME,
      {TPM_ALG_NULL,
       RANGE(5, 28, UINT16),
-      ((ALG_HMAC << 0)    | (ALG_RSASSA << 15) | (ALG_RSAPSS << 17) |
-       (ALG_ECDSA << 19)  | (ALG_ECDAA << 21)  | (ALG_SM2 << 22)    |
-       (ALG_ECSCHNORR << 23))}},
+      (UINT32)((ALG_HMAC << 0)    | (ALG_RSASSA << 15) | (ALG_RSAPSS << 17) |
+	       (ALG_ECDSA << 19)  | (ALG_ECDAA << 21)  | (ALG_SM2 << 22)    |
+	       (ALG_ECSCHNORR << 23))}},
     // TPMI_ECC_KEY_EXCHANGE_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_SCHEME,
      {TPM_ALG_NULL,
       RANGE(25, 29, UINT16),
-      ((ALG_ECDH << 0)|(ALG_SM2 << 2)|(ALG_ECMQV << 4))}},
+      (UINT32)((ALG_ECDH << 0)|(ALG_SM2 << 2)|(ALG_ECMQV << 4))}},
     // TPMI_ST_COMMAND_TAG_DATA
     {TABLE_MTYPE, TWO_BYTES, (UINT8)TPM_RC_BAD_TAG, 2,
      {TPM_ST_NO_SESSIONS, TPM_ST_SESSIONS}},
@@ -293,14 +293,16 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_SYMMETRIC,
      {TPM_ALG_NULL,
       RANGE(4, 63, UINT16),
-      ((ALG_SHA1 << 0)   | (ALG_SHA256 << 7) | (ALG_SHA384 << 8) |
-       (ALG_SHA512 << 9) | (ALG_SM3_256 << 14)),
-      ((ALG_SHA3_256 << 3)|(ALG_SHA3_384 << 4)|(ALG_SHA3_512 << 5)|(ALG_CMAC << 27))}},
+      (UINT32)((ALG_SHA1 << 0)   | (ALG_SHA256 << 7) | (ALG_SHA384 << 8) |
+	       (ALG_SHA512 << 9) | (ALG_SM3_256 << 14)),
+      (UINT32)((ALG_SHA3_256 << 3) | (ALG_SHA3_384 << 4) | (ALG_SHA3_512 << 5) |
+	       (ALG_CMAC << 27))}},
     // TPMI_ALG_CIPHER_MODE_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_MODE,
      {TPM_ALG_NULL,
       RANGE(64, 68, UINT16),
-      ((ALG_CTR << 0)|(ALG_OFB << 1)|(ALG_CBC << 2)|(ALG_CFB << 3)|(ALG_ECB << 4))}},
+      (UINT32)((ALG_CTR << 0) | (ALG_OFB << 1) | (ALG_CBC << 2) | (ALG_CFB << 3) |
+	       (ALG_ECB << 4))}},
     // TPMS_EMPTY_DATA
     {STRUCTURE_MTYPE, 1,
      {SET_ELEMENT_TYPE(SIMPLE_STYPE), UINT0_MARSHAL_REF, 0}},
@@ -668,7 +670,7 @@ MarshalData_st MarshalData = {
     // TPMS_ATTEST_DATA
     {STRUCTURE_MTYPE, 7, {
 	    SET_ELEMENT_TYPE(SIMPLE_STYPE)|SET_ELEMENT_SIZE(FOUR_BYTES),
-	    TPM_GENERATED_MARSHAL_REF,
+	    TPM_CONSTANTS32_MARSHAL_REF,
 	    (UINT16)(offsetof(TPMS_ATTEST, magic)),
 	    SET_ELEMENT_TYPE(SIMPLE_STYPE)|SET_ELEMENT_SIZE(TWO_BYTES),
 	    TPMI_ST_ATTEST_MARSHAL_REF,
@@ -822,7 +824,7 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_VALUE,
      {TPM_ALG_NULL,
       RANGE(5, 10, UINT16),
-      ((ALG_HMAC << 0)|(ALG_XOR << 5))}},
+      (UINT32)((ALG_HMAC << 0) | (ALG_XOR << 5))}},
     // TPMS_SCHEME_XOR_DATA
     {STRUCTURE_MTYPE, 2, {
 	    SET_ELEMENT_TYPE(SIMPLE_STYPE)|SET_ELEMENT_SIZE(TWO_BYTES),
@@ -892,10 +894,10 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_VALUE,
      {TPM_ALG_NULL,
       RANGE(20, 29, UINT16),
-      ((ALG_RSASSA << 0)    | (ALG_RSAES << 1)     | (ALG_RSAPSS << 2)    |
-       (ALG_OAEP << 3)      | (ALG_ECDSA << 4)     | (ALG_ECDH << 5)      |
-       (ALG_ECDAA << 6)     | (ALG_SM2 << 7)       | (ALG_ECSCHNORR << 8) |
-       (ALG_ECMQV << 9))}},
+      (UINT32)((ALG_RSASSA << 0)    | (ALG_RSAES << 1)     | (ALG_RSAPSS << 2)    |
+	       (ALG_OAEP << 3)      | (ALG_ECDSA << 4)     | (ALG_ECDH << 5)      |
+	       (ALG_ECDAA << 6)     | (ALG_SM2 << 7)       | (ALG_ECSCHNORR << 8) |
+	       (ALG_ECMQV << 9))}},
     // TPMU_ASYM_SCHEME_DATA
     {11, 0, (UINT16)(offsetof(TPMU_ASYM_SCHEME_mst, marshalingTypes)),
      {(UINT32)TPM_ALG_ECDH,      (UINT32)TPM_ALG_ECMQV,
@@ -933,7 +935,7 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_VALUE,
      {TPM_ALG_NULL,
       RANGE(21, 23, UINT16),
-      ((ALG_RSAES << 0)|(ALG_OAEP << 2))}},
+      (UINT32)((ALG_RSAES << 0) | (ALG_OAEP << 2))}},
     // TPMT_RSA_DECRYPT_DATA
     {STRUCTURE_MTYPE, 2, {
 	    SET_ELEMENT_TYPE(SIMPLE_STYPE)|SET_ELEMENT_SIZE(TWO_BYTES)|ELEMENT_PROPAGATE,
@@ -968,14 +970,14 @@ MarshalData_st MarshalData = {
     {MIN_MAX_MTYPE, TWO_BYTES|TAKES_NULL|HAS_BITS, (UINT8)TPM_RC_SCHEME,
      {TPM_ALG_NULL,
       RANGE(24, 29, UINT16),
-      ((ALG_ECDSA << 0)     | (ALG_ECDH << 1)      | (ALG_ECDAA << 2)     |
-       (ALG_SM2 << 3)       | (ALG_ECSCHNORR << 4) | (ALG_ECMQV << 5))}},
+      (UINT32)((ALG_ECDSA << 0)     | (ALG_ECDH << 1)      | (ALG_ECDAA << 2)     |
+	       (ALG_SM2 << 3)       | (ALG_ECSCHNORR << 4) | (ALG_ECMQV << 5))}},
     // TPMI_ECC_CURVE_DATA
-    {MIN_MAX_MTYPE, TWO_BYTES|HAS_BITS, (UINT8)TPM_RC_CURVE,
+    {MIN_MAX_MTYPE, TWO_BYTES | HAS_BITS, (UINT8)TPM_RC_CURVE,
      {RANGE(1, 32, UINT16),
-      ((ECC_NIST_P192 << 0) | (ECC_NIST_P224 << 1) | (ECC_NIST_P256 << 2) |
-       (ECC_NIST_P384 << 3) | (ECC_NIST_P521 << 4) | (ECC_BN_P256 << 15)  |
-       (ECC_BN_P638 << 16)  | (ECC_SM2_P256 << 31))}},
+      (UINT32)((ECC_NIST_P192 << 0) | (ECC_NIST_P224 << 1) | (ECC_NIST_P256 << 2) |
+	       (ECC_NIST_P384 << 3) | (ECC_NIST_P521 << 4) | (ECC_BN_P256 << 15)  |
+	       (ECC_BN_P638 << 16)  | (ECC_SM2_P256 << 31))}},
     // TPMT_ECC_SCHEME_DATA
     {STRUCTURE_MTYPE, 2, {
 	    SET_ELEMENT_TYPE(SIMPLE_STYPE)|SET_ELEMENT_SIZE(TWO_BYTES)|ELEMENT_PROPAGATE,
@@ -1073,8 +1075,8 @@ MarshalData_st MarshalData = {
     // TPMI_ALG_PUBLIC_DATA
     {MIN_MAX_MTYPE, TWO_BYTES|HAS_BITS, (UINT8)TPM_RC_TYPE,
      {RANGE(1, 37, UINT16),
-      ((ALG_RSA << 0)|(ALG_KEYEDHASH << 7)),
-      ((ALG_ECC << 2)|(ALG_SYMCIPHER << 4))}},
+      (UINT32)((ALG_RSA << 0)|(ALG_KEYEDHASH << 7)),
+      (UINT32)((ALG_ECC << 2)|(ALG_SYMCIPHER << 4))}},
     // TPMU_PUBLIC_ID_DATA
     {4, 0, (UINT16)(offsetof(TPMU_PUBLIC_ID_mst, marshalingTypes)),
      {(UINT32)TPM_ALG_KEYEDHASH, (UINT32)TPM_ALG_SYMCIPHER,
