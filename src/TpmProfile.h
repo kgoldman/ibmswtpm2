@@ -3,7 +3,7 @@
 /*	Constants Reflecting a Particular TPM Implementation (e.g. PC Client)	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmProfile.h 1594 2020-03-26 22:15:48Z kgoldman $		*/
+/*            $Id: TpmProfile.h 1629 2020-06-01 20:50:13Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -176,7 +176,7 @@
 #define MAX_LOADED_OBJECTS              3
 #endif
 #ifndef MIN_EVICT_OBJECTS
-#define MIN_EVICT_OBJECTS               2
+#define MIN_EVICT_OBJECTS               7	/* kgold for PC Client */
 #endif
 #ifndef NUM_POLICY_PCR_GROUP
 #define NUM_POLICY_PCR_GROUP            1
@@ -200,8 +200,17 @@
 #ifndef MAX_CAP_BUFFER
 #define MAX_CAP_BUFFER                  1024
 #endif
+
+/* for PC client, permits
+
+   1300 bytes reserved
+   7 * 2600 persistent objects
+   4000 NV indexes
+   60 * 68 nv index metadata
+*/
+
 #ifndef NV_MEMORY_SIZE
-#define NV_MEMORY_SIZE                  16384
+#define NV_MEMORY_SIZE                  32768
 #endif
 #ifndef MIN_COUNTER_INDICES
 #define MIN_COUNTER_INDICES             8
