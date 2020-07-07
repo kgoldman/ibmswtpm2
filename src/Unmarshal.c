@@ -770,7 +770,7 @@ TPM_RC
 TPMI_DH_SAVED_Unmarshal(TPMI_DH_SAVED *target, BYTE **buffer, INT32 *size, BOOL allowNull)
 {
     TPM_RC rc = TPM_RC_SUCCESS;
-    allowNull = allowNull;
+    (void)allowNull;
 
     if (rc == TPM_RC_SUCCESS) {
 	rc = TPM_HANDLE_Unmarshal(target, buffer, size);  
@@ -1469,9 +1469,10 @@ TPM_RC
 TPMS_EMPTY_Unmarshal(TPMS_EMPTY *target, BYTE **buffer, INT32 *size)
 {
     TPM_RC rc = TPM_RC_SUCCESS;
-    target = target;
-    buffer = buffer;
-    size = size;
+    (void)target;
+    (void)buffer;
+    (void)size;
+
     return rc;
 }
 

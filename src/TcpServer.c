@@ -227,7 +227,7 @@ PlatformServer(
 		    break;
 		  case TPM_ACT_GET_SIGNALED:
 		      {
-			  UINT32 actHandle;
+			  UINT32 actHandle = 0;
 			  OK = ReadUINT32(s, &actHandle);
 			  WriteUINT32(s, _rpc__ACT_GetSignaled(actHandle));
 			  break;

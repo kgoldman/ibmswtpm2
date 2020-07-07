@@ -1,0 +1,5 @@
+build
+.vscode
+*.o
+*.debhelper.log
+obj-x86_64-linux-gnu
