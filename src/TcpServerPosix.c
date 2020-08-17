@@ -264,7 +264,8 @@ PlatformServer(
 		      {
 			  uint32_t actHandle;
 			  ok = ReadUINT32(s, &actHandle);
-			  WriteUINT32(s, _rpc__ACT_GetSignaled(actHandle));
+			  if(ok)
+			      WriteUINT32(s, _rpc__ACT_GetSignaled(actHandle));
 			  break;
 		      }
 		  default:
