@@ -3,7 +3,6 @@
 /*		Socket Interface to a TPM Simulator    				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TcpServerPosix.c 1658 2021-01-22 23:14:01Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2012 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2012 - 2024				*/
 /*										*/
 /********************************************************************************/
 
@@ -266,7 +265,8 @@ PlatformServer(
 		      {
 			  uint32_t actHandle;
 			  ok = ReadUINT32(s, &actHandle);
-			  WriteUINT32(s, _rpc__ACT_GetSignaled(actHandle));
+			  if(ok)
+			      WriteUINT32(s, _rpc__ACT_GetSignaled(actHandle));
 			  break;
 		      }
 		  default:
