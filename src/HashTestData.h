@@ -3,7 +3,7 @@
 /*			   Hash Test Vectors	  				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: HashTestData.h 1259 2018-07-10 19:11:09Z kgoldman $		*/
+/*            $Id: HashTestData.h 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -127,5 +127,22 @@ TPM2B_SHA512    c_SHA512_digest = {{64, {
 	}}};
 #endif
 
+TPM2B_TYPE(EMPTY, 1);
+
+#if ALG_SM3_256 == YES
+TPM2B_EMPTY c_SM3_256_digest = {{0, {0}}};
+#endif
+
+#if ALG_SHA3_256 == YES
+TPM2B_EMPTY c_SHA3_256_digest = {{0, {0}}};
+#endif
+
+#if ALG_SHA3_384 == YES
+TPM2B_EMPTY c_SHA3_384_digest = {{0, {0}}};
+#endif
+
+#if ALG_SHA3_512 == YES
+TPM2B_EMPTY c_SHA3_512_digest = {{0, {0}}};
+#endif
 
 #endif

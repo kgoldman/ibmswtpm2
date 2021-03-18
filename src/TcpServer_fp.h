@@ -3,7 +3,7 @@
 /*			     TcpServer Header					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TcpServer_fp.h 1530 2019-11-21 23:36:21Z kgoldman $		*/
+/*            $Id: TcpServer_fp.h 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,20 +55,22 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #ifndef TCPSERVER_FP_H
 #define TCPSERVER_FP_H
 
-BOOL
+#include <stdbool.h>
+
+bool
 PlatformServer(
 	       SOCKET           s
 	       );
 DWORD WINAPI
 PlatformSvcRoutine(
-		   LPVOID           port
+		   void *port
 		   );
 int
 PlatformSignalService(
@@ -83,42 +85,42 @@ StartTcpServer(
 	       int              *PortNumber,
 	       int              *PortNumberPlatform
 	       );
-BOOL
+bool
 ReadBytes(
 	  SOCKET           s,
 	  char            *buffer,
 	  int              NumBytes
 	  );
-BOOL
+bool
 WriteBytes(
 	   SOCKET           s,
 	   char            *buffer,
 	   int              NumBytes
 	   );
-BOOL
+bool
 WriteUINT32(
 	    SOCKET           s,
 	    uint32_t         val
 	    );
-BOOL
+bool
 ReadUINT32(
 	   SOCKET           s,
 	   UINT32          *val
 	   );
-BOOL
+bool
 ReadVarBytes(
 	     SOCKET           s,
 	     char            *buffer,
 	     uint32_t        *BytesReceived,
 	     int              MaxLen
 	     );
-BOOL
+bool
 WriteVarBytes(
 	      SOCKET           s,
 	      char            *buffer,
 	      int              BytesToSend
 	      );
-BOOL
+bool
 TpmServer(
 	  SOCKET           s
 	  );

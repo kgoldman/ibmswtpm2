@@ -3,7 +3,7 @@
 /*		Implementation of cryptographic primitives for RSA		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptRsa.c 1594 2020-03-26 22:15:48Z kgoldman $		*/
+/*            $Id: CryptRsa.c 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -477,7 +477,7 @@ RSAES_Decode(
     // Make sure that pSize has not gone over the end and that there are at least 8
     // bytes of pad data.
     fail = (pSize > coded->size) | fail;
-    fail = ((pSize - 2) < 8) | fail;
+    fail = ((pSize - 2) <= 8) | fail;
     if((message->size < (UINT16)(coded->size - pSize)) || fail)
 	return TPM_RC_VALUE;
     message->size = coded->size - pSize;
@@ -872,7 +872,7 @@ CryptRsaLoadPrivateExponent(
     TPM_RC          retVal = TPM_RC_SUCCESS;
     if(!rsaKey->attributes.privateExp)
 	{
-	    TEST(ALG_NULL_VALUE);
+	    TEST(TPM_ALG_NULL);
 	    // Make sure that the bigNum used for the exponent is properly initialized
 	    RsaInitializeExponent(&rsaKey->privateExponent);
 	    // Find the second prime by division
@@ -929,7 +929,7 @@ CryptRsaEncrypt(
     TEST(scheme->scheme);
     switch(scheme->scheme)
 	{
-	  case ALG_NULL_VALUE:  // 'raw' encryption
+	  case TPM_ALG_NULL:  // 'raw' encryption
 	      {
 		  INT32            i;
 		  INT32            dSize = dIn->size;
@@ -948,10 +948,10 @@ CryptRsaEncrypt(
 		  // the modulus. If it is, then RSAEP() will catch it.
 	      }
 	      break;
-	  case ALG_RSAES_VALUE:
+	  case TPM_ALG_RSAES:
 	    retVal = RSAES_PKCS1v1_5Encode(&cOut->b, dIn, rand);
 	    break;
-	  case ALG_OAEP_VALUE:
+	  case TPM_ALG_OAEP:
 	    retVal = OaepEncode(&cOut->b, scheme->details.oaep.hashAlg, label, dIn,
 				rand);
 	    break;
@@ -999,15 +999,15 @@ CryptRsaDecrypt(
 	    // Remove padding
 	    switch(scheme->scheme)
 		{
-		  case ALG_NULL_VALUE:
+		  case TPM_ALG_NULL:
 		    if(dOut->size < cIn->size)
 			return TPM_RC_VALUE;
 		    MemoryCopy2B(dOut, cIn, dOut->size);
 		    break;
-		  case ALG_RSAES_VALUE:
+		  case TPM_ALG_RSAES:
 		    retVal = RSAES_Decode(dOut, cIn);
 		    break;
-		  case ALG_OAEP_VALUE:
+		  case TPM_ALG_OAEP:
 		    retVal = OaepDecode(dOut, scheme->details.oaep.hashAlg, label, cIn);
 		    break;
 		  default:
@@ -1042,14 +1042,14 @@ CryptRsaSign(
     TEST(sigOut->sigAlg);
     switch(sigOut->sigAlg)
 	{
-	  case ALG_NULL_VALUE:
+	  case TPM_ALG_NULL:
 	    sigOut->signature.rsapss.sig.t.size = 0;
 	    return TPM_RC_SUCCESS;
-	  case ALG_RSAPSS_VALUE:
+	  case TPM_ALG_RSAPSS:
 	    retVal = PssEncode(&sigOut->signature.rsapss.sig.b,
 			       sigOut->signature.rsapss.hash, &hIn->b, rand);
 	    break;
-	  case ALG_RSASSA_VALUE:
+	  case TPM_ALG_RSASSA:
 	    retVal = RSASSA_Encode(&sigOut->signature.rsassa.sig.b,
 				   sigOut->signature.rsassa.hash, &hIn->b);
 	    break;
@@ -1083,8 +1083,8 @@ CryptRsaValidateSignature(
     pAssert(key != NULL && sig != NULL && digest != NULL);
     switch(sig->sigAlg)
 	{
-	  case ALG_RSAPSS_VALUE:
-	  case ALG_RSASSA_VALUE:
+	  case TPM_ALG_RSAPSS:
+	  case TPM_ALG_RSASSA:
 	    break;
 	  default:
 	    return TPM_RC_SCHEME;
@@ -1099,11 +1099,11 @@ CryptRsaValidateSignature(
 	{
 	    switch(sig->sigAlg)
 		{
-		  case ALG_RSAPSS_VALUE:
+		  case TPM_ALG_RSAPSS:
 		    retVal = PssDecode(sig->signature.any.hashAlg, &digest->b,
 				       &sig->signature.rsassa.sig.b);
 		    break;
-		  case ALG_RSASSA_VALUE:
+		  case TPM_ALG_RSASSA:
 		    retVal = RSASSA_Decode(sig->signature.any.hashAlg, &digest->b,
 					   &sig->signature.rsassa.sig.b);
 		    break;
@@ -1172,7 +1172,7 @@ CryptRsaGenerateKey(
 	return TPM_RC_SUCCESS;
 #endif
     // Make sure that key generation has been tested
-    TEST(ALG_NULL_VALUE);
+    TEST(TPM_ALG_NULL);
     // Need to initialize the privateExponent structure
     RsaInitializeExponent(&rsaKey->privateExponent);
     // The prime is computed in P. When a new prime is found, Q is checked to

@@ -3,7 +3,7 @@
 /*			  Parameter Marshaling   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Marshal.c 1636 2020-06-12 22:22:37Z kgoldman $		*/
+/*            $Id: Marshal.c 1642 2020-08-18 19:42:24Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -2236,7 +2236,7 @@ UINT16
 TPM2B_CREATION_DATA_Marshal(TPM2B_CREATION_DATA *source, BYTE **buffer, INT32 *size)
 {
     UINT16 written = 0;
-    BYTE *sizePtr;
+    BYTE *sizePtr = NULL;
 
     if (buffer != NULL) {
 	sizePtr = *buffer;

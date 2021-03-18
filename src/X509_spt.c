@@ -3,7 +3,7 @@
 /*			X509 Support						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: X509_spt.c 1594 2020-03-26 22:15:48Z kgoldman $		*/
+/*            $Id: X509_spt.c 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -198,35 +198,40 @@ X509ProcessExtensions(
     // Make sure the failure to find the value wasn't because of a fatal error
     else if(extensionCtx.size < 0)
 	return TPM_RCS_VALUE;
-    
+
     // Get the keyUsage extension. This one is required
     if(X509FindExtensionByOID(&ctx, &extensionCtx, OID_KEY_USAGE_EXTENSION) &&
         X509GetExtensionBits(&extensionCtx, &value))
     {
         x509KeyUsageUnion   keyUsage;
-	BOOL                bad;
+	BOOL                badSign;
+	BOOL                badDecrypt;
+	BOOL                badFixedTPM;
+	BOOL                badRestricted;
+
         keyUsage.integer = value;
 
 	// For KeyUsage:
 	// 1) 'sign' is SET if Key Usage includes signing
-	bad = (KEY_USAGE_SIGN.integer & keyUsage.integer) != 0
-	      && !IS_ATTRIBUTE(attributes, TPMA_OBJECT, sign);
+	badSign = ((KEY_USAGE_SIGN.integer & keyUsage.integer) != 0)
+		  && !IS_ATTRIBUTE(attributes, TPMA_OBJECT, sign);
 	// 2) 'decrypt' is SET if Key Usage includes decryption uses
-	bad = bad || ((KEY_USAGE_DECRYPT.integer & keyUsage.integer) != 0
-		      && !IS_ATTRIBUTE(attributes, TPMA_OBJECT, decrypt));
+	badDecrypt = ((KEY_USAGE_DECRYPT.integer & keyUsage.integer) != 0)
+		     && !IS_ATTRIBUTE(attributes, TPMA_OBJECT, decrypt);
 	// 3) 'fixedTPM' is SET if Key Usage is non-repudiation
-	bad = bad || (IS_ATTRIBUTE(keyUsage.x509, TPMA_X509_KEY_USAGE, nonrepudiation)
-		      && !IS_ATTRIBUTE(attributes, TPMA_OBJECT, fixedTPM));
+	badFixedTPM = IS_ATTRIBUTE(keyUsage.x509, TPMA_X509_KEY_USAGE,
+				   nonrepudiation)
+		      && !IS_ATTRIBUTE(attributes, TPMA_OBJECT, fixedTPM);
 	// 4)'restricted' is SET if Key Usage is for key agreement.
-	bad = bad || (IS_ATTRIBUTE(keyUsage.x509, TPMA_X509_KEY_USAGE, keyAgreement)
-		      && !IS_ATTRIBUTE(attributes, TPMA_OBJECT, restricted));
-	if(bad)
+	badRestricted = IS_ATTRIBUTE(keyUsage.x509, TPMA_X509_KEY_USAGE, keyAgreement)
+			&& !IS_ATTRIBUTE(attributes, TPMA_OBJECT, restricted);
+	if(badSign || badDecrypt || badFixedTPM || badRestricted)
 	    return TPM_RCS_VALUE;
-    }
+   }
     else
 	// The KeyUsage extension is required
 	return TPM_RCS_VALUE;
-    
+
     return TPM_RC_SUCCESS;
 }
 /* 10.2.26.3	Marshaling Functions */
@@ -278,15 +283,15 @@ X509AddPublicKey(
     switch(object->publicArea.type)
 	{
 #if ALG_RSA
-	  case ALG_RSA_VALUE:
+	  case TPM_ALG_RSA:
 	    return X509AddPublicRSA(object, ctx);
 #endif
 #if ALG_ECC
-	  case ALG_ECC_VALUE:
+	  case TPM_ALG_ECC:
 	    return X509AddPublicECC(object, ctx);
 #endif
 #if ALG_SM2
-	  case ALG_SM2_VALUE:
+	  case TPM_ALG_SM2:
 	    break;
 #endif
 	  default:

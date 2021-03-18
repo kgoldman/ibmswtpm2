@@ -4,9 +4,9 @@
 #		   	TPM2 makefile - Common to all variations		#
 #			     Written by Ken Goldman				#
 #		       IBM Thomas J. Watson Research Center			#
-#	      $Id: makefile-common 1606 2020-04-14 16:26:05Z kgoldman $		#
+#	      $Id: makefile-common 1659 2021-03-17 13:44:52Z kgoldman $		#
 #										#
-# (c) Copyright IBM Corporation 2014 - 2020					#
+# (c) Copyright IBM Corporation 2014 - 2021					#
 # 										#
 # All rights reserved.								#
 # 										#
@@ -101,6 +101,7 @@ HEADERS = 				\
 	CryptRsa_fp.h			\
 	CryptSelfTest_fp.h		\
 	CryptSmac_fp.h			\
+	CryptSym.h			\
 	CryptSym_fp.h			\
 	CryptTest.h			\
 	CryptUtil_fp.h			\

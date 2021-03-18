@@ -3,7 +3,7 @@
 /*			Interfaces to the Crypto Engine				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptUtil.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
+/*            $Id: CryptUtil.c 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -200,7 +200,7 @@ CryptIsSchemeAnonymous(
 		       TPM_ALG_ID       scheme         // IN: the scheme algorithm to test
 		       )
 {
-    return scheme == ALG_ECDAA_VALUE;
+    return scheme == TPM_ALG_ECDAA;
 }
 /* 10.2.6.4 Symmetric Functions */
 /* 10.2.6.4.1 ParmDecryptSym() */
@@ -404,12 +404,14 @@ CryptStartup(
 {
     BOOL            OK;
     NOT_REFERENCED(type);
-    OK = CryptSymStartup() && CryptRandStartup() && CryptHashStartup()
+    OK = CryptSymStartup();
+    OK = OK && CryptRandStartup();
+    OK = OK && CryptHashStartup();
 #if ALG_RSA
-	 &&  CryptRsaStartup()
+    OK = OK && CryptRsaStartup();
 #endif // TPM_ALG_RSA
 #if ALG_ECC
-	 &&  CryptEccStartup()
+    OK = OK && CryptEccStartup();
 #endif // TPM_ALG_ECC
 	 ;
 #if ALG_ECC
@@ -1402,7 +1404,7 @@ CryptGetTestResult(
     return TPM_RC_SUCCESS;
 }
 /* 10.2.6.6.17 CryptValidateKeys() */
-/* This function is used to verify that the key material of and object is valid. For a publicOnly
+/* This function is used to verify that the key material of an object is valid. For a publicOnly
    object, the key is verified for size and, if it is an ECC key, it is verified to be on the
    specified curve. For a key with a sensitive area, the binding between the public and private
    parts of the key are verified. If the nameAlg of the key is TPM_ALG_NULL, then the size of the

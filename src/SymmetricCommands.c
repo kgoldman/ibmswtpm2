@@ -3,7 +3,7 @@
 /*			     	Symmetric Commands				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: SymmetricCommands.c 1594 2020-03-26 22:15:48Z kgoldman $	*/
+/*            $Id: SymmetricCommands.c 1658 2021-01-22 23:14:01Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -123,19 +123,19 @@ TPM2_EncryptDecrypt(
     if(blockSize == 0)
 	return TPM_RCS_KEY + RC_EncryptDecrypt_keyHandle;
     // Note: When an algorithm is not supported by a TPM, the TPM_ALG_xxx for that
-    // algorithm is not defined. However, it is assumed that the ALG_xxx_VALUE for
+    // algorithm is not defined. However, it is assumed that the TPM_ALG_xxx for
     // the algorithm is always defined. Both have the same numeric value.
-    // ALG_xxx_VALUE is used here so that the code does not get cluttered with
+    // TPM_ALG_xxx is used here so that the code does not get cluttered with
     // #ifdef's. Having this check does not mean that the algorithm is supported.
     // If it was not supported the unmarshaling code would have rejected it before
     // this function were called. This means that, depending on the implementation,
     // the check could be redundant but it doesn't hurt.
-    if(((mode == ALG_ECB_VALUE) && (in->ivIn.t.size != 0))
-       || ((mode != ALG_ECB_VALUE) && (in->ivIn.t.size != blockSize)))
+    if(((mode == TPM_ALG_ECB) && (in->ivIn.t.size != 0))
+       || ((mode != TPM_ALG_ECB) && (in->ivIn.t.size != blockSize)))
 	return TPM_RCS_SIZE + RC_EncryptDecrypt_ivIn;
     // The input data size of CBC mode or ECB mode must be an even multiple of
     // the symmetric algorithm's block size
-    if(((mode == ALG_CBC_VALUE) || (mode == ALG_ECB_VALUE))
+    if(((mode == TPM_ALG_CBC) || (mode == TPM_ALG_ECB))
        && ((in->inData.t.size % blockSize) != 0))
 	return TPM_RCS_SIZE + RC_EncryptDecrypt_inData;
     // Copy IV

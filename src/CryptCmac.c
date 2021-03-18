@@ -3,7 +3,7 @@
 /*	Message Authentication Codes Based on a Symmetric Block Cipher		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptCmac.c 1490 2019-07-26 21:13:22Z kgoldman $		*/
+/*            $Id: CryptCmac.c 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2018					*/
+/*  (c) Copyright IBM Corp. and others, 2018 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -99,7 +99,7 @@ CryptCmacStart(
     return cState->iv.t.size;
 }
 
-/* 10.2.6.3.2	CryptCmacData() */
+/* 10.2.5.3.2	CryptCmacData() */
 /* This function is used to add data to the CMAC sequence computation. The function will XOR new
    data into the IV. If the buffer is full, and there is additional input data, the data is
    encrypted into the IV buffer, the new data is then XOR into the IV. When the data runs out, the
@@ -120,21 +120,28 @@ CryptCmacData(
     tpmCryptKeySchedule_t    keySchedule;
     TpmCryptSetSymKeyCall_t  encrypt;
     //
-    SELECT(ENCRYPT);
+    // Set up the encryption values based on the algorithm
+    switch (algorithm)
+	{
+	    FOR_EACH_SYM(ENCRYPT_CASE)
+	  default:
+	    FAIL(FATAL_ERROR_INTERNAL);
+	}
     while(size > 0)
 	{
 	    if(cmacState->bcount == cmacState->iv.t.size)
-		{
-		    ENCRYPT(&keySchedule, cmacState->iv.t.buffer, cmacState->iv.t.buffer);
-		    cmacState->bcount = 0;
-		}
+	        {
+	            ENCRYPT(&keySchedule, cmacState->iv.t.buffer, cmacState->iv.t.buffer);
+	            cmacState->bcount = 0;
+	        }
 	    for(;(size > 0) && (cmacState->bcount < cmacState->iv.t.size);
 		size--, cmacState->bcount++)
-		{
-		    cmacState->iv.t.buffer[cmacState->bcount] ^= *buffer++;
-		}
+	        {
+	            cmacState->iv.t.buffer[cmacState->bcount] ^= *buffer++;
+	        }
 	}
 }
+
 /* 10.2.6.3.3	CryptCmacEnd() */
 /* This is the completion function for the CMAC. It does padding, if needed, and selects the subkey
    to be applied before the last block is encrypted. */
@@ -156,10 +163,18 @@ CryptCmacEnd(
     TPM2B_IV                 subkey = {{0, {0}}};
     BOOL                     xorVal;
     UINT16                   i;
+
     subkey.t.size = cState->iv.t.size;
     // Encrypt a block of zero
-    SELECT(ENCRYPT);
+    // Set up the encryption values based on the algorithm
+    switch (algorithm)
+	{
+	    FOR_EACH_SYM(ENCRYPT_CASE)
+	  default:
+	    return 0;
+	}
     ENCRYPT(&keySchedule, subkey.t.buffer, subkey.t.buffer);
+
     // shift left by 1 and XOR with 0x0...87 if the MSb was 0
     xorVal = ((subkey.t.buffer[0] & 0x80) == 0) ? 0 : 0x87;
     ShiftLeft(&subkey.b);
@@ -185,6 +200,8 @@ CryptCmacEnd(
     ENCRYPT(&keySchedule, cState->iv.t.buffer, cState->iv.t.buffer);
     i = (UINT16)MIN(cState->iv.t.size, outSize);
     MemoryCopy(outBuffer, cState->iv.t.buffer, i);
+
     return i;
 }
+
 #endif

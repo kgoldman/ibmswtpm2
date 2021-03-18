@@ -3,7 +3,7 @@
 /*		Used to splice the OpenSSL() hash code into the TPM code  	*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslHash.h 1628 2020-05-27 19:35:29Z kgoldman $		*/
+/*            $Id: TpmToOsslHash.h 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -67,9 +67,31 @@
 #define HASH_LIB_OSSL
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+
 #if ALG_SM3_256
-#include <openssl/sm3.h>
-#endif
+#   if defined(OPENSSL_NO_SM3) || OPENSSL_VERSION_NUMBER < 0x10101010L
+#       undef ALG_SM3_256
+#       define ALG_SM3_256  ALG_NO
+#   elif OPENSSL_VERSION_NUMBER >= 0x10200000L
+#       include <openssl/sm3.h>
+#   else
+// OpenSSL 1.1.1 keeps smX.h headers in the include/crypto directory,
+// and they do not get installed as part of the libssl package
+#       define SM3_LBLOCK      (64/4)
+
+typedef struct SM3state_st {
+    unsigned int A, B, C, D, E, F, G, H;
+    unsigned int Nl, Nh;
+    unsigned int data[SM3_LBLOCK];
+    unsigned int num;
+} SM3_CTX;
+
+int sm3_init(SM3_CTX *c);
+int sm3_update(SM3_CTX *c, const void *data, size_t len);
+int sm3_final(unsigned char *md, SM3_CTX *c);
+#   endif // OpenSSL < 1.2
+#endif // ALG_SM3_256
+
 #include <openssl/ossl_typ.h>
 
 #define HASH_ALIGNMENT  RADIX_BYTES
@@ -101,8 +123,6 @@ typedef const BYTE    *PCBYTE;
    library). */
 /* The macro that calls the method also defines how the parameters get swizzled between the default
    form (in CryptHash.c)and the library form. */
-
-#define HASH_ALIGNMENT  RADIX_BYTES
 
 /* Initialize the hash context */
 #define HASH_START_METHOD_DEF   void (HASH_START_METHOD)(PANY_HASH_STATE state)

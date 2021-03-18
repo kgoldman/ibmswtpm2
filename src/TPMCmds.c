@@ -3,7 +3,7 @@
 /*			 Main Simulator Entry Point		    		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TPMCmds.c 1604 2020-04-03 18:50:29Z kgoldman $		*/
+/*            $Id: TPMCmds.c 1646 2020-10-16 13:11:49Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -127,6 +127,7 @@ main(
     int manufacture = 0;
     int portNum = DEFAULT_TPM_PORT;
     int portNumPlat;
+    setvbuf(stdout, 0, _IONBF, 0);      /* output may be going through pipe to log file */
 
     for (i=1 ; i<argc ; i++) {
 	if (strcmp(argv[i],"-rm") == 0) {
