@@ -122,7 +122,8 @@ main(
      )
 {
     int		i;				/* argc iterator */
-    
+    int		irc;
+
     /* command line argument defaults */
     int manufacture = 0;
     int portNum = DEFAULT_TPM_PORT;
@@ -189,7 +190,13 @@ main(
     _rpc__Signal_NvOn();
 
     portNumPlat = portNum + 1;
-    StartTcpServer(&portNum, &portNumPlat);
-    return EXIT_SUCCESS;
+
+    irc = StartTcpServer(&portNum, &portNumPlat);
+    if (irc == 0) {
+	return EXIT_SUCCESS;
+    }
+    else {
+	return 4;
+    }
 }
 
