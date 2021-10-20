@@ -306,7 +306,7 @@ PlatformSvcRoutine(
     }
     if (nSock == 0) {
 	printf("Create platform service socket fail\n");
-	return -1;
+	exit(5);
     }
 
     maxListenSocket = listenSocket[0];
