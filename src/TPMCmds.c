@@ -189,7 +189,7 @@ main(
     _rpc__Signal_NvOn();
 
     portNumPlat = portNum + 1;
-    StartTcpServer(&portNum, &portNumPlat);
-    return EXIT_SUCCESS;
+
+    return StartTcpServer(&portNum, &portNumPlat) == 0 ? EXIT_SUCCESS : 4;
 }
 
