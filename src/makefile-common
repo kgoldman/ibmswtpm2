@@ -110,6 +110,8 @@ HEADERS = 				\
 	DictionaryAttackLockReset_fp.h	\
 	DictionaryAttackParameters_fp.h	\
 	Duplicate_fp.h			\
+	ECC_Decrypt_fp.h		\
+	ECC_Encrypt_fp.h		\
 	EC_Ephemeral_fp.h		\
 	ECC_Parameters_fp.h		\
 	EccTestData.h			\
@@ -314,6 +316,7 @@ OBJFILES = \
 	Context_spt.o			\
 	CryptDes.o			\
 	CryptCmac.o			\
+	CryptEccCrypt.o			\
 	CryptEccData.o			\
 	CryptEccKeyExchange.o		\
 	CryptEccMain.o			\
@@ -422,6 +425,7 @@ CommandDispatcher.o		: $(HEADERS)
 ContextCommands.o		: $(HEADERS)
 Context_spt.o			: $(HEADERS)
 CryptDes.o			: $(HEADERS)
+CryptEccCrypt.o			: $(HEADERS)
 CryptEccData.o			: $(HEADERS)
 CryptEccKeyExchange.o		: $(HEADERS)
 CryptEccMain.o			: $(HEADERS)

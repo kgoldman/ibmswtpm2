@@ -113,6 +113,7 @@
     <ClCompile Include="..\..\src\Context_spt.c" />
     <ClCompile Include="..\..\src\CryptCmac.c" />
     <ClCompile Include="..\..\src\CryptDes.c" />
+    <ClCompile Include="..\..\src\CryptEccCrypt.c" />
     <ClCompile Include="..\..\src\CryptEccData.c" />
     <ClCompile Include="..\..\src\CryptEccKeyExchange.c" />
     <ClCompile Include="..\..\src\CryptEccMain.c" />

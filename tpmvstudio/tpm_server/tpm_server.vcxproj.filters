@@ -345,5 +345,8 @@
     <ClCompile Include="..\..\src\ntc2lib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\CryptEccCrypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
