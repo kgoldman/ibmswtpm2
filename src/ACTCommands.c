@@ -55,12 +55,15 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019					*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "ACT_SetTimeout_fp.h"
+
+extern int verbose;
+
 #if CC_ACT_SetTimeout  // Conditional expansion of this file
 
 /* Error Returns	Meaning */
@@ -74,6 +77,11 @@ TPM2_ACT_SetTimeout(
     // If 'startTimeout' is UINT32_MAX, then this is an attempt to disable the ACT
     // and turn off the signaling for the ACT. This is only valid if the ACT
     // is signaling.
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ACT_SetTimeout: actHandle %08x\n", in->actHandle);
+	fclose(f);
+    }
     if((in->startTimeout == UINT32_MAX) && !ActGetSignaled(in->actHandle))
 	return TPM_RC_VALUE + RC_ACT_SetTimeout_startTimeout;
     return ActCounterUpdate(in->actHandle, in->startTimeout);

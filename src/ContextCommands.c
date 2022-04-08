@@ -63,6 +63,9 @@
 #include "ContextSave_fp.h"
 #if CC_ContextSave  // Conditional expansion of this file
 #include "Context_spt_fp.h"
+
+extern int verbose;
+
 /* Error Returns Meaning */
 /* TPM_RC_CONTEXT_GAP a contextID could not be assigned for a session context save */
 /* TPM_RC_TOO_MANY_CONTEXTS no more contexts can be saved as the counter has maxed out */
@@ -81,22 +84,27 @@ TPM2_ContextSave(
     TPM2B_DIGEST    integrity;
     UINT16          integritySize;
     BYTE            *buffer;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ContextSave: %08x\n", in->saveHandle);
+	fclose(f);
+    }
     // This command may cause the orderlyState to be cleared due to
     // the update of state reset data. If the state is orderly and
     // cannot be changed, exit early.
     RETURN_IF_ORDERLY;
-    
+
     // Internal Data Update
-    
+
     // This implementation does not do things in quite the same way as described in
-    // Part 2 of the specification. In Part 2, it indicates that the 
-    // TPMS_CONTEXT_DATA contains two TPM2B values. That is not how this is 
-    // implemented. Rather, the size field of the TPM2B_CONTEXT_DATA is used to 
-    // determine the amount of data in the encrypted data. That part is not 
-    // independently sized. This makes the actual size 2 bytes smaller than 
-    // calculated using Part 2. Since this is opaque to the caller, it is not 
+    // Part 2 of the specification. In Part 2, it indicates that the
+    // TPMS_CONTEXT_DATA contains two TPM2B values. That is not how this is
+    // implemented. Rather, the size field of the TPM2B_CONTEXT_DATA is used to
+    // determine the amount of data in the encrypted data. That part is not
+    // independently sized. This makes the actual size 2 bytes smaller than
+    // calculated using Part 2. Since this is opaque to the caller, it is not
     // necessary to fix. The actual size is returned by TPM2_GetCapabilties().
-    
+
     // Initialize output handle.  At the end of command action, the output
     // handle of an object will be replaced, while the output handle
     // for a session will be the same as input
@@ -333,6 +341,11 @@ TPM2_ContextLoad(
 	    FAIL(FATAL_ERROR_INTERNAL);
 	    break;
 	}
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ContextLoad: %08x\n", out->loadedHandle);
+	fclose(f);
+    }
     return TPM_RC_SUCCESS;
 }
 #endif // CC_ContextLoad
@@ -344,6 +357,11 @@ TPM2_FlushContext(
 		  FlushContext_In     *in             // IN: input parameter list
 		  )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_FlushContext: %08x\n", in->flushHandle);
+	fclose(f);
+    }
     // Internal Data Update
     // Call object or session specific routine to flush
     switch(HandleGetType(in->flushHandle))
@@ -386,6 +404,12 @@ TPM2_EvictControl(
 {
     TPM_RC      result;
     OBJECT      *evictObject;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "EvictControl: persistentHandle %08x\n", in->persistentHandle);
+	fprintf(f, "EvictControl: objectHandle %08x\n", in->objectHandle);
+	fclose(f);
+    }
     // Input Validation
     // Get internal object pointer
     evictObject = HandleToObject(in->objectHandle);

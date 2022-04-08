@@ -61,6 +61,9 @@
 
 #include "Tpm.h"
 #include "RSA_Encrypt_fp.h"
+
+extern int verbose;
+
 #if CC_RSA_Encrypt  // Conditional expansion of this file
 TPM_RC
 TPM2_RSA_Encrypt(
@@ -71,6 +74,11 @@ TPM2_RSA_Encrypt(
     TPM_RC                  result;
     OBJECT                  *rsaKey;
     TPMT_RSA_DECRYPT        *scheme;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_RSA_Encrypt: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // Input Validation
     rsaKey = HandleToObject(in->keyHandle);
     // selected key must be an RSA key
@@ -107,6 +115,11 @@ TPM2_RSA_Decrypt(
     TPM_RC                       result;
     OBJECT                      *rsaKey;
     TPMT_RSA_DECRYPT            *scheme;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_RSA_Decrypt: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // Input Validation
     rsaKey = HandleToObject(in->keyHandle);
     // The selected key must be an RSA key
@@ -150,6 +163,11 @@ TPM2_ECDH_KeyGen(
     OBJECT                  *eccKey;
     TPM2B_ECC_PARAMETER      sensitive;
     TPM_RC                   result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ECDH_KeyGen: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // Input Validation
     eccKey = HandleToObject(in->keyHandle);
     // Referenced key must be an ECC key
@@ -194,6 +212,11 @@ TPM2_ECDH_ZGen(
 {
     TPM_RC                   result;
     OBJECT                  *eccKey;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ECDH_ZGen: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // Input Validation
     eccKey = HandleToObject(in->keyHandle);
     // Selected key must be a non-restricted, decrypt ECC key
@@ -249,6 +272,11 @@ TPM2_ZGen_2Phase(
     OBJECT                  *eccKey;
     TPM2B_ECC_PARAMETER      r;
     TPM_ALG_ID               scheme;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ZGen_2Phase: keyA %08x\n", in->keyA);
+	fclose(f);
+    }
     // Input Validation
     eccKey = HandleToObject(in->keyA);
     // keyA must be an ECC key

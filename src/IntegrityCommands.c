@@ -55,12 +55,15 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "PCR_Extend_fp.h"
+
+extern int verbose;
+
 #if CC_PCR_Extend  // Conditional expansion of this file
 TPM_RC
 TPM2_PCR_Extend(
@@ -68,6 +71,11 @@ TPM2_PCR_Extend(
 		)
 {
     UINT32              i;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PCR_Extend: pcrHandle %u\n", in->pcrHandle);
+	fclose(f);
+    }
     // Input Validation
     // NOTE: This function assumes that the unmarshaling function for 'digests' will
     // have validated that all of the indicated hash algorithms are valid. If the
@@ -109,6 +117,11 @@ TPM2_PCR_Event(
     HASH_STATE          hashState;
     UINT32              i;
     UINT16              size;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PCR_Event: pcrHandle %u\n", in->pcrHandle);
+	fclose(f);
+    }
     // Input Validation
     // If a PCR extend is required
     if(in->pcrHandle != TPM_RH_NULL)
@@ -151,6 +164,11 @@ TPM2_PCR_Read(
     // Command Output
     // Call PCR read function.  input pcrSelectionIn parameter could be changed
     // to reflect the actual PCR being returned
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PCR_Read:\n");
+	fclose(f);
+    }
     PCRRead(&in->pcrSelectionIn, &out->pcrValues, &out->pcrUpdateCounter);
     out->pcrSelectionOut = in->pcrSelectionIn;
     return TPM_RC_SUCCESS;
@@ -166,6 +184,11 @@ TPM2_PCR_Allocate(
 		  )
 {
     TPM_RC      result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PCR_Allocate: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // The command needs NV update.  Check if NV is available.
     // A TPM_RC_NV_UNAVAILABLE or TPM_RC_NV_RATE error may be returned at
     // this point.
@@ -198,6 +221,11 @@ TPM2_PCR_SetAuthPolicy(
 		       )
 {
     UINT32      groupIndex;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PCR_SetAuthPolicy: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // The command needs NV update.  Check if NV is available.
     // A TPM_RC_NV_UNAVAILABLE or TPM_RC_NV_RATE error may be returned at
     // this point
@@ -228,6 +256,11 @@ TPM2_PCR_SetAuthValue(
 		      )
 {
     UINT32      groupIndex;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PCR_SetAuthValue: pcrHandle %d\n", in->pcrHandle);
+	fclose(f);
+    }
     // Input Validation:
     // If PCR does not belong to an auth group, return TPM_RC_VALUE
     if(!PCRBelongsAuthGroup(in->pcrHandle, &groupIndex))
@@ -252,6 +285,11 @@ TPM2_PCR_Reset(
 	       PCR_Reset_In    *in             // IN: input parameter list
 	       )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PCR_Reset: pcrHandle %d\n", in->pcrHandle);
+	fclose(f);
+    }
     // Input Validation
     // Check if the reset operation is allowed by the current command locality
     if(!PCRIsResetAllowed(in->pcrHandle))

@@ -55,18 +55,26 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "DictionaryAttackLockReset_fp.h"
+
+extern int verbose;
+
 #if CC_DictionaryAttackLockReset  // Conditional expansion of this file
 TPM_RC
 TPM2_DictionaryAttackLockReset(
 			       DictionaryAttackLockReset_In    *in             // IN: input parameter list
 			       )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_DictionaryAttackLockReset: lockHandle %08x\n", in->lockHandle);
+	fclose(f);
+    }
     // Input parameter is not reference in command action
     NOT_REFERENCED(in);
     // The command needs NV update.
@@ -87,6 +95,11 @@ TPM2_DictionaryAttackParameters(
 				DictionaryAttackParameters_In   *in             // IN: input parameter list
 				)
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_DictionaryAttackParameters: lockHandle %08x\n", in->lockHandle);
+	fclose(f);
+    }
     // The command needs NV update.
     RETURN_IF_NV_IS_NOT_AVAILABLE;
     // Internal Data Update

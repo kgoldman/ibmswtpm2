@@ -89,6 +89,8 @@
     "TPM Reference Simulator.\nCopyright Microsoft Corp.\n"
 #define DEFAULT_TPM_PORT 2321
 
+int verbose = 0;
+
 /* D.5.3. Functions */
 /* D.5.3.1. Usage() */
 /* This function prints the proper calling sequence for the simulator. */
@@ -105,7 +107,8 @@ Usage(
     fprintf(stderr,  "%s -port PortNum - Starts the TPM server listening on port PortNum, PortNum+1\n",
 	    pszProgramName);
     fprintf(stderr,  "%s -rm remanufacture the TPM before starting\n", pszProgramName);
-    fprintf(stderr,  "%s -h       - This message\n", pszProgramName);
+    fprintf(stderr,  "%s -h      - This message\n", pszProgramName);
+    fprintf(stderr,  "%s -v      - Verbose trace to trace.txt\n", pszProgramName);
     exit(1);
 }
 
@@ -123,7 +126,7 @@ main(
 {
     int		i;				/* argc iterator */
     int		irc;
-
+    
     /* command line argument defaults */
     int manufacture = 0;
     int portNum = DEFAULT_TPM_PORT;
@@ -146,6 +149,9 @@ main(
 		printf("Missing parameter for -port\n");
 		Usage(argv[0]);
 	    }
+	}
+	else if (strcmp(argv[i],"-v") == 0) {
+	    verbose = 1;
 	}
 	else if (strcmp(argv[i],"-h") == 0) {
 	    Usage(argv[0]);

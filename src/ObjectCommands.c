@@ -62,6 +62,9 @@
 #include "Tpm.h"
 #include "Object_spt_fp.h"
 #include "Create_fp.h"
+
+extern int verbose;
+
 #if CC_Create  // Conditional expansion of this file
 TPM_RC
 TPM2_Create(
@@ -117,7 +120,12 @@ TPM2_Create(
 		       &out->outPrivate);
     // Finish by copying the remaining return values
     out->outPublic.publicArea = newObject->publicArea;
-    return TPM_RC_SUCCESS;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Create: parentHandle %08x\n", in->parentHandle);
+	fclose(f);
+    }
+   return TPM_RC_SUCCESS;
 }
 #endif // CC_Create
 #include "Tpm.h"
@@ -134,6 +142,11 @@ TPM2_Load(
     TPMT_SENSITIVE           sensitive;
     OBJECT                  *parentObject;
     OBJECT                  *newObject;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Load: parentHandle %08x\n", in->parentHandle);
+	fclose(f);
+    }
     // Input Validation
     // Don't get invested in loading if there is no place to put it.
     newObject = FindEmptyObjectSlot(&out->objectHandle);
@@ -168,6 +181,11 @@ TPM2_Load(
 	    // Set the common OBJECT attributes for a loaded object.
 	    ObjectSetLoadedAttributes(newObject, in->parentHandle);
 	}
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Load: objectHandle %08x\n", out->objectHandle);
+	fclose(f);
+    }
     return result;
 }
 #endif // CC_Load
@@ -247,6 +265,11 @@ TPM2_ReadPublic(
     out->outPublic.publicArea = object->publicArea;
     out->name = object->name;
     out->qualifiedName = object->qualifiedName;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ReadPublic: objectHandle %08x\n", in->objectHandle);
+	fclose(f);
+    }
     return TPM_RC_SUCCESS;
 }
 #endif // CC_ReadPublic
@@ -295,6 +318,12 @@ TPM2_ActivateCredential(
 				&out->certInfo);
     if(result != TPM_RC_SUCCESS)
 	return RcSafeAddToResult(result, RC_ActivateCredential_credentialBlob);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "ActivateCredential: activateHandle %08x\n", in->activateHandle);
+	fprintf(f, "ActivateCredential: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     return TPM_RC_SUCCESS;
 }
 #endif // CC_ActivateCredential

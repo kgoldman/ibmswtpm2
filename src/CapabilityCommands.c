@@ -55,12 +55,15 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "GetCapability_fp.h"
+
+extern int verbose;
+
 #if CC_GetCapability  // Conditional expansion of this file
 TPM_RC
 TPM2_GetCapability(
@@ -69,6 +72,11 @@ TPM2_GetCapability(
 		   )
 {
     TPMU_CAPABILITIES   *data = &out->capabilityData.data;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_GetCapability: capability %x\n", in->capability);
+	fclose(f);
+    }
     // Command Output
     // Set output capability type the same as input type
     out->capabilityData.capability = in->capability;
@@ -206,6 +214,11 @@ TPM2_TestParms(
 	       TestParms_In    *in             // IN: input parameter list
 	       )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_TestParms:\n");
+	fclose(f);
+    }
     // Input parameter is not reference in command action
     NOT_REFERENCED(in);
     // The parameters are tested at unmarshal process.  We do nothing in command

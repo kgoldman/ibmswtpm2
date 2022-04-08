@@ -55,12 +55,15 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "NV_DefineSpace_fp.h"
+
+extern int verbose;
+
 #if CC_NV_DefineSpace  // Conditional expansion of this file
 TPM_RC
 TPM2_NV_DefineSpace(
@@ -69,6 +72,12 @@ TPM2_NV_DefineSpace(
 {
     TPMA_NV         attributes = in->publicInfo.nvPublic.attributes;
     UINT16          nameSize;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_DefineSpace: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_DefineSpace: nvIndex %08x\n", in->publicInfo.nvPublic.nvIndex);
+	fclose(f);
+    }
     nameSize = CryptHashGetDigestSize(in->publicInfo.nvPublic.nameAlg);
     // Input Validation
     // Checks not specific to type
@@ -223,6 +232,12 @@ TPM2_NV_UndefineSpace(
 {
     NV_REF           locator;
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_UndefineSpace: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_UndefineSpace: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     // This command can't be used to delete an index with TPMA_NV_POLICY_DELETE SET
     if(IS_ATTRIBUTE(nvIndex->publicArea.attributes, TPMA_NV, POLICY_DELETE))
@@ -249,6 +264,12 @@ TPM2_NV_UndefineSpaceSpecial(
     TPM_RC           result;
     NV_REF           locator;
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_UndefineSpaceSpecial: nvIndex %08x\n", in->nvIndex);
+	fprintf(f, "TPM2_NV_UndefineSpaceSpecial: platform %08x\n", in->platform );
+	fclose(f);
+    }
     // Input Validation
     // This operation only applies when the TPMA_NV_POLICY_DELETE attribute is SET
     if(!IS_ATTRIBUTE(nvIndex->publicArea.attributes, TPMA_NV, POLICY_DELETE))
@@ -273,6 +294,11 @@ TPM2_NV_ReadPublic(
 		   NV_ReadPublic_Out   *out            // OUT: output parameter list
 		   )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_ReadPublic: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, NULL);
     // Command Output
     // Copy index public data to output
@@ -293,6 +319,12 @@ TPM2_NV_Write(
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, NULL);
     TPMA_NV          attributes = nvIndex->publicArea.attributes;
     TPM_RC           result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_Write: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_Write: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     // Common access checks, NvWriteAccessCheck() may return TPM_RC_NV_AUTHORIZATION
     // or TPM_RC_NV_LOCKED
@@ -340,6 +372,12 @@ TPM2_NV_Increment(
     NV_REF           locator;
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
     UINT64           countValue;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_Increment: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_Increment: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     // Common access checks, NvWriteAccessCheck() may return TPM_RC_NV_AUTHORIZATION
     // or TPM_RC_NV_LOCKED
@@ -393,6 +431,12 @@ TPM2_NV_Extend(
     TPM2B_DIGEST            oldDigest;
     TPM2B_DIGEST            newDigest;
     HASH_STATE              hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_Extend: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_Extend: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     // Common access checks, NvWriteAccessCheck() may return TPM_RC_NV_AUTHORIZATION
     // or TPM_RC_NV_LOCKED
@@ -442,6 +486,12 @@ TPM2_NV_SetBits(
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
     UINT64           oldValue;
     UINT64           newValue;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_SetBits: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_SetBits: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     // Common access checks, NvWriteAccessCheck() may return TPM_RC_NV_AUTHORIZATION
     // or TPM_RC_NV_LOCKED
@@ -477,6 +527,12 @@ TPM2_NV_WriteLock(
     NV_REF           locator;
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
     TPMA_NV          nvAttributes = nvIndex->publicArea.attributes;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_WriteLock: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_WriteLock: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation:
     // Common access checks, NvWriteAccessCheck() may return TPM_RC_NV_AUTHORIZATION
     // or TPM_RC_NV_LOCKED
@@ -512,6 +568,11 @@ TPM2_NV_GlobalWriteLock(
 			NV_GlobalWriteLock_In   *in             // IN: input parameter list
 			)
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_GlobalWriteLock: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // Input parameter (the authorization handle) is not reference in command action.
     NOT_REFERENCED(in);
     // Internal Data Update
@@ -538,6 +599,12 @@ TPM2_NV_Read(
     NV_REF           locator;
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
     TPM_RC           result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_Read: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_Read: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     // Common read access checks. NvReadAccessChecks() may return
     // TPM_RC_NV_AUTHORIZATION, TPM_RC_NV_LOCKED, or TPM_RC_NV_UNINITIALIZED
@@ -572,6 +639,12 @@ TPM2_NV_ReadLock(
 {
     TPM_RC           result;
     NV_REF           locator;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_ReadLock: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_ReadLock: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // The referenced index has been checked multiple times before this is called
     // so it must be present and will be loaded into cache
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
@@ -611,6 +684,11 @@ TPM2_NV_ChangeAuth(
 {
     NV_REF           locator;
     NV_INDEX        *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_ChangeAuth: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     // Remove trailing zeros and make sure that the result is not larger than the
     // digest of the nameAlg.
@@ -637,6 +715,13 @@ TPM2_NV_Certify(
     NV_INDEX                *nvIndex = NvGetIndexInfo(in->nvIndex, &locator);
     TPMS_ATTEST              certifyInfo;
     OBJECT                 *signObject = HandleToObject(in->signHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_Certify: signHandle %08x\n", in->signHandle);
+	fprintf(f, "TPM2_NV_Certify: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_Certify: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
     // Input Validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_NV_Certify_signHandle;

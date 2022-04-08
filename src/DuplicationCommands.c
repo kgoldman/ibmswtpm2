@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -63,6 +63,9 @@
 #include "Duplicate_fp.h"
 #if CC_Duplicate  // Conditional expansion of this file
 #include "Object_spt_fp.h"
+
+extern int verbose;
+
 TPM_RC
 TPM2_Duplicate(
 	       Duplicate_In    *in,            // IN: input parameter list
@@ -75,6 +78,12 @@ TPM2_Duplicate(
     OBJECT                  *object;
     OBJECT                  *newParent;
     TPM2B_DATA              data;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Duplicate: newParentHandle %08x\n", in->newParentHandle);
+	fprintf(f, "TPM2_Duplicate: objectHandle %08x\n", in->objectHandle);
+	fclose(f);
+    }
     // Input Validation
     // Get duplicate object pointer
     object = HandleToObject(in->objectHandle);
@@ -160,6 +169,12 @@ TPM2_Rewrap(
     TPM2B_DATA              data;               // symmetric key
     UINT16                  hashSize = 0;
     TPM2B_PRIVATE           privateBlob;        // A temporary private blob
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Rewrap: oldParent %08x\n", in->oldParent);
+	fprintf(f, "TPM2_Rewrap: newParent %08x\n", in->newParent);
+	fclose(f);
+    }
     // to transit between old
     // and new wrappers
     // Input Validation
@@ -263,7 +278,12 @@ TPM2_Import(
     TPM2B_NAME               name;
     TPMA_OBJECT              attributes;
     UINT16                   innerKeySize = 0;       // encrypt key size for inner
-    // wrapper
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Import: %08x\n", in->parentHandle);
+	fclose(f);
+    }
+   // wrapper
     // Input Validation
     // to save typing
     attributes = in->objectPublic.publicArea.objectAttributes;

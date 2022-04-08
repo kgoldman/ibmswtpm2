@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -63,6 +63,9 @@
 #include "Tpm.h"
 #include "PlatformACT_fp.h"		/* added kgold */
 #include "_TPM_Init_fp.h"
+
+extern int verbose;
+
 // This function is used to process a _TPM_Init indication.
 LIB_EXPORT void
 _TPM_Init(
@@ -121,6 +124,11 @@ TPM2_Startup(
     BYTE                 locality = _plat__LocalityGet();
     BOOL                 OK = TRUE;    // The command needs NV update.
     RETURN_IF_NV_IS_NOT_AVAILABLE;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Startup:\n");
+	fclose(f);
+    }
     // Get the flags for the current startup locality and the H-CRTM.
     // Rather than generalizing the locality setting, this code takes advantage
     // of the fact that the PC Client specification only allows Startup()
@@ -272,7 +280,7 @@ TPM2_Startup(
     OK = OK && NV_SYNC_PERSISTENT(orderlyState);
     // This can be reset after the first completion of a TPM2_Startup() after
     // a power loss. It can probably be reset earlier but this is an OK place.
-    if (OK) 
+    if (OK)
 	g_powerWasLost = FALSE;
     return (OK) ? TPM_RC_SUCCESS : TPM_RC_FAILURE;
 }
@@ -285,6 +293,11 @@ TPM2_Shutdown(
 	      Shutdown_In     *in             // IN: input parameter list
 	      )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Shutdown:\n");
+	fclose(f);
+    }
     // The command needs NV update.  Check if NV is available.
     // A TPM_RC_NV_UNAVAILABLE or TPM_RC_NV_RATE error may be returned at
     // this point
@@ -297,9 +310,9 @@ TPM2_Shutdown(
     gp.orderlyState = in->shutdownType;
 #if USE_DA_USED
     // CLEAR g_daUsed so that any future DA-protected access will cause the
-    // shutdown to become non-orderly. It is not sufficient to invalidate the 
-    // shutdown state after a DA failure because an attacker can inhibit access 
-    // to NV and use the fact that an update of failedTries was attempted as an 
+    // shutdown to become non-orderly. It is not sufficient to invalidate the
+    // shutdown state after a DA failure because an attacker can inhibit access
+    // to NV and use the fact that an update of failedTries was attempted as an
     // indication of an authorization failure. By making sure that the orderly state
     // is CLEAR before any DA attempt, this prevents the possibility of this 'attack.'
     g_daUsed = FALSE;
