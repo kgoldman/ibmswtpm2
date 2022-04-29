@@ -73,7 +73,7 @@
 
 #define SYMMETRIC_ALIGNMENT RADIX_BYTES
 
-#if OPENSSL_VERSION_NUMBER > 0x30000010L
+#if OPENSSL_VERSION_NUMBER > 0x30000020L
 // Check the bignum_st definition in crypto/bn/bn_lcl.h and either update the
 // version check or provide the new definition for this version.
 #   error Untested OpenSSL version
