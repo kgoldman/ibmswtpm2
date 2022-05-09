@@ -55,12 +55,15 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "CreatePrimary_fp.h"
+
+extern int verbose;
+
 #if CC_CreatePrimary  // Conditional expansion of this file
 TPM_RC
 TPM2_CreatePrimary(
@@ -73,6 +76,11 @@ TPM2_CreatePrimary(
     DRBG_STATE           rand;
     OBJECT              *newObject;
     TPM2B_NAME           name;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_CreatePrimary: primaryHandle %08x\n", in->primaryHandle);
+	fclose(f);
+    }
     // Input Validation
     // Will need a place to put the result
     newObject = FindEmptyObjectSlot(&out->objectHandle);
@@ -127,6 +135,11 @@ TPM2_CreatePrimary(
 			  &out->creationHash, &out->creationTicket);
     // Set the remaining attributes for a loaded object
     ObjectSetLoadedAttributes(newObject, in->primaryHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_CreatePrimary: objectHandle %08x\n", out->objectHandle);
+	fclose(f);
+    }
     return result;
 }
 #endif // CC_CreatePrimary
@@ -140,6 +153,11 @@ TPM2_HierarchyControl(
 {
     BOOL        select = (in->state == YES);
     BOOL        *selected = NULL;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_HierarchyControl: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // Input Validation
     switch(in->enable)
 	{
@@ -232,6 +250,11 @@ TPM2_SetPrimaryPolicy(
 		      SetPrimaryPolicy_In     *in             // IN: input parameter list
 		      )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_SetPrimaryPolicy: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // Input Validation
     // Check the authPolicy consistent with hash algorithm. If the policy size is
     // zero, then the algorithm is required to be TPM_ALG_NULL
@@ -279,7 +302,7 @@ TPM2_SetPrimaryPolicy(
 	      break;
 	    
 	    FOR_EACH_ACT(SET_ACT_POLICY)
-	    
+
 	  default:
 	    FAIL(FATAL_ERROR_INTERNAL);
 	    break;
@@ -296,6 +319,11 @@ TPM2_ChangePPS(
 	       )
 {
     UINT32          i;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ChangePPS: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // Check if NV is available.  A TPM_RC_NV_UNAVAILABLE or TPM_RC_NV_RATE
     // error may be returned at this point
     RETURN_IF_NV_IS_NOT_AVAILABLE;
@@ -339,6 +367,11 @@ TPM2_ChangeEPS(
 	       ChangeEPS_In    *in             // IN: input parameter list
 	       )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ChangeEPS: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // The command needs NV update.  Check if NV is available.
     // A TPM_RC_NV_UNAVAILABLE or TPM_RC_NV_RATE error may be returned at
     // this point
@@ -382,6 +415,11 @@ TPM2_Clear(
 	   Clear_In        *in             // IN: input parameter list
 	   )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Clear: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // Input parameter is not reference in command action
     NOT_REFERENCED(in);
     // The command needs NV update.  Check if NV is available.
@@ -445,6 +483,11 @@ TPM2_ClearControl(
 		  ClearControl_In     *in             // IN: input parameter list
 		  )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ClearControl: auth %08x\n", in->auth);
+	fclose(f);
+    }
     // The command needs NV update.
     RETURN_IF_NV_IS_NOT_AVAILABLE;
     // Input Validation
@@ -470,6 +513,11 @@ TPM2_HierarchyChangeAuth(
 			 HierarchyChangeAuth_In  *in             // IN: input parameter list
 			 )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_HierarchyChangeAuth: authHandle %08x\n", in->authHandle);
+	fclose(f);
+    }
     // The command needs NV update.
     RETURN_IF_NV_IS_NOT_AVAILABLE;
     // Make sure that the authorization value is a reasonable size (not larger than
@@ -505,3 +553,4 @@ TPM2_HierarchyChangeAuth(
     return TPM_RC_SUCCESS;
 }
 #endif // CC_HierarchyChangeAuth
+

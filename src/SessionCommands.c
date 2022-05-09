@@ -61,6 +61,9 @@
 
 #include "Tpm.h"
 #include "StartAuthSession_fp.h"
+
+extern int verbose;
+
 #if CC_StartAuthSession  // Conditional expansion of this file
 TPM_RC
 TPM2_StartAuthSession(
@@ -157,6 +160,11 @@ TPM2_StartAuthSession(
     result = SessionCreate(in->sessionType, in->authHash, &in->nonceCaller,
 			   &in->symmetric, in->bind, &salt, &out->sessionHandle,
 			   &out->nonceTPM);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_StartAuthSession: sessionHandle %08x\n", out->sessionHandle);
+	fclose(f);
+    }
     return result;
 }
 #endif // CC_StartAuthSession
@@ -168,6 +176,11 @@ TPM2_PolicyRestart(
 		   PolicyRestart_In    *in             // IN: input parameter list
 		   )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyRestart: sessionHandle %08x\n", in->sessionHandle);
+	fclose(f);
+    }
     // Initialize policy session data
     SessionResetPolicyData(SessionGet(in->sessionHandle));
     return TPM_RC_SUCCESS;

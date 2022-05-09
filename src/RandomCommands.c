@@ -1,9 +1,9 @@
 /********************************************************************************/
 /*										*/
-/*			     				*/
+/*			    Random Number Generator 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: RandomCommands.c 1490 2019-07-26 21:13:22Z kgoldman $		*/
+/*            $Id: RandomCommands.c 1671 2021-06-03 18:30:41Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -61,6 +61,9 @@
 
 #include "Tpm.h"
 #include "GetRandom_fp.h"
+
+extern int verbose;
+
 #if CC_GetRandom  // Conditional expansion of this file
 TPM_RC
 TPM2_GetRandom(
@@ -68,6 +71,11 @@ TPM2_GetRandom(
 	       GetRandom_Out   *out            // OUT: output parameter list
 	       )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_GetRandom: bytesRequested %hu\n", in->bytesRequested);
+	fclose(f);
+    }
     // Command Output
     // if the requested bytes exceed the output buffer size, generates the
     // maximum bytes that the output buffer allows
@@ -76,7 +84,7 @@ TPM2_GetRandom(
     else
 	out->randomBytes.t.size = in->bytesRequested;
     CryptRandomGenerate(out->randomBytes.t.size, out->randomBytes.t.buffer);
-    return TPM_RC_SUCCESS;
+   return TPM_RC_SUCCESS;
 }
 #endif // CC_GetRandom
 #include "Tpm.h"
@@ -87,6 +95,11 @@ TPM2_StirRandom(
 		StirRandom_In   *in             // IN: input parameter list
 		)
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_StirRandom:\n");
+	fclose(f);
+    }
     // Internal Data Update
     CryptRandomStir(in->inData.t.size, in->inData.t.buffer);
     return TPM_RC_SUCCESS;

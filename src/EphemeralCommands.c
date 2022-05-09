@@ -55,12 +55,15 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "Commit_fp.h"
+
+extern int verbose;
+
 #if CC_Commit  // Conditional expansion of this file
 TPM_RC
 TPM2_Commit(
@@ -76,6 +79,11 @@ TPM2_Commit(
     TPM2B_ECC_PARAMETER      p;
     TPM_RC                   result;
     TPMS_ECC_PARMS          *parms;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Commit: signHandle %08x\n", in->signHandle);
+	fclose(f);
+    }
     // Input Validation
     eccKey = HandleToObject(in->signHandle);
     parms = &eccKey->publicArea.parameters.eccDetail;
@@ -169,6 +177,11 @@ TPM2_EC_Ephemeral(
 {
     TPM2B_ECC_PARAMETER      r;
     TPM_RC                   result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_EC_Ephemeral:\n");
+	fclose(f);
+    }
     //
     do
 	{

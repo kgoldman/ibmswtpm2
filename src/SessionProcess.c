@@ -68,6 +68,9 @@
 #define SESSION_PROCESS_C
 #include "Tpm.h"
 #include "ACT.h"
+
+extern int verbose;
+
 /* 6.4.3.1 IsDAExempted() */
 /* This function indicates if a handle is exempted from DA logic. A handle is exempted if it is */
 /* a) a primary seed handle, */
@@ -1446,6 +1449,12 @@ ParseSessionBuffer(
 		}
 	    else
 		{
+		    if (verbose) {
+			FILE *f = fopen("trace.txt", "a");
+			fprintf(f, "Session %u handle %08x\n",
+				sessionIndex, s_sessionHandles[sessionIndex]);
+			fclose(f);
+		    }
 		    session = SessionGet(s_sessionHandles[sessionIndex]);
 		    // A trial session can not appear in session area, because it cannot
 		    // be used for authorization, audit or encrypt/decrypt.

@@ -61,6 +61,9 @@
 
 #include "Tpm.h"
 #include "VerifySignature_fp.h"
+
+extern int verbose;
+
 #if CC_VerifySignature  // Conditional expansion of this file
 TPM_RC
 TPM2_VerifySignature(
@@ -71,6 +74,11 @@ TPM2_VerifySignature(
     TPM_RC                   result;
     OBJECT                  *signObject = HandleToObject(in->keyHandle);
     TPMI_RH_HIERARCHY        hierarchy;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_VerifySignature: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // Input Validation
     // The object to validate the signature must be a signing key.
     if(!IS_ATTRIBUTE(signObject->publicArea.objectAttributes, TPMA_OBJECT, sign))
@@ -113,11 +121,16 @@ TPM2_Sign(
     TPM_RC                   result;
     TPMT_TK_HASHCHECK        ticket;
     OBJECT                  *signObject = HandleToObject(in->keyHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Sign: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     //
     // Input Validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_Sign_keyHandle;
-    
+
     // A key that will be used for x.509 signatures can't be used in TPM2_Sign().
     if(IS_ATTRIBUTE(signObject->publicArea.objectAttributes, TPMA_OBJECT, x509sign))
 	return TPM_RCS_ATTRIBUTES + RC_Sign_keyHandle;

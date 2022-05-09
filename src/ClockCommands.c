@@ -55,18 +55,26 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "ReadClock_fp.h"
+
+extern int verbose;
+
 #if CC_ReadClock  // Conditional expansion of this file
 TPM_RC
 TPM2_ReadClock(
 	       ReadClock_Out   *out            // OUT: output parameter list
 	       )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ReadClock:\n");
+	fclose(f);
+    }
     // Command Output
     out->currentTime.time = g_time;
     TimeFillInfo(&out->currentTime.clockInfo);
@@ -81,6 +89,11 @@ TPM2_ClockSet(
 	      ClockSet_In     *in             // IN: input parameter list
 	      )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ClockSet:\n");
+	fclose(f);
+    }
     // Input Validation
     // new time can not be bigger than 0xFFFF000000000000 or smaller than
     // current clock
@@ -102,6 +115,11 @@ TPM2_ClockRateAdjust(
 		     ClockRateAdjust_In  *in             // IN: input parameter list
 		     )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ClockRateAdjust:\n");
+	fclose(f);
+    }
     // Internal Data Update
     TimeSetAdjustRate(in->rateAdjust);
     return TPM_RC_SUCCESS;

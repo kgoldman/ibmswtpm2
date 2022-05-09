@@ -1,3 +1,4 @@
+
 /********************************************************************************/
 /*										*/
 /*			   Attestation Commands  				*/
@@ -22,7 +23,7 @@
 /*										*/
 /*  2. Source Code Distribution Conditions:					*/
 /*										*/
-/*  - Redistributions of Source Code must retain the above copyright licenses, 	*/
+/*  - Redistributions of Source CoDe must retain the above copyright licenses, 	*/
 /*    this list of conditions and the following disclaimers.			*/
 /*										*/
 /*  - Redistributions in binary form must reproduce the above copyright 	*/
@@ -62,6 +63,9 @@
 #include "Tpm.h"
 #include "Attest_spt_fp.h"
 #include "Certify_fp.h"
+
+extern int verbose;
+
 #if CC_Certify  // Conditional expansion of this file
 TPM_RC
 TPM2_Certify(
@@ -72,6 +76,12 @@ TPM2_Certify(
     TPMS_ATTEST             certifyInfo;
     OBJECT                  *signObject = HandleToObject(in->signHandle);
     OBJECT                  *certifiedObject = HandleToObject(in->objectHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Certify: signHandle %08x\n", in->signHandle);
+	fprintf(f, "TPM2_Certify: objectHandle %08x\n", in->objectHandle);
+	fclose(f);
+    }
     // Input validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_Certify_signHandle;
@@ -94,7 +104,7 @@ TPM2_Certify(
 	certifyInfo.attested.certify.qualifiedName.t.size = 0;
     else
 	certifyInfo.attested.certify.qualifiedName = certifiedObject->qualifiedName;
-    
+
     // Sign attestation structure.  A NULL signature will be returned if
     // signHandle is TPM_RH_NULL.  A TPM_RC_NV_UNAVAILABLE, TPM_RC_NV_RATE,
     // TPM_RC_VALUE, TPM_RC_SCHEME or TPM_RC_ATTRIBUTES error may be returned
@@ -117,6 +127,12 @@ TPM2_CertifyCreation(
     TPMS_ATTEST             certifyInfo;
     OBJECT                  *certified = HandleToObject(in->objectHandle);
     OBJECT                  *signObject = HandleToObject(in->signHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_CertifyCreation: signHandle %08x\n", in->signHandle);
+	fprintf(f, "TPM2_CertifyCreation: objectHandle %08x\n", in->objectHandle);
+	fclose(f);
+    }
     // Input Validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_CertifyCreation_signHandle;
@@ -161,6 +177,11 @@ TPM2_Quote(
     TPMI_ALG_HASH            hashAlg;
     TPMS_ATTEST              quoted;
     OBJECT                 *signObject = HandleToObject(in->signHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Quote: signHandle %08x\n", in->signHandle);
+	fclose(f);
+    }
     // Input Validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_Quote_signHandle;
@@ -205,6 +226,12 @@ TPM2_GetSessionAuditDigest(
     SESSION                 *session = SessionGet(in->sessionHandle);
     TPMS_ATTEST              auditInfo;
     OBJECT                 *signObject = HandleToObject(in->signHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_GetSessionAuditDigest: signHandle %08x\n", in->signHandle);
+	fprintf(f, "TPM2_GetSessionAuditDigest: sessionHandle %08x\n", in->sessionHandle);
+	fclose(f);
+    }
     // Input Validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_GetSessionAuditDigest_signHandle;
@@ -243,6 +270,11 @@ TPM2_GetCommandAuditDigest(
     TPM_RC                  result;
     TPMS_ATTEST             auditInfo;
     OBJECT                 *signObject = HandleToObject(in->signHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_GetCommandAuditDigest: signHandle %08x\n", in->signHandle);
+	fclose(f);
+    }
     // Input validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_GetCommandAuditDigest_signHandle;
@@ -285,6 +317,11 @@ TPM2_GetTime(
 {
     TPMS_ATTEST             timeInfo;
     OBJECT                 *signObject = HandleToObject(in->signHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_GetTime: signHandle %08x\n", in->signHandle);
+	fclose(f);
+    }
     // Input Validation
     if(!IsSigningObject(signObject))
 	return TPM_RCS_KEY + RC_GetTime_signHandle;
@@ -347,12 +384,18 @@ TPM2_CertifyX509(
     INT16                    countOfSequences = 0;
     INT16                    i;
     //
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_CertifyX509: signHandle %08x\n", in->signHandle);
+	fprintf(f, "TPM2_CertifyX509: objectHandle %08x\n", in->objectHandle);
+	fclose(f);
+    }
 #if CERTIFYX509_DEBUG
     DebugFileInit();
     DebugDumpBuffer(in->partialCertificate.t.size, in->partialCertificate.t.buffer,
 		    "partialCertificate");
 #endif
-    
+
     // Input Validation
     if(in->reserved.b.size != 0)
 	return TPM_RC_SIZE + RC_CertifyX509_reserved;
@@ -419,13 +462,13 @@ TPM2_CertifyX509(
     // belong
     for(i = 0; i < countOfSequences; i++)
 	certTBS[SUBJECT_KEY_REF - i] = partial[countOfSequences - 1 - i];
-    
+
     // If only three SEQUENCES, then the TPM needs to produce the signature algorithm.
     // See if it can
     if((countOfSequences == 3) &&
        (X509AddSigningAlgorithm(NULL, signKey, &in->inScheme) == 0))
 	return TPM_RCS_SCHEME + RC_CertifyX509_signHandle;
-    
+
     // Process the extensions
     result = X509ProcessExtensions(object, &certTBS[EXTENSIONS_REF]);
     if(result != TPM_RC_SUCCESS)
@@ -437,14 +480,14 @@ TPM2_CertifyX509(
 			 : RC_CertifyX509_partialCertificate);
     // Command Output
     // Create the addedToCertificate values
-    
+
     // Build the addedToCertificate from the bottom up.
     // Initialize the context structure
     ASN1InitialializeMarshalContext(&ctxOut, sizeof(out->addedToCertificate.t.buffer),
 				    out->addedToCertificate.t.buffer);
     // Place a marker for the overall context
     ASN1StartMarshalContext(&ctxOut);  // SEQUENCE for addedToCertificate
-    
+
     // Add the subject public key descriptor
     certTBS[SUBJECT_PUBLIC_KEY_REF].len = X509AddPublicKey(&ctxOut, object);
     certTBS[SUBJECT_PUBLIC_KEY_REF].buf = ctxOut.buffer + ctxOut.offset;
@@ -461,7 +504,7 @@ TPM2_CertifyX509(
 	//
 	digest->size = (INT16)CryptHashStart(&hash, signKey->publicArea.nameAlg);
 	pAssert(digest->size != 0);
-	
+
 	// The serial number size is the smaller of the digest and the vendor-defined
 	// value
 	digest->size = MIN(digest->size, SIZE_OF_X509_SERIAL_NUMBER);
@@ -476,19 +519,19 @@ TPM2_CertifyX509(
 	// Done
 	CryptHashEnd2B(&hash, digest);
     }
-    
+
     // Add the serial number
     certTBS[SERIAL_NUMBER_REF].len =
 	ASN1PushInteger(&ctxOut, out->tbsDigest.t.size, out->tbsDigest.t.buffer);
     certTBS[SERIAL_NUMBER_REF].buf = ctxOut.buffer + ctxOut.offset;
-    
+
     // Add the static version number
     ASN1StartMarshalContext(&ctxOut);
     ASN1PushUINT(&ctxOut, 2);
     certTBS[VERSION_REF].len =
 	ASN1EndEncapsulation(&ctxOut, ASN1_APPLICAIION_SPECIFIC);
     certTBS[VERSION_REF].buf = ctxOut.buffer + ctxOut.offset;
-    
+
     // Create a fake tag and length for the TBS in the space used for
     // 'addedToCertificate'
     {
@@ -510,7 +553,7 @@ TPM2_CertifyX509(
     for(i = 0; i < REF_COUNT; i++)
 	CryptDigestUpdate(&hash, certTBS[i].len, certTBS[i].buf);
     CryptHashEnd2B(&hash, &out->tbsDigest.b);
-    
+
 #if CERTIFYX509_DEBUG
     {
 	BYTE                 fullTBS[4096];
@@ -524,7 +567,7 @@ TPM2_CertifyX509(
 	DebugDumpBuffer((int)(fill - &fullTBS[0]), fullTBS, "\nfull TBS");
     }
 #endif
-    
+
     // Finish up the processing of addedToCertificate
     // Create the actual tag and length for the addedToCertificate structure
     out->addedToCertificate.t.size =
@@ -538,7 +581,7 @@ TPM2_CertifyX509(
 #endif
     // only thing missing is the signature
     result = CryptSign(signKey, &in->inScheme, &out->tbsDigest, &out->signature);
-    
+
     return result;
 }
 #endif // CC_CertifyX509

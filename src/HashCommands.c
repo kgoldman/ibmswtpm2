@@ -55,12 +55,15 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "HMAC_Start_fp.h"
+
+extern int verbose;
+
 #if CC_HMAC_Start  // Conditional expansion of this file
 TPM_RC
 TPM2_HMAC_Start(
@@ -71,6 +74,11 @@ TPM2_HMAC_Start(
     OBJECT                  *keyObject;
     TPMT_PUBLIC             *publicArea;
     TPM_ALG_ID               hashAlg;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_HMAC_Start: handle %08x\n", in->handle);
+	fclose(f);
+    }
     // Input Validation
     // Get HMAC key object and public area pointers
     keyObject = HandleToObject(in->handle);
@@ -103,6 +111,11 @@ TPM2_HMAC_Start(
     // Internal Data Update
     // Create a HMAC sequence object. A TPM_RC_OBJECT_MEMORY error may be
     // returned at this point
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_HMAC_Start: sequenceHandle %08x\n", out->sequenceHandle);
+	fclose(f);
+    }
     return ObjectCreateHMACSequence(hashAlg,
 				    keyObject,
 				    &in->auth,
@@ -127,6 +140,11 @@ TPM2_MAC_Start(
     OBJECT                  *keyObject;
     TPMT_PUBLIC             *publicArea;
     TPM_RC                   result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_MAC_Start: handle %08x\n", in->handle);
+	fclose(f);
+    }
     // Input Validation
     // Get HMAC key object and public area pointers
     keyObject = HandleToObject(in->handle);
@@ -150,6 +168,11 @@ TPM2_MAC_Start(
     // Internal Data Update
     // Create a HMAC sequence object. A TPM_RC_OBJECT_MEMORY error may be
     // returned at this point
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_MAC_Start: sequenceHandle %08x\n", out->sequenceHandle);
+	fclose(f);
+    }
     return ObjectCreateHMACSequence(in->inScheme,
 				    keyObject,
 				    &in->auth,
@@ -172,6 +195,11 @@ TPM2_HashSequenceStart(
 	return ObjectCreateEventSequence(&in->auth, &out->sequenceHandle);
     // Start a hash sequence.  A TPM_RC_OBJECT_MEMORY error may be
     // returned at this point
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_HashSequenceStart: sequenceHandle %08x\n", out->sequenceHandle);
+	fclose(f);
+    }
     return ObjectCreateHashSequence(in->hashAlg, &in->auth, &out->sequenceHandle);
 }
 #endif // CC_HashSequenceStart
@@ -185,6 +213,11 @@ TPM2_SequenceUpdate(
 {
     OBJECT                  *object;
     HASH_OBJECT             *hashObject;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_SequenceUpdate: sequenceHandle %08x\n", in->sequenceHandle);
+	fclose(f);
+    }
     // Input Validation
     // Get sequence object pointer
     object = HandleToObject(in->sequenceHandle);
@@ -244,6 +277,11 @@ TPM2_SequenceComplete(
 		      )
 {
     HASH_OBJECT                      *hashObject;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_SequenceComplete: sequenceHandle %08x\n", in->sequenceHandle);
+	fclose(f);
+    }
     // Input validation
     // Get hash object pointer
     hashObject = (HASH_OBJECT *)HandleToObject(in->sequenceHandle);
@@ -329,6 +367,12 @@ TPM2_EventSequenceComplete(
     HASH_OBJECT         *hashObject;
     UINT32               i;
     TPM_ALG_ID           hashAlg;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_EventSequenceComplete: pcrHandle %u\n", in->pcrHandle);
+	fprintf(f, "TPM2_EventSequenceComplete: sequenceHandle %08x\n", in->sequenceHandle);
+	fclose(f);
+    }
     // Input validation
     // get the event sequence object pointer
     hashObject = (HASH_OBJECT *)HandleToObject(in->sequenceHandle);

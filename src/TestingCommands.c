@@ -55,18 +55,26 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016-2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "SelfTest_fp.h"
+
+extern int verbose;
+
 #if CC_SelfTest  // Conditional expansion of this file
 TPM_RC
 TPM2_SelfTest(
 	      SelfTest_In     *in             // IN: input parameter list
 	      )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_SelfTest:\n");
+	fclose(f);
+    }
     // Command Output
     // Call self test function in crypt module
     return CryptSelfTest(in->fullTest);
@@ -82,6 +90,11 @@ TPM2_IncrementalSelfTest(
 			 )
 {
     TPM_RC                       result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_IncrementalSelfTest:\n");
+	fclose(f);
+    }
     // Command Output
     // Call incremental self test function in crypt module. If this function
     // returns TPM_RC_VALUE, it means that an algorithm on the 'toTest' list is
@@ -100,6 +113,11 @@ TPM2_GetTestResult(
 		   GetTestResult_Out   *out            // OUT: output parameter list
 		   )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_GetTestResult:\n");
+	fclose(f);
+    }
     // Command Output
     // Call incremental self test function in crypt module
     out->testResult = CryptGetTestResult(&out->outData);

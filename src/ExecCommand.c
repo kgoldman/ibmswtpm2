@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
@@ -64,6 +64,9 @@
    TPM command execution. */
 #include "Tpm.h"
 #include "ExecCommand_fp.h"
+
+extern int verbose;
+
 /* Uncomment this next #include if doing static command/response buffer sizing */
 // #include "CommandResponseSizes_fp.h"
 // The function performs the following steps.
@@ -175,6 +178,11 @@ ExecuteCommand(
     // Unmarshal the command code.
     result = TPM_CC_Unmarshal(&command.code, &command.parameterBuffer,
 			      &command.parameterSize);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "\t\tCommand Code %08x\n", command.code);
+	fclose(f);
+    }
     if(result != TPM_RC_SUCCESS)
 	goto Cleanup;
     // Check to see if the command is implemented.

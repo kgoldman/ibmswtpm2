@@ -64,6 +64,9 @@
 #if CC_EncryptDecrypt2
 #include  "EncryptDecrypt_spt_fp.h"
 #endif
+
+extern int verbose;
+
 #if CC_EncryptDecrypt  // Conditional expansion of this file
 TPM_RC
 TPM2_EncryptDecrypt(
@@ -84,13 +87,18 @@ TPM2_EncryptDecrypt(
     TPM_RC               result;
     BOOL                 OK;
     TPMA_OBJECT          attributes;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_EncryptDecrypt: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // Input Validation
     symKey = HandleToObject(in->keyHandle);
     mode = symKey->publicArea.parameters.symDetail.sym.mode.sym;
     attributes = symKey->publicArea.objectAttributes;
     // The input key should be a symmetric key
     if(symKey->publicArea.type != TPM_ALG_SYMCIPHER)
-	return TPM_RCS_KEY + RC_EncryptDecrypt_keyHandle;	
+	return TPM_RCS_KEY + RC_EncryptDecrypt_keyHandle;
     // The key must be unrestricted and allow the selected operation
     OK = IS_ATTRIBUTE(attributes, TPMA_OBJECT, restricted)
      if(YES == in->decrypt)
@@ -176,6 +184,11 @@ TPM2_EncryptDecrypt2(
 		     )
 {
     TPM_RC                result;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_EncryptDecrypt2: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // EncryptDecyrptShared() performs the operations as shown in
     // TPM2_EncrypDecrypt
     result = EncryptDecryptShared(in->keyHandle, in->decrypt, in->mode,
@@ -209,6 +222,11 @@ TPM2_Hash(
 	  )
 {
     HASH_STATE          hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Hash:\n");
+	fclose(f);
+    }
     // Command Output
     // Output hash
     // Start hash stack
@@ -255,6 +273,11 @@ TPM2_HMAC(
     OBJECT                  *hmacObject;
     TPMI_ALG_HASH            hashAlg;
     TPMT_PUBLIC             *publicArea;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_HMAC: handle %08x\n", in->handle);
+	fclose(f);
+    }
     // Input Validation
     // Get HMAC key object and public area pointers
     hmacObject = HandleToObject(in->handle);
@@ -316,6 +339,11 @@ TPM2_MAC(
     TPMT_PUBLIC             *publicArea;
     TPM_RC                   result;
     // Input Validation
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_HMAC: handle %08x\n", in->handle);
+	fclose(f);
+    }
     // Get MAC key object and public area pointers
     keyObject = HandleToObject(in->handle);
     publicArea = &keyObject->publicArea;

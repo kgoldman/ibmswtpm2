@@ -55,13 +55,16 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "Policy_spt_fp.h"
 #include "PolicySigned_fp.h"
+
+extern int verbose;
+
 #if CC_PolicySigned  // Conditional expansion of this file
 /*TPM_RC_CPHASH cpHash was previously set to a different value */
 /*TPM_RC_EXPIRED expiration indicates a time in the past or expiration is non-zero but no nonceTPM
@@ -82,6 +85,12 @@ TPM2_PolicySigned(
     TPM2B_DIGEST             authHash;
     HASH_STATE               hashState;
     UINT64                   authTimeout = 0;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicySigned: authObject %08x\n", in->authObject);
+	fprintf(f, "TPM2_PolicySigned: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Set up local pointers
     session = SessionGet(in->policySession);    // the session structure
@@ -187,6 +196,12 @@ TPM2_PolicySecret(
     SESSION                 *session;
     TPM2B_NAME               entityName;
     UINT64                   authTimeout = 0;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicySecret: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_PolicySecret: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -267,6 +282,11 @@ TPM2_PolicyTicket(
     TPMT_TK_AUTH             ticketToCompare;
     TPM_CC                   commandCode = TPM_CC_PolicySecret;
     BOOL                     expiresOnReset;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyTicket: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -334,6 +354,11 @@ TPM2_PolicyOR(
 {
     SESSION     *session;
     UINT32       i;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyOR: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation and Update
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -388,6 +413,11 @@ TPM2_PolicyPCR(
     BYTE            *buffer;
     TPM_CC           commandCode = TPM_CC_PolicyPCR;
     HASH_STATE       hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyPCR: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -456,6 +486,11 @@ TPM2_PolicyLocality(
     BYTE        *buffer;
     TPM_CC       commandCode = TPM_CC_PolicyLocality;
     HASH_STATE   hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyLocality: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -537,6 +572,13 @@ TPM2_PolicyNV(
     TPM_CC               commandCode = TPM_CC_PolicyNV;
     HASH_STATE           hashState;
     TPM2B_DIGEST         argHash;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Policy: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_Policy: nvIndex %08x\n", in->nvIndex);
+	fprintf(f, "TPM2_Policy: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -608,6 +650,11 @@ TPM2_PolicyCounterTimer(
     TPM_CC               commandCode = TPM_CC_PolicyCounterTimer;
     HASH_STATE           hashState;
     TPM2B_DIGEST         argHash;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyCounterTimer: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get a marshaled time structure
     infoDataSize = TimeGetMarshaled(&infoData);
@@ -679,6 +726,12 @@ TPM2_PolicyCommandCode(
     SESSION     *session;
     TPM_CC      commandCode = TPM_CC_PolicyCommandCode;
     HASH_STATE  hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyCommandCode: policySession %08x\n", in->policySession);
+	fprintf(f, "TPM2_PolicyCommandCode: code %08x\n", in->code);
+	fclose(f);
+    }
     // Input validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -715,6 +768,11 @@ TPM2_PolicyPhysicalPresence(
     SESSION     *session;
     TPM_CC      commandCode = TPM_CC_PolicyPhysicalPresence;
     HASH_STATE  hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyPhysicalPresence: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Internal Data Update
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -744,6 +802,11 @@ TPM2_PolicyCpHash(
     SESSION     *session;
     TPM_CC      commandCode = TPM_CC_PolicyCpHash;
     HASH_STATE  hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyCpHash: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -788,6 +851,11 @@ TPM2_PolicyNameHash(
     SESSION             *session;
     TPM_CC               commandCode = TPM_CC_PolicyNameHash;
     HASH_STATE           hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyNameHash: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -831,6 +899,11 @@ TPM2_PolicyDuplicationSelect(
     SESSION         *session;
     HASH_STATE      hashState;
     TPM_CC          commandCode = TPM_CC_PolicyDuplicationSelect;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyDuplicationSelect: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -887,6 +960,11 @@ TPM2_PolicyAuthorize(
     TPMT_TK_VERIFIED         ticket;
     TPM_ALG_ID               hashAlg;
     UINT16                   digestSize;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyAuthorize: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -946,6 +1024,11 @@ TPM2_PolicyAuthValue(
     SESSION             *session;
     TPM_CC               commandCode = TPM_CC_PolicyAuthValue;
     HASH_STATE           hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyAuthValue: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Internal Data Update
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -977,6 +1060,11 @@ TPM2_PolicyPassword(
     SESSION             *session;
     TPM_CC               commandCode = TPM_CC_PolicyAuthValue;
     HASH_STATE           hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyPassword: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Internal Data Update
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -1006,6 +1094,11 @@ TPM2_PolicyGetDigest(
 		     )
 {
     SESSION     *session;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyGetDigest: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Command Output
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -1024,6 +1117,11 @@ TPM2_PolicyNvWritten(
     SESSION     *session;
     TPM_CC       commandCode = TPM_CC_PolicyNvWritten;
     HASH_STATE   hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyNvWritten: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -1066,6 +1164,11 @@ TPM2_PolicyTemplate(
     SESSION     *session;
     TPM_CC      commandCode = TPM_CC_PolicyTemplate;
     HASH_STATE  hashState;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyTemplate: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);
@@ -1119,6 +1222,13 @@ TPM2_PolicyAuthorizeNV(
     BYTE                     nvTemp[sizeof(TPMT_HA)];
     BYTE                    *buffer = nvTemp;
     INT32                    size;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_PolicyAuthorizeNV: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_PolicyAuthorizeNV: nvIndex %08x\n", in->nvIndex);
+	fprintf(f, "TPM2_PolicyAuthorizeNV: policySession %08x\n", in->policySession);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to the session structure
     session = SessionGet(in->policySession);

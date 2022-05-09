@@ -55,18 +55,26 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2018				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
 /*										*/
 /********************************************************************************/
 
 #include "Tpm.h"
 #include "SetCommandCodeAuditStatus_fp.h"
+
+extern int verbose;
+
 #if CC_SetCommandCodeAuditStatus  // Conditional expansion of this file
 TPM_RC
 TPM2_SetCommandCodeAuditStatus(
-			       SetCommandCodeAuditStatus_In    *in             // IN: input parameter list
+			       SetCommandCodeAuditStatus_In    *in	// IN: input parameter list
 			       )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_SetCommandCodeAuditStatus:\n");
+	fclose(f);
+    }
     // The command needs NV update.  Check if NV is available.
     // A TPM_RC_NV_UNAVAILABLE or TPM_RC_NV_RATE error may be returned at
     // this point

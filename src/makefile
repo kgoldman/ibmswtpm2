@@ -43,6 +43,7 @@ CC = /usr/bin/gcc
 CCFLAGS = -Wall  			\
 	-Wmissing-declarations -Wmissing-prototypes -Wnested-externs \
 	-Werror -Wsign-compare \
+	-Wno-deprecated-declarations	\
 	 -c -ggdb -O0 			\
 	-DTPM_POSIX			\
 	-D_POSIX_			\
