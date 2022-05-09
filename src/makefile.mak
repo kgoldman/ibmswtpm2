@@ -1,11 +1,10 @@
 #################################################################################
 #										#
-#		Windows MinGW TPM2 MakefileOpenSSL 1.1.1 32-bit			#
+#		Windows MinGW TPM2 Makefile OpenSSL 32-bit			#
 #			     Written by Ken Goldman				#
 #		       IBM Thomas J. Watson Research Center			#
-#	      $Id: makefile.mak 1661 2021-03-18 19:00:58Z kgoldman $		#
 #										#
-# (c) Copyright IBM Corporation 2014 - 2019					#
+# (c) Copyright IBM Corporation 2014 - 2022					#
 # 										#
 # All rights reserved.								#
 # 										#
@@ -52,6 +51,7 @@ CC = "c:/program files/mingw/bin/gcc.exe"
 
 CCFLAGS = -Wall  				\
 	-ggdb -O0 -c -Wnested-externs		\
+	-Wno-deprecated-declarations		\
 	-DTPM_WINDOWS -D_NO_OLDNAMES -D_MINGW	\
 	-D_ISOC99_SOURCE -D_WIN32_WINNT=0x0603	\
 	-I"c:/program files/MinGW/include"	\
