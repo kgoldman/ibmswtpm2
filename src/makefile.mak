@@ -56,7 +56,8 @@ CCFLAGS = -Wall  				\
 	-D_ISOC99_SOURCE -D_WIN32_WINNT=0x0603	\
 	-I"c:/program files/MinGW/include"	\
 	-I"c:/program files/openssl/include"	\
-	-I.
+	-I.					\
+	-DTPM_NUVOTON
 
 LNFLAGS = -D_MT					\
 	-DTPM_WINDOWS				\
