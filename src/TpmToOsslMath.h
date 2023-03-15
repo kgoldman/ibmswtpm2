@@ -72,16 +72,20 @@
 
 #define SYMMETRIC_ALIGNMENT RADIX_BYTES
 
-#if OPENSSL_VERSION_NUMBER > 0x300000ffL
+/*
+ * As of release 3.0.0, OPENSSL_VERSION_NUMBER is a combination of the
+ * major (M), minor (NN) and patch (PP) version into a single integer 0xMNN00PP0L
+ */
+#if OPENSSL_VERSION_NUMBER > 0x30100ff0L
 // Check the bignum_st definition in crypto/bn/bn_lcl.h or crypto/bn/bn_local.h and either update
 // the version check or provide the new definition for this version.
-// Currently safe for all 3.0.n.a
+// Currently safe for all 3.1.x
 #   error Untested OpenSSL version
 #elif OPENSSL_VERSION_NUMBER >= 0x10100000L
 // from crypto/bn/bn_lcl.h
 struct bignum_st {
     BN_ULONG *d;
-    int top; 
+    int top;
 
     int dmax;
     int neg;
