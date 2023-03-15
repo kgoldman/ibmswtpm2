@@ -1,10 +1,10 @@
 #################################################################################
 #										#
-#		Windows MinGW TPM2 Makefile OpenSSL 32-bit			#
+#		Windows MinGW TPM2 Makefile OpenSSL 64-bit			#
 #			     Written by Ken Goldman				#
 #		       IBM Thomas J. Watson Research Center			#
 #										#
-# (c) Copyright IBM Corporation 2014 - 2022					#
+# (c) Copyright IBM Corporation 2014 - 2023					#
 # 										#
 # All rights reserved.								#
 # 										#
@@ -38,14 +38,7 @@
 #################################################################################
 
 
-# Windows OpenSSL 1.1.1 32-bit with mingw
-
-# Please contribute a solution for OpenSSL 64-bit (Shining Light),
-# which does not include the mingw .a files.
-
-# For this to work, copy the file .../openssl/bin/libcrypto-1.1.dll to
-# libcrypto.dll.  Please contribute a solution that does not require
-# this step.
+# Windows OpenSSL 3.1 64-bit with mingw64
 
 CC = "c:/program files/mingw/bin/gcc.exe"
 
@@ -65,10 +58,9 @@ LNFLAGS = -D_MT					\
 	-ggdb 					\
 	-L.
 
-# Shining Light OpenSSL 1.1 32-bit
+# Shining Light OpenSSL 3.1 64-bit
 
-LNLIBS =  	"c:/program files/openssl/lib/mingw/libcrypto.a" \
-		"c:/program files/MinGW/lib/libws2_32.a"
+LNLIBS =  	"c:/program files/openssl/bin/libcrypto-3-x64.dll" -lws2_32
 
 all:	tpm_server.exe
 
@@ -81,9 +73,9 @@ OBJFILES += TcpServer.o
 .PRECIOUS:	%.o
 
 tpm_server.exe:	$(OBJFILES) applink.o
-		$(CC) $(LNFLAGS) $(OBJFILES) -o tpm_server.exe applink.o $(LNLIBS) 
+		$(CC) $(LNFLAGS) $(OBJFILES) -o tpm_server.exe applink.o $(LNLIBS)
 
-clean:		
+clean:
 		rm *.o *.exe
 
 %.o:		%.c
