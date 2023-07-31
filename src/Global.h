@@ -931,6 +931,27 @@ typedef struct state_reset_data
 } STATE_RESET_DATA;
 EXTERN STATE_RESET_DATA gr;
 
+/* version of the NVChip file, always at the end.
+ *
+ * This is only incremented for incompatible algorithm changes
+ * in the spec to tell which one should be used.
+ *
+ * The only current change is RsaAdjustPrime */
+typedef struct version_data
+{
+	UINT16	version;
+	UINT16	padding;
+} VERSION_DATA;
+EXTERN VERSION_DATA gv;
+
+/* These defines mark the version changes */
+#define NV_VERSION_OLD_PRIME_ADJUST	0
+#define NV_VERSION_CURRENT		1
+/* If no version is set, then it will be all 0xff because of NVChip init */
+#define NV_VERSION_INVALID		0xffff
+/* currently padding is unused so fill with 0xffff */
+#define NV_VERSION_PADDING		0xffff
+
 /* 5.9.12 NV Layout */
 /* The NV data organization is */
 /* a) a PERSISTENT_DATA structure */
@@ -944,7 +965,9 @@ EXTERN STATE_RESET_DATA gr;
 #define NV_ORDERLY_DATA     (NV_STATE_CLEAR_DATA + sizeof(STATE_CLEAR_DATA))
 #define NV_INDEX_RAM_DATA   (NV_ORDERLY_DATA + sizeof(ORDERLY_DATA))
 #define NV_USER_DYNAMIC     (NV_INDEX_RAM_DATA + sizeof(s_indexOrderlyRam))
-#define NV_USER_DYNAMIC_END     NV_MEMORY_SIZE
+#define NV_USER_DYNAMIC_END     (NV_MEMORY_SIZE - sizeof(VERSION_DATA))
+/* space for version number */
+#define NV_VERSION	    NV_USER_DYNAMIC_END
 
 /* 5.9.13 Global Macro Definitions */
 /* The NV_READ_PERSISTENT and NV_WRITE_PERSISTENT macros are used to access members of the

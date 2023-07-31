@@ -299,6 +299,25 @@ RsaCheckPrime(
     return PrimeSelectWithSieve(prime, exponent, rand);
 #endif
 }
+
+/* Old rev1332 version of RsaAdjustPrimeCandidate */
+static void
+RsaAdjustPrimeCandidate_old(
+			    bigNum          prime
+			    )
+{
+    UINT16  highBytes;
+    crypt_uword_t       *msw = &prime->d[prime->size - 1];
+#define MASK (MAX_CRYPT_UWORD >> (RADIX_BITS - 16))
+    highBytes = *msw >> (RADIX_BITS - 16);
+    // This is fixed point arithmetic on 16-bit values
+    highBytes = ((UINT32)highBytes * (UINT32)0x4AFB) >> 16;
+    highBytes += 0xB505;
+    *msw = ((crypt_uword_t)(highBytes) << (RADIX_BITS - 16)) + (*msw & MASK);
+    prime->d[0] |= 1;
+}
+
+
 /* 10.2.14.1.7 RsaAdjustPrimeCandidate() */
 
 /* For this math, we assume that the RSA numbers are fixed-point numbers with the decimal point to
@@ -328,6 +347,9 @@ RsaAdjustPrimeCandidate(
 {
     UINT32          msw;
     UINT32          adjusted;
+
+    if (gv.version == NV_VERSION_OLD_PRIME_ADJUST)
+	return RsaAdjustPrimeCandidate_old(prime);
     
     // If the radix is 32, the compiler should turn this into a simple assignment
     msw = prime->d[prime->size - 1] >> ((RADIX_BITS == 64) ? 32 : 0);
@@ -371,11 +393,13 @@ BnGeneratePrimeForRSA(
     
     while(!found)
 	{
+	    if (gv.version == NV_VERSION_OLD_PRIME_ADJUST)
+		DRBG_Generate(rand, (BYTE *)prime->d, (UINT16)BITS_TO_BYTES(bits));
 	    // The change below is to make sure that all keys that are generated from the same
 	    // seed value will be the same regardless of the endianess or word size of the CPU.
 	    //       DRBG_Generate(rand, (BYTE *)prime->d, (UINT16)BITS_TO_BYTES(bits));// old
 	    //       if(g_inFailureMode)                                                // old
-	    if(!BnGetRandomBits(prime, bits, rand))                              // new
+	    else if(!BnGetRandomBits(prime, bits, rand))                              // new
 		return TPM_RC_FAILURE;
 	    RsaAdjustPrimeCandidate(prime);
 	    found = RsaCheckPrime(prime, exponent, rand) == TPM_RC_SUCCESS;

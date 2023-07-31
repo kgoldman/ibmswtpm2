@@ -177,8 +177,14 @@ validate_nvchip(void)
 	EM = *m;
 
 	/* now check the current layout */
+	NvRead(&gv, NV_VERSION, sizeof(gv));
 	if (check_nv(NV_USER_DYNAMIC)) {
-		printf("NVChip is current\n");
+		if (gv.version == NV_VERSION_INVALID) {
+			fprintf(stderr, "Adding version to NVChip file\n");
+			gv.version = NV_VERSION_CURRENT;
+			gv.padding = NV_VERSION_PADDING;
+			NvWrite(NV_VERSION, sizeof(gv), &gv);
+		}
 		goto migrate_object;
 	}
 	if (check_nv(NV_USER_DYNAMIC_1332)) {
@@ -186,6 +192,9 @@ validate_nvchip(void)
 		migrate_1332();
 		if (check_nv(NV_USER_DYNAMIC)) {
 			fprintf(stderr, "NVChip successfully migrated\n");
+			gv.version = NV_VERSION_OLD_PRIME_ADJUST;
+			gv.padding = NV_VERSION_PADDING;
+			NvWrite(NV_VERSION, sizeof(gv), &gv);
 			goto migrate_object;
 		}
 		fprintf(stderr, "Failed to migrate NVChip from 1332 format\n");
