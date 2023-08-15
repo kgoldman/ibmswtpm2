@@ -3,7 +3,6 @@
 /*			     RSA-related structures and defines			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptRsa.h 1476 2019-06-10 19:32:03Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -64,36 +63,35 @@
 #ifndef _CRYPT_RSA_H
 #define _CRYPT_RSA_H
 
-/* This structure is a succinct representation of the cryptographic components of an RSA key. It is
-   used in testing */
-typedef struct
-{
-    UINT32        exponent;      // The public exponent pointer
-    TPM2B        *publicKey;     // Pointer to the public modulus
-    TPM2B        *privateKey;    // The private prime
-} RSA_KEY;
-/* These values are used in the bigNum representation of various RSA values. */
-#define RSA_BITS            (MAX_RSA_KEY_BYTES * 8)
-BN_TYPE(rsa, RSA_BITS);
-#define BN_RSA(name)       BN_VAR(name, RSA_BITS)
-#define BN_RSA_INITIALIZED(name, initializer)		\
-    BN_INITIALIZED(name, RSA_BITS, initializer)
-#define BN_PRIME(name)     BN_VAR(name, (RSA_BITS / 2))
-BN_TYPE(prime, (RSA_BITS / 2));
-#define BN_PRIME_INITIALIZED(name, initializer)			\
-    BN_INITIALIZED(name, RSA_BITS / 2, initializer)
+// These values are used in the bigNum representation of various RSA values.
+
+BN_TYPE(rsa, MAX_RSA_KEY_BITS);
+#define BN_RSA(name)       BN_VAR(name, MAX_RSA_KEY_BITS)
+#define BN_RSA_INITIALIZED(name, initializer)			\
+    BN_INITIALIZED(name, MAX_RSA_KEY_BITS, initializer)
+
+#define BN_PRIME(name)     BN_VAR(name, (MAX_RSA_KEY_BITS / 2))
+BN_TYPE(prime, (MAX_RSA_KEY_BITS / 2));
+#define BN_PRIME_INITIALIZED(name, initializer)				\
+    BN_INITIALIZED(name, MAX_RSA_KEY_BITS / 2, initializer)
+
+#if !CRT_FORMAT_RSA
+#   error   This verson only works with CRT formatted data
+#endif // !CRT_FORMAT_RSA
+
 typedef struct privateExponent
 {
-#if CRT_FORMAT_RSA == NO
-    bn_rsa_t            D;
-#else
-    bn_prime_t          Q;
-    bn_prime_t          dP;
-    bn_prime_t          dQ;
-    bn_prime_t          qInv;
-#endif // CRT_FORMAT_RSA
-} privateExponent_t;
+    bigNum              P;
+    bigNum              Q;
+    bigNum              dP;
+    bigNum              dQ;
+    bigNum              qInv;
+    bn_prime_t          entries[5];
+} privateExponent;
+
+#define     NEW_PRIVATE_EXPONENT(X)					\
+    privateExponent         _##X;					\
+    privateExponent         *X = RsaInitializeExponent(&(_##X))
+
 #endif      // _CRYPT_RSA_H
-
-
 

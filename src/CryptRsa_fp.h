@@ -3,7 +3,6 @@
 /*		Implementation of cryptographic primitives for RSA		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CryptRsa_fp.h 1476 2019-06-10 19:32:03Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -70,10 +69,6 @@ BOOL
 CryptRsaStartup(
 		void
 		);
-void
-RsaInitializeExponent(
-		      privateExponent_t      *pExp
-		      );
 INT16
 CryptRsaPssSaltSize(
 		    INT16              hashSize,
@@ -85,9 +80,8 @@ CryptRsaSelectScheme(
 		     TPMT_RSA_DECRYPT    *scheme         // IN: a sign or decrypt scheme
 		     );
 TPM_RC
-CryptRsaLoadPrivateExponent(
-			    OBJECT          *rsaKey        // IN: the RSA key object
-			    );
+CryptRsaLoadPrivateExponent(TPMT_PUBLIC             *publicArea,
+			    TPMT_SENSITIVE          *sensitive);
 LIB_EXPORT TPM_RC
 CryptRsaEncrypt(
 		TPM2B_PUBLIC_KEY_RSA        *cOut,          // OUT: the encrypted data
@@ -123,10 +117,9 @@ CryptRsaValidateSignature(
 			  );
 LIB_EXPORT TPM_RC
 CryptRsaGenerateKey(
-		    OBJECT              *rsaKey,            // IN/OUT: The object structure in which
-		    //          the key is created.
+		    TPMT_PUBLIC         *publicArea,
+		    TPMT_SENSITIVE      *sensitive,
 		    RAND_STATE          *rand               // IN: if not NULL, the deterministic
-		    //     RNG state
 		    );
 INT16
 MakeDerTag(

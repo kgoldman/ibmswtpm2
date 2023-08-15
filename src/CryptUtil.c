@@ -304,7 +304,6 @@ CryptGenerateKeySymmetric(
 #if ALG_TDES
     else if(publicArea->parameters.symDetail.sym.algorithm == TPM_ALG_TDES)
 	{
-	    sensitive->sensitive.sym.t.size = keyBits / 8;
 	    result = CryptGenerateKeyDes(publicArea, sensitive, rand);
 	}
 #endif
@@ -972,7 +971,7 @@ CryptCreateObject(
 	  case TPM_ALG_RSA:
 	    // RSA uses full object so that it has a place to put the private
 	    // exponent
-	    result = CryptRsaGenerateKey(object, rand);
+	    result = CryptRsaGenerateKey(publicArea, sensitive, rand);
 	    break;
 #endif // TPM_ALG_RSA
 #if ALG_ECC
@@ -1006,7 +1005,7 @@ CryptCreateObject(
 	}
     // Generate a seedValue that is the size of the digest produced by nameAlg
     sensitive->seedValue.t.size =
-	DRBG_Generate(rand, object->sensitive.seedValue.t.buffer,
+	DRBG_Generate(rand, sensitive->seedValue.t.buffer,
 		      CryptHashGetDigestSize(publicArea->nameAlg));
     if(g_inFailureMode)
 	return TPM_RC_FAILURE;

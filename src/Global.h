@@ -3,7 +3,6 @@
 /*			Internal Global Type Definitions			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Global.h 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -195,9 +194,6 @@ typedef struct OBJECT
     OBJECT_ATTRIBUTES   attributes;         // object attributes
     TPMT_PUBLIC         publicArea;         // public area of an object
     TPMT_SENSITIVE      sensitive;          // sensitive area of an object
-#if ALG_RSA
-    privateExponent_t   privateExponent;    // Additional field for the private
-#endif
     TPM2B_NAME          qualifiedName;      // object qualified name
     TPMI_DH_OBJECT      evictHandle;        // if the object is an evict object,
     // the original handle is kept here.

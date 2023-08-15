@@ -3,7 +3,6 @@
 /*		Manage the object store of the TPM.    				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Object.c 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -395,9 +394,9 @@ ObjectLoad(
 	   )
 {
     TPM_RC           result = TPM_RC_SUCCESS;
-    BOOL             doCheck;
     //
     // Do validations of public area object descriptions
+    pAssert(publicArea != NULL);
     // Is this public only or a no-name object?
     if(sensitive == NULL || publicArea->nameAlg == TPM_ALG_NULL)
 	{
@@ -417,53 +416,47 @@ ObjectLoad(
 	}
     if(result != TPM_RC_SUCCESS)
 	return RcSafeAddToResult(result, blamePublic);
-    // If object == NULL, then this is am import. For import, load is not called
-    // unless the parent is fixedTPM.
-    if(object == NULL)
-	doCheck = TRUE;// //
-    // If the parent is not NULL, then this is an ordinary load and we only check
-    // if the parent is not fixedTPM
-    else if(parent != NULL)
-	doCheck = !IS_ATTRIBUTE(parent->publicArea.objectAttributes,
-				TPMA_OBJECT, fixedTPM);
-    else
-	// This is a loadExternal. Check everything.
-	// Note: the check functions will filter things based on the name algorithm
-	// and whether or not both parts are loaded.
-	doCheck = TRUE;
-    // Note: the parent will be NULL if this is a load external. CryptValidateKeys()
-    // will only check the parts that need to be checked based on the settings
-    // of publicOnly and nameAlg.
-    // Note: For an RSA key, the keys sizes are checked but the binding is not
-    // checked.
-    if(doCheck)
+
+    // Sensitive area and binding checks
+
+    // On load, check nothing if the parent is fixedTPM. For all other cases, validate
+    // the keys.
+    if((parent == NULL)
+       || ((parent != NULL) && !IS_ATTRIBUTE(
+			    parent->publicArea.objectAttributes, TPMA_OBJECT, fixedTPM)))
 	{
 	    // Do the cryptographic key validation
-	    result = CryptValidateKeys(publicArea, sensitive, blamePublic,
-				       blameSensitive);
+	    result = CryptValidateKeys(publicArea, sensitive, blamePublic, blameSensitive);
+	    if(result != TPM_RC_SUCCESS)
+		return result;
 	}
-    // If this is an import, we are done
-    if(object == NULL || result != TPM_RC_SUCCESS)
-	return result;
-    // Set the name, if one was provided
-    if(name != NULL)
-	object->name = *name;
-    else
-	object->name.t.size = 0;
-    // Initialize public
-    object->publicArea = *publicArea;
-    // If there is a sensitive area, load it
-    if(sensitive == NULL)
-	object->attributes.publicOnly = SET;
-    else
-	{
-	    object->sensitive = *sensitive;
 #if ALG_RSA
-	    // If this is an RSA key that is not a parent, complete the load by
-	    // computing the private exponent.
-	    if(publicArea->type == ALG_RSA_VALUE)
-		result = CryptRsaLoadPrivateExponent(object);
-#endif
+    // If this is an RSA key, then expand the private exponent.
+    // Note: ObjectLoad() is only called by TPM2_Import() if the parent is fixedTPM.
+    // For any key that does not have a fixedTPM parent, the exponent is computed
+    // whenever it is loaded
+    if((publicArea->type == TPM_ALG_RSA) && (sensitive != NULL))
+	{
+	    result = CryptRsaLoadPrivateExponent(publicArea, sensitive);
+	    if(result != TPM_RC_SUCCESS)
+		return result;
+	}
+#endif  // ALG_RSA
+    // See if there is an object to populate
+    if((result == TPM_RC_SUCCESS) && (object != NULL))
+	{
+	    // Initialize public
+	    object->publicArea = *publicArea;
+	    // Copy sensitive if there is one
+	    if(sensitive == NULL)
+		object->attributes.publicOnly = SET;
+	    else
+		object->sensitive = *sensitive;
+	    // Set the name, if one was provided
+	    if(name != NULL)
+		object->name = *name;
+	    else
+		object->name.t.size = 0;
 	}
     return result;
 }
