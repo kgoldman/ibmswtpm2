@@ -165,7 +165,7 @@ NvRead(
        )
 {
     // Input type should be valid
-    pAssert(nvOffset + size < NV_MEMORY_SIZE);
+    pAssert(nvOffset + size <= NV_MEMORY_SIZE);
     _plat__NvMemoryRead(nvOffset, size, outBuffer);
     return;
 }

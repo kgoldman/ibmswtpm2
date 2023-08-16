@@ -72,4 +72,7 @@
 #include "PlatformClock.h"
 #include "PlatformData.h"
 #include "Platform_fp.h"
+
+extern void validate_nvchip(void);
+
 #endif  // _PLATFORM_H_

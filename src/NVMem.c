@@ -181,6 +181,7 @@ _plat__NvErrors(
     s_NV_unrecoverable = unrecoverable;
     s_NV_recoverable = recoverable;
 }
+#define NV_MEMORY_SIZE_1563		16384
 /* C.6.2.5. _plat__NVEnable() */
 /* Enable NV memory. */
 /* This version just pulls in data from a file. In a real TPM, with NV on chip, this function would
@@ -212,14 +213,16 @@ _plat__NVEnable(
     // If the file exists
     if(NvFileOpen("r+b") >= 0)
 	{
-	    long    fileSize = NvFileSize(SEEK_SET);    // get the file size and leave the
+	    size_t    fileSize = NvFileSize(SEEK_SET);    // get the file size and leave the
 	    // file pointer at the start
 	    //
 	    // If the size is right, read the data
-	    if(NV_MEMORY_SIZE == fileSize)
+	    if(NV_MEMORY_SIZE == fileSize || NV_MEMORY_SIZE_1563 == fileSize)
 		{
 		    s_NeedsManufacture =
-			fread(s_NV, 1, NV_MEMORY_SIZE, s_NvFile) != NV_MEMORY_SIZE;
+			fread(s_NV, 1, NV_MEMORY_SIZE, s_NvFile) != fileSize;
+		    validate_nvchip();
+		    NvFileCommit();
 		}
 	    else
 		{

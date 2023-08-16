@@ -402,7 +402,8 @@ OBJFILES = \
 	X509_spt.o			\
 					\
 	ntc2lib.o			\
-	ntc2.o
+	ntc2.o				\
+	nvchip-migrate.o
 
 ACT_spt.o			: $(HEADERS)
 AlgorithmCap.o			: $(HEADERS)
