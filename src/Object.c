@@ -419,8 +419,14 @@ ObjectLoad(
 
     // Sensitive area and binding checks
 
-    // On load, check nothing if the parent is fixedTPM. For all other cases, validate
-    // the keys.
+    // On load, check nothing if the parent is fixedTPM.
+    // If the parent is fixedTPM, then this TPM produced this key blob (either
+    // by import, or creation). If the parent is not fixedTPM, then an external
+    // copy of the parent's protection seed might have been used to create the
+    // blob, and we have to validate it.
+    // NOTE: By the time a TPMT_SENSITIVE has been decrypted and passed to this
+    // function, it has been validated against the corresponding TPMT_PUBLIC.
+    // For more information about this check, see PrivateToSensitive
     if((parent == NULL)
        || ((parent != NULL) && !IS_ATTRIBUTE(
 			    parent->publicArea.objectAttributes, TPMA_OBJECT, fixedTPM)))
