@@ -3,7 +3,6 @@
 /*		Algorithm Values from the TCG Algorithm Registry 		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmAlgorithmDefines.h 1658 2021-01-22 23:14:01Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2019 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2019 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -78,13 +77,6 @@
     MAX(ECC_NIST_P521 * 521, MAX(ECC_SM2_P256 * 256, \
     0))))))))
 #define MAX_ECC_KEY_BYTES               BITS_TO_BYTES(MAX_ECC_KEY_BITS)
-
-// Table 0:6 - Defines for PLATFORM Values
-#define PLATFORM_FAMILY         TPM_SPEC_FAMILY
-#define PLATFORM_LEVEL          TPM_SPEC_LEVEL
-#define PLATFORM_VERSION        TPM_SPEC_VERSION
-#define PLATFORM_YEAR           TPM_SPEC_YEAR
-#define PLATFORM_DAY_OF_YEAR    TPM_SPEC_DAY_OF_YEAR
 
 // Table 1:12 - Defines for SHA1 Hash Values
 #define SHA1_DIGEST_SIZE    20
@@ -220,8 +212,6 @@
 #endif
 #define MAX_TDES_BLOCK_SIZE_BYTES   TDES_MAX_BLOCK_SIZE
 // Additional values for benefit of code
-#define TPM_CC_FIRST                        0x0000011F
-#define TPM_CC_LAST                         0x0000019A
 #if COMPRESSED_LISTS
 #define ADD_FILL            0
 #else
@@ -354,6 +344,11 @@
 					  + (ADD_FILL || CC_ACT_SetTimeout)                       /* 0x00000198 */ \
 					  + (ADD_FILL || CC_ECC_Encrypt)                          /* 0x00000199 */ \
 					  + (ADD_FILL || CC_ECC_Decrypt)                          /* 0x0000019A */ \
+					  + (ADD_FILL || CC_PolicyCapability)                     /* 0x0000019B */ \
+					  + (ADD_FILL || CC_PolicyParameters)                     /* 0x0000019C */ \
+					  + (ADD_FILL || CC_NV_DefineSpace2)                      /* 0x0000019D */ \
+					  + (ADD_FILL || CC_NV_ReadPublic2)                       /* 0x0000019E */ \
+					  + (ADD_FILL || CC_SetCapability)                        /* 0x0000019F */ \
 					  )
 #ifndef TPM_NUVOTON
 #define VENDOR_COMMAND_ARRAY_SIZE   (0 + CC_Vendor_TCG_Test)

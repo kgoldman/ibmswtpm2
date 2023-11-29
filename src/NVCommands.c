@@ -3,7 +3,6 @@
 /*			    Non-Volatile Storage 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: NVCommands.c 1490 2019-07-26 21:13:22Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -745,27 +744,27 @@ TPM2_NV_Certify(
     if(in->size > MAX_NV_BUFFER_SIZE)
 	return TPM_RCS_VALUE + RC_NV_Certify_size;
     // Command Output
- 
+
     // Fill in attest information common fields
     FillInAttestInfo(in->signHandle, &in->inScheme, &in->qualifyingData,
 		     &certifyInfo);
-    
+
     // Get the name of the index
     NvGetIndexName(nvIndex, &certifyInfo.attested.nv.indexName);
-    
+
     // See if this is old format or new format
     if ((in->size != 0) || (in->offset != 0))
 	{
 	    // NV certify specific fields
 	    // Attestation type
 	    certifyInfo.type = TPM_ST_ATTEST_NV;
-	    
+
 	    // Set the return size
 	    certifyInfo.attested.nv.nvContents.t.size = in->size;
-	    
+
 	    // Set the offset
 	    certifyInfo.attested.nv.offset = in->offset;
-	    
+
 	    // Perform the read
 	    NvGetIndexData(nvIndex, locator, in->offset, in->size,
 			   certifyInfo.attested.nv.nvContents.t.buffer);
@@ -789,3 +788,110 @@ TPM2_NV_Certify(
 			  &in->qualifyingData, &out->certifyInfo, &out->signature);
 }
 #endif // CC_NV_Certify
+
+#include "Tpm.h"
+#include "NV_ReadPublic2_fp.h"
+
+#if CC_NV_ReadPublic2  // Conditional expansion of this file
+
+/*(See part 3 specification)
+// Read the public information of a NV index
+*/
+TPM_RC
+TPM2_NV_ReadPublic2(NV_ReadPublic2_In*  in,  // IN: input parameter list
+		    NV_ReadPublic2_Out* out  // OUT: output parameter list
+		    )
+{
+    TPM_RC    result;
+    NV_INDEX* nvIndex;
+
+    nvIndex = NvGetIndexInfo(in->nvIndex, NULL);
+
+    // Command Output
+
+    // The reference code stores its NV indices in the legacy form, because
+    // it doesn't support any extended attributes.
+    // Translate the legacy form to the general form.
+    result = NvPublic2FromNvPublic(&nvIndex->publicArea, &out->nvPublic.nvPublic2);
+    if(result != TPM_RC_SUCCESS)
+	{
+	    return RcSafeAddToResult(result, RC_NV_ReadPublic2_nvIndex);
+	}
+
+    // Compute NV name
+    NvGetIndexName(nvIndex, &out->nvName);
+
+    return TPM_RC_SUCCESS;
+}
+
+#endif  // CC_NV_ReadPublic2
+
+#include "Tpm.h"
+#include "NV_DefineSpace2_fp.h"
+
+#if CC_NV_DefineSpace2  // Conditional expansion of this file
+
+/*(See part 3 specification)
+// Define a NV index space
+*/
+//  Return Type: TPM_RC
+//      TPM_RC_HIERARCHY            for authorizations using TPM_RH_PLATFORM
+//                                  phEnable_NV is clear preventing access to NV
+//                                  data in the platform hierarchy.
+//      TPM_RC_ATTRIBUTES           attributes of the index are not consistent
+//      TPM_RC_NV_DEFINED           index already exists
+//      TPM_RC_NV_SPACE             insufficient space for the index
+//      TPM_RC_SIZE                 'auth->size' or 'publicInfo->authPolicy.size' is
+//                                  larger than the digest size of
+//                                  'publicInfo->nameAlg'; or 'publicInfo->dataSize'
+//                                  is not consistent with 'publicInfo->attributes'
+//                                  (this includes the case when the index is
+//                                   larger than a MAX_NV_BUFFER_SIZE but the
+//                                   TPMA_NV_WRITEALL attribute is SET)
+TPM_RC
+TPM2_NV_DefineSpace2(NV_DefineSpace2_In* in  // IN: input parameter list
+		     )
+{
+    TPM_RC         result;
+    TPMS_NV_PUBLIC legacyPublic;
+
+    // Input Validation
+
+    // Validate the handle type and the (handle-type-specific) attributes.
+    switch(in->publicInfo.nvPublic2.handleType)
+	{
+	  case TPM_HT_NV_INDEX:
+	    break;
+#  if EXTERNAL_NV
+	  case TPM_HT_EXTERNAL_NV:
+	    // The reference implementation may let you define an "external" NV
+	    // index, but it doesn't currently support setting any of the extended
+	    // bits for customizing the behavior of external NV.
+	    if((TPMA_NV_EXP_TO_UINT64(
+				      in->publicInfo.nvPublic2.nvPublic2.externalNV.attributes)
+		& 0xffffffff00000000)
+	       != 0)
+		{
+		    return TPM_RCS_ATTRIBUTES + RC_NV_DefineSpace2_publicInfo;
+		}
+	    break;
+#  endif
+	  default:
+	    return TPM_RCS_HANDLE + RC_NV_DefineSpace2_publicInfo;
+	}
+
+    result = NvPublicFromNvPublic2(&in->publicInfo.nvPublic2, &legacyPublic);
+    if(result != TPM_RC_SUCCESS)
+	{
+	    return RcSafeAddToResult(result, RC_NV_DefineSpace2_publicInfo);
+	}
+
+    return NvDefineSpace(in->authHandle,
+			 &in->auth,
+			 &legacyPublic,
+			 RC_NV_DefineSpace2_authHandle,
+			 RC_NV_DefineSpace2_auth,
+			 RC_NV_DefineSpace2_publicInfo);
+}
+
+#endif  // CC_NV_DefineSpace

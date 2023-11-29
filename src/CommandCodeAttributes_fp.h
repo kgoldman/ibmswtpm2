@@ -3,7 +3,6 @@
 /*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CommandCodeAttributes_fp.h 1490 2019-07-26 21:13:22Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -114,6 +113,9 @@ CommandCapGetCCList(
 		    //     'commandList'
 		    TPML_CCA        *commandList    // OUT: list of TPMA_CC
 		    );
+BOOL CommandCapGetOneCC(TPM_CC   commandCode,       // IN: command code
+			TPMA_CC* commandAttributes  // OUT: Command attributes
+			);
 BOOL
 IsVendorCommand(
 		COMMAND_INDEX    commandIndex   // IN: command index to check

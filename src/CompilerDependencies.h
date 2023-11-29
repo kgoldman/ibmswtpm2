@@ -1,9 +1,8 @@
 /********************************************************************************/
 /*										*/
-/*			   Compiler Dependencies  				*/
+/*						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CompilerDependencies.h 1453 2019-04-05 16:43:36Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,111 +54,61 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2023				  	*/
 /*										*/
 /********************************************************************************/
 
-#ifndef COMPILERDEPEDENCIES_H
-#define COMPILERDEPEDENCIES_H
+// This file contains the build switches. This contains switches for multiple
+// versions of the crypto-library so some may not apply to your environment.
+//
 
-/* kgold - Not in the original code.  A user reported that it was required for a non-Visual Studio
-   environment.
-*/
+#ifndef _COMPILER_DEPENDENCIES_H_
+#define _COMPILER_DEPENDENCIES_H_
 
-#ifdef TPM_WINDOWS
-#include <windows.h>
-#include <winsock.h>
-#endif
-
-/* 5.10	CompilerDependencies.h */
-#ifdef GCC
-#   undef _MSC_VER
-#   undef WIN32
-#endif
-
-#ifdef _MSC_VER
-
-// These definitions are for the Microsoft compiler Endian conversion for aligned structures
-#   define REVERSE_ENDIAN_16(_Number) _byteswap_ushort(_Number)
-#   define REVERSE_ENDIAN_32(_Number) _byteswap_ulong(_Number)
-#   define REVERSE_ENDIAN_64(_Number) _byteswap_uint64(_Number)
-
-// Avoid compiler warning for in line of stdio (or not)
-
-// #define _NO_CRT_STDIO_INLINE
-
-// This macro is used to handle LIB_EXPORT of function and variable names in lieu of a .def
-// file. Visual Studio requires that functions be explicitly exported and imported.
-
-#   define LIB_EXPORT __declspec(dllexport) // VS compatible version
-#   define LIB_IMPORT __declspec(dllimport)
-
-// This is defined to indicate a function that does not return. Microsoft compilers do not
-// support the _Noretrun() function parameter.
-
-#   define NORETURN  __declspec(noreturn)
-#   if _MSC_VER >= 1400     // SAL processing when needed
-#       include <sal.h>
-#   endif
-#   ifdef _WIN64
-#       define _INTPTR 2
-#   else
-#       define _INTPTR 1
-#   endif
-#   define NOT_REFERENCED(x)   (x)
-
-// Lower the compiler error warning for system include files. They tend not to be that clean and
-// there is no reason to sort through all the spurious errors that they generate when the normal
-// error level is set to /Wall
-
-#   define _REDUCE_WARNING_LEVEL_(n)		\
-    __pragma(warning(push, n))
-
-// Restore the compiler warning level
-
-#   define _NORMAL_WARNING_LEVEL_		\
-    __pragma(warning(pop))
-#   include <stdint.h>
-#endif 	// _MSC_VER
-
-#ifndef _MSC_VER
-#ifndef WINAPI
-#   define WINAPI
-#endif
-#   define __pragma(x)
-#   define REVERSE_ENDIAN_16(_Number) __builtin_bswap16(_Number)
-#   define REVERSE_ENDIAN_32(_Number) __builtin_bswap32(_Number)
-#   define REVERSE_ENDIAN_64(_Number) __builtin_bswap64(_Number)
-#endif
 #if defined(__GNUC__)
-#      define NORETURN                     __attribute__((noreturn))
-#      include <stdint.h>
+#  include "CompilerDependencies_gcc.h"
+#elif defined(_MSC_VER)
+#  include "CompilerDependencies_msvc.h"
+#else
+#  error unexpected
 #endif
+
+#include <stdint.h>
 
 // Things that are not defined should be defined as NULL
+
 #ifndef NORETURN
-#   define NORETURN
+#  define NORETURN
 #endif
 #ifndef LIB_EXPORT
-#   define LIB_EXPORT
+#  define LIB_EXPORT
 #endif
 #ifndef LIB_IMPORT
-#   define LIB_IMPORT
+#  define LIB_IMPORT
 #endif
 #ifndef _REDUCE_WARNING_LEVEL_
-#   define _REDUCE_WARNING_LEVEL_(n)
+#  define _REDUCE_WARNING_LEVEL_(n)
 #endif
 #ifndef _NORMAL_WARNING_LEVEL_
-#   define _NORMAL_WARNING_LEVEL_
+#  define _NORMAL_WARNING_LEVEL_
 #endif
 #ifndef NOT_REFERENCED
-#   define  NOT_REFERENCED(x) (x = x)
+#  define NOT_REFERENCED(x) (x = x)
 #endif
+
 #ifdef _POSIX_
 typedef int SOCKET;
 #endif
-// #ifdef TPM_POSIX
-// typedef int SOCKET;
-// #endif
-#endif // _COMPILER_DEPENDENCIES_H_
 
+#if !defined(TPM_STATIC_ASSERT) || !defined(COMPILER_CHECKS)
+#  error Expect definitions of COMPILER_CHECKS and TPM_STATIC_ASSERT
+#elif COMPILER_CHECKS
+// pre static_assert static_assert
+#  define MUST_BE(e) TPM_STATIC_ASSERT(e)
+
+#else
+// intentionally disabled, fine.
+#  define MUST_BE(e)
+#endif
+
+#endif  // _COMPILER_DEPENDENCIES_H_

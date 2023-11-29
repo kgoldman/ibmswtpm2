@@ -4,9 +4,8 @@
 #		   	TPM2 makefile - Common to all variations		#
 #			     Written by Ken Goldman				#
 #		       IBM Thomas J. Watson Research Center			#
-#	      $Id: makefile-common 1659 2021-03-17 13:44:52Z kgoldman $		#
 #										#
-# (c) Copyright IBM Corporation 2014 - 2021					#
+# (c) Copyright IBM Corporation 2014 - 2023					#
 # 										#
 # All rights reserved.								#
 # 										#
@@ -41,7 +40,7 @@
 
 .SUFFIXES: .o
 
-CCFLAGS += -DUSE_BIT_FIELD_STRUCTURES=NO
+CCFLAGS += -DUSE_BIT_FIELD_STRUCTURES=NO -DSYM_LIB=Ossl -DHASH_LIB=Ossl -DMATH_LIB=TpmBigNum -DBN_MATH_LIB=Ossl
 
 # add this for big endian machines
 # CCFLAGS += -DBIG_ENDIAN_TPM=YES 
@@ -59,6 +58,14 @@ HEADERS = 				\
 	BnConvert_fp.h			\
 	BnMath_fp.h			\
 	BnMemory_fp.h			\
+	BnOssl.h			\
+	BnToOsslMath_fp.h		\
+	BnUtil_fp.h			\
+	BnSupport_Interface.h		\
+	BnToOsslMath.h			\
+	BnToOsslMath_fp.h		\
+	BnToOsslSupport.h		\
+	BnToOsslSym.h			\
 	BnValues.h			\
 	Capabilities.h			\
 	Certify_fp.h			\
@@ -79,6 +86,8 @@ HEADERS = 				\
 	Commands.h			\
 	Commit_fp.h			\
 	CompilerDependencies.h		\
+	CompilerDependencies_gcc.h	\
+	CompilerDependencies_msvc.h	\
 	Context_spt_fp.h		\
 	ContextLoad_fp.h		\
 	ContextSave_fp.h		\
@@ -120,6 +129,7 @@ HEADERS = 				\
 	EncryptDecrypt2_fp.h		\
 	EncryptDecrypt_fp.h		\
 	EncryptDecrypt_spt_fp.h		\
+	endian_swap.h			\
 	Entity_fp.h			\
 	EventSequenceComplete_fp.h	\
 	EvictControl_fp.h		\
@@ -155,20 +165,25 @@ HEADERS = 				\
 	MAC_Start_fp.h			\
 	MakeCredential_fp.h		\
 	Manufacture_fp.h		\
+	Marshal.h			\
 	Marshal_fp.h			\
 	MathOnByteBuffers_fp.h		\
+	MathLibraryInterface.h		\
+	MathLibraryInterfaceTypes.h	\
 	Memory_fp.h			\
 	MinMax.h			\
 	NV.h				\
 	NV_Certify_fp.h			\
 	NV_ChangeAuth_fp.h		\
 	NV_DefineSpace_fp.h		\
+	NV_DefineSpace2_fp.h		\
 	NV_Extend_fp.h			\
 	NV_GlobalWriteLock_fp.h		\
 	NV_Increment_fp.h		\
 	NV_Read_fp.h			\
 	NV_ReadLock_fp.h		\
 	NV_ReadPublic_fp.h		\
+	NV_ReadPublic2_fp.h		\
 	NV_SetBits_fp.h			\
 	NV_spt_fp.h			\
 	NV_UndefineSpaceSpecial_fp.h	\
@@ -189,16 +204,19 @@ HEADERS = 				\
 	PCR_Reset_fp.h			\
 	PCR_SetAuthPolicy_fp.h		\
 	PCR_SetAuthValue_fp.h		\
+	pcrstruct.h			\
 	Platform.h			\
-	Platform_fp.h			\
 	PlatformACT.h			\
 	PlatformClock.h			\
 	PlatformData.h			\
+	platform_pcr_fp.h		\
+	platform_public_interface.h	\
 	PRNG_TestVectors.h		\
 	Policy_spt_fp.h			\
 	PolicyAuthValue_fp.h		\
 	PolicyAuthorizeNV_fp.h		\
 	PolicyAuthorize_fp.h		\
+	PolicyCapability_fp.h		\
 	PolicyCommandCode_fp.h		\
 	PolicyCounterTimer_fp.h		\
 	PolicyCpHash_fp.h		\
@@ -211,6 +229,7 @@ HEADERS = 				\
 	PolicyOR_fp.h			\
 	PolicyPCR_fp.h			\
 	PolicyPassword_fp.h		\
+	PolicyParameters_fp.h		\
 	PolicyPhysicalPresence_fp.h	\
 	PolicyRestart_fp.h		\
 	PolicySecret_fp.h		\
@@ -239,15 +258,17 @@ HEADERS = 				\
 	Session_fp.h			\
 	SessionProcess_fp.h		\
 	SetAlgorithmSet_fp.h		\
+	SetCapability_fp.h		\
 	SetCommandCodeAuditStatus_fp.h	\
 	SetPrimaryPolicy_fp.h		\
 	Shutdown_fp.h			\
 	Sign_fp.h			\
 	Simulator_fp.h			\
+	simulatorPrivate.h		\
+	simulator_sysheaders.h		\
 	StartAuthSession_fp.h		\
 	Startup_fp.h			\
 	StirRandom_fp.h			\
-	SupportLibraryFunctionPrototypes_fp.h	\
 	SymmetricTest.h			\
 	SymmetricTestData.h		\
 	TcpServer_fp.h			\
@@ -255,28 +276,45 @@ HEADERS = 				\
 	TestParms_fp.h			\
 	Ticket_fp.h			\
 	Time_fp.h			\
+	tpm_radix.h			\
+	tpm_public.h			\
 	Tpm.h				\
 	TpmAlgorithmDefines.h		\
 	TpmAsn1.h			\
 	TpmAsn1_fp.h			\
 	TPMB.h				\
+	TpmBigNum.h			\
 	TpmBuildSwitches.h		\
+	TpmCalculatedAttributes.h	\
+	TpmEcc_Signature_ECDAA_fp.h	\
+	TpmEcc_Signature_ECDSA_fp.h	\
+	TpmEcc_Signature_Schnorr_fp.h	\
+	TpmEcc_Signature_SM2_fp.h	\
+	TpmEcc_Signature_Util_fp.h	\
+	TpmEcc_Util_fp.h		\
+	TpmMath_Debug_fp.h		\
+	TpmMath_Util_fp.h		\
 	TpmError.h			\
 	TpmFail_fp.h			\
 	TpmProfile.h			\
+	TpmProfile_Common.h		\
+	TpmProfile_Misc.h		\
+	TpmProfile_CommandList.h	\
+	TpmProfile_ErrorCodes.h		\
 	TpmSizeChecks_fp.h		\
 	TpmTcpProtocol.h		\
-	TpmToOsslDesSupport_fp.h	\
+	TpmToTpmBigNumMath.h		\
 	TpmToOsslHash.h			\
-	TpmToOsslMath.h			\
-	TpmToOsslMath_fp.h		\
 	TpmToOsslSupport_fp.h		\
 	TpmToOsslSym.h			\
+	tpm_to_platform_interface.h	\
+	tpm_to_tpm_interface.h		\
 	TpmTypes.h			\
 	Unmarshal_fp.h			\
 	Unseal_fp.h			\
-	VendorString.h			\
+	VendorInfo.h			\
 	Vendor_TCG_Test_fp.h		\
+	VerifyConfiguration.h		\
 	VerifySignature_fp.h		\
 	X509.h				\
 	X509_ECC_fp.h			\
@@ -287,7 +325,6 @@ HEADERS = 				\
 	_TPM_Hash_End_fp.h		\
 	_TPM_Hash_Start_fp.h		\
 	_TPM_Init_fp.h			\
-	swap.h				\
 					\
 	ntc2lib.h			\
 	ntc2_fp.h
@@ -303,8 +340,11 @@ OBJFILES = \
 	AuditCommands.o			\
 	Bits.o				\
 	BnConvert.o			\
+	BnEccConstants.o		\
 	BnMath.o			\
 	BnMemory.o			\
+	BnUtil.o			\
+	BnToOsslMath.o			\
 	Cancel.o			\
 	CapabilityCommands.o		\
 	Clock.o				\
@@ -340,6 +380,7 @@ OBJFILES = \
 	Entropy.o			\
 	EphemeralCommands.o		\
 	ExecCommand.o			\
+	ExtraData.o			\
 	Global.o			\
 	Handle.o			\
 	HashCommands.o			\
@@ -367,6 +408,7 @@ OBJFILES = \
 	PPPlat.o			\
 	PlatformACT.o			\
 	PlatformData.o			\
+	PlatformPCR.o			\
 	Policy_spt.o			\
 	Power.o				\
 	PowerPlat.o			\
@@ -389,13 +431,21 @@ OBJFILES = \
 	Ticket.o			\
 	Time.o				\
 	TpmAsn1.o			\
+	TpmBigNumThunks.o		\
+	TpmEcc_Signature_ECDAA.o	\
+	TpmEcc_Signature_ECDSA.o	\
+	TpmEcc_Signature_Schnorr.o	\
+	TpmEcc_Signature_SM2.o		\
+	TpmEcc_Signature_Util.o		\
+	TpmEcc_Util.o			\
+	TpmMath_Debug.o			\
+	TpmMath_Util.o			\
 	TpmFail.o			\
 	TpmSizeChecks.o			\
-	TpmToOsslDesSupport.o		\
-	TpmToOsslMath.o			\
 	TpmToOsslSupport.o		\
 	Unique.o			\
 	Unmarshal.o			\
+	VendorInfo.o			\
 	Vendor_TCG_Test.o		\
 	X509_ECC.o			\
 	X509_RSA.o			\
@@ -404,6 +454,7 @@ OBJFILES = \
 	ntc2lib.o			\
 	ntc2.o
 
+ACTCommands.o			: $(HEADERS)
 ACT_spt.o			: $(HEADERS)
 AlgorithmCap.o			: $(HEADERS)
 AlgorithmTests.o		: $(HEADERS)
@@ -413,8 +464,11 @@ AttestationCommands.o		: $(HEADERS)
 AuditCommands.o			: $(HEADERS)
 Bits.o				: $(HEADERS)
 BnConvert.o			: $(HEADERS)
+BnEccConstantst.o		: $(HEADERS)
 BnMath.o			: $(HEADERS)
 BnMemory.o			: $(HEADERS)
+BnUtil.o			: $(HEADERS)
+BnToOsslMath.o			: $(HEADERS)
 Cancel.o			: $(HEADERS)
 CapabilityCommands.o		: $(HEADERS)
 Clock.o				: $(HEADERS)
@@ -425,6 +479,7 @@ CommandDispatcher.o		: $(HEADERS)
 ContextCommands.o		: $(HEADERS)
 Context_spt.o			: $(HEADERS)
 CryptDes.o			: $(HEADERS)
+CryptCmac.o			: $(HEADERS)
 CryptEccCrypt.o			: $(HEADERS)
 CryptEccData.o			: $(HEADERS)
 CryptEccKeyExchange.o		: $(HEADERS)
@@ -436,9 +491,11 @@ CryptPrimeSieve.o		: $(HEADERS)
 CryptRand.o			: $(HEADERS)
 CryptRsa.o			: $(HEADERS)
 CryptSelfTest.o			: $(HEADERS)
+CryptSmac.o			: $(HEADERS)
 CryptSym.o			: $(HEADERS)
 CryptUtil.o			: $(HEADERS)
 DA.o				: $(HEADERS)
+DebugHelpers.o			: $(HEADERS)
 DictionaryCommands.o		: $(HEADERS)
 DuplicationCommands.o		: $(HEADERS)
 EACommands.o			: $(HEADERS)
@@ -447,6 +504,7 @@ Entity.o			: $(HEADERS)
 Entropy.o			: $(HEADERS)
 EphemeralCommands.o		: $(HEADERS)
 ExecCommand.o			: $(HEADERS)
+ExtraData.o			: $(HEADERS)
 Global.o			: $(HEADERS)
 Handle.o			: $(HEADERS)
 HashCommands.o			: $(HEADERS)
@@ -472,6 +530,7 @@ Object_spt.o			: $(HEADERS)
 PCR.o				: $(HEADERS)
 PP.o				: $(HEADERS)
 PPPlat.o			: $(HEADERS)
+PlatformACT.o			: $(HEADERS)
 PlatformData.o			: $(HEADERS)
 Policy_spt.o			: $(HEADERS)
 Power.o				: $(HEADERS)
@@ -494,14 +553,26 @@ TPMCmds.o			: $(HEADERS)
 TestingCommands.o		: $(HEADERS)
 Ticket.o			: $(HEADERS)
 Time.o				: $(HEADERS)
+TpmAsn1.o			: $(HEADERS)
+TpmBigNumThunks.o		: $(HEADERS)
+TpmEcc_Signature_ECDAA.o	: $(HEADERS)
+TpmEcc_Signature_ECDSA.o	: $(HEADERS)
+TpmEcc_Signature_Schnorr.o	: $(HEADERS)
+TpmEcc_Signature_SM2.o		: $(HEADERS)
+TpmEcc_Signature_Util.o		: $(HEADERS)
+TpmEcc_Util.o			: $(HEADERS)
+TpmMath_Debug.o			: $(HEADERS)
+TpmMath_Util.o			: $(HEADERS)
 TpmFail.o			: $(HEADERS)
 TpmSizeChecks.o			: $(HEADERS)
-TpmToOsslDesSupport.o		: $(HEADERS)
-TpmToOsslMath.o			: $(HEADERS)
 TpmToOsslSupport.o		: $(HEADERS)
 Unique.o			: $(HEADERS)
 Unmarshal.o			: $(HEADERS)
 Vendor_TCG_Test.o		: $(HEADERS)
+VendorInfo.o			: $(HEADERS)
+X509_ECC.o			: $(HEADERS)
+X509_RSA.o			: $(HEADERS)
+X509_spt.o			: $(HEADERS)
 
 ntc2lib.o			: $(HEADERS)
 ntc2.o				: $(HEADERS)

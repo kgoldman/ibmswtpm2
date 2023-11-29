@@ -138,9 +138,12 @@
 #       include "CryptCmac_fp.h"
 #   endif
 #endif
-/* Support library */
-#include "SupportLibraryFunctionPrototypes_fp.h"
-/* Linkage to platform functions */
-#include "Platform_fp.h"
+// Asymmetric Support library Interface
+// TODO_RENAME_INC_FOLDER: needs a component prefix
+#include "MathLibraryInterface.h"
+
+// Linkage to platform functions
+// TODO_RENAME_INC_FOLDER:platform_interface refers to the TPM_CoreLib platform interface
+#include "tpm_to_platform_interface.h"
 
 #endif

@@ -3,7 +3,6 @@
 /*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Session_fp.h 1490 2019-07-26 21:13:22Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -131,12 +130,17 @@ SessionCapGetLoaded(
 		    UINT32           count,         // IN: count of returned handles
 		    TPML_HANDLE     *handleList     // OUT: list of handle
 		    );
+BOOL SessionCapGetOneLoaded(TPMI_SH_POLICY handle  // IN: handle
+			    );
 TPMI_YES_NO
 SessionCapGetSaved(
 		   TPMI_SH_HMAC     handle,        // IN: start handle
 		   UINT32           count,         // IN: count of returned handles
 		   TPML_HANDLE     *handleList     // OUT: list of handle
 		   );
+BOOL SessionCapGetOneSaved(TPMI_SH_HMAC handle  // IN: handle
+			   );
+
 UINT32
 SessionCapGetLoadedNumber(
 			  void

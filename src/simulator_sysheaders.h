@@ -1,9 +1,8 @@
 /********************************************************************************/
 /*										*/
-/*			     	Vendor String					*/
+/*						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: VendorString.h 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,54 +54,56 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2023				  	*/
 /*										*/
 /********************************************************************************/
 
-#ifndef VENDORSTRING_H
-#define VENDORSTRING_H
+// system headers for the simulator, both Windows and Linux
 
-/* Define up to 4-byte values for MANUFACTURER.  This value defines the response for
-   TPM_PT_MANUFACTURER in TPM2_GetCapability(). The following line should be un-commented and a
-   vendor specific string should be provided here. */
-#define    MANUFACTURER    "IBM "
+#ifndef _SIMULATOR_SYSHEADERS_H_
+#define _SIMULATOR_SYSHEADERS_H_
+// include the system headers silencing warnings that occur with /Wall
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 
-/*     The following #if macro may be deleted after a proper MANUFACTURER is provided. */
-#ifndef MANUFACTURER
-#error MANUFACTURER is not provided.				 \
-    Please modify VendorString.h to provide a specific	  	 \
-    manufacturer name.
+#ifdef TPM_WINDOWS
+#ifdef _MSC_VER
+#  pragma warning(push, 3)
+// C4668 is supposed to be level 4, but this is still necessary to suppress the
+// error.  We don't want to suppress it globally because the same error can
+// happen in the TPM code and it shouldn't be ignored in those cases because it
+// generally means a configuration header is missing.
+//
+// X is not defined as a preprocessor macro, assuming 0 for #if
+#  pragma warning(disable : 4668)
 #endif
-
-/*     Define up to 4, 4-byte, vendor-specific values. The values must each be 4 bytes long and the
-       last value used may contain trailing zeros. These values define the response for
-       TPM_PT_VENDOR_STRING_(1-4) in TPM2_GetCapability(). The following line should be un-commented
-       and a vendor specific string.  The vendor strings 2-4 may also be defined as appropriate. */
-
-#define       VENDOR_STRING_1       "SW  "
-#define       VENDOR_STRING_2       " TPM"
-//#define       VENDOR_STRING_3
-//#define       VENDOR_STRING_4
-
-/*     The following #if macro may be deleted after a proper VENDOR_STRING_1 is provided. */
-#ifndef VENDOR_STRING_1
-#error VENDOR_STRING_1 is not provided.					\
-    Please modify VendorString.h to provide a vendor specific string.
+#  include <windows.h>
+#  include <winsock.h>
+#ifdef _MSC_VER
+#  pragma warning(pop)
 #endif
-
-/* the more significant 32-bits of a vendor-specific value indicating the version of the firmware
-   The following line should be un-commented and a vendor specific firmware V1 should be provided
-   here. The FIRMWARE_V2 may also be defined as appropriate. */
-#define   FIRMWARE_V1         (0x20191023)
-
-// the less significant 32-bits of a vendor-specific value indicating the version of the firmware
-#define   FIRMWARE_V2         (0x00163636)
-
-// The following #if macro may be deleted after a proper FIRMWARE_V1 is provided.
-#ifndef FIRMWARE_V1
-#error  FIRMWARE_V1 is not provided.					\
-    Please modify VendorString.h to provide a vendor specific firmware \
-    version
-#endif
-
-#endif
+typedef int socklen_t;
+#elif defined(__unix__) || defined(__APPLE__)
+#  include <unistd.h>
+#  include <errno.h>
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <pthread.h>
+// simulate certain windows APIs
+#  define ZeroMemory(ptr, sz) (memset((ptr), 0, (sz)))
+#  define closesocket(x)      close(x)
+#  define INVALID_SOCKET      (-1)
+#  define SOCKET_ERROR        (-1)
+#  define WSAGetLastError()   (errno)
+#  define WSAEADDRINUSE       EADDRINUSE
+#  define INT_PTR             intptr_t
+typedef int SOCKET;
+#  define _strcmpi            strcasecmp
+#else
+#  error "Unsupported platform."
+#endif  // _MSC_VER
+#endif  // _SIMULATOR_SYSHEADERS_H_

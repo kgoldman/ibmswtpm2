@@ -3,7 +3,6 @@
 /*			   Parameter Marshaling  				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Marshal_fp.h 1635 2020-06-12 21:48:27Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -122,6 +121,8 @@ extern "C" {
     TPMI_RH_HIERARCHY_Marshal(TPMI_RH_HIERARCHY *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMI_RH_NV_INDEX_Marshal(TPMI_RH_NV_INDEX *source, BYTE **buffer, INT32 *size);
+    UINT16
+    TPMI_RH_NV_EXP_INDEX_Marshal(TPMI_RH_NV_INDEX *source, BYTE **buffer, INT32 *size);
     UINT16
     TPMI_ALG_HASH_Marshal(TPMI_ALG_HASH *source, BYTE **buffer, INT32 *size);
     UINT16
@@ -373,9 +374,19 @@ extern "C" {
     UINT16
     TPMA_NV_Marshal(TPMA_NV *source, BYTE **buffer, INT32 *size);
     UINT16
+    TPMA_NV_EXP_Marshal(TPMA_NV_EXP *source, BYTE **buffer, INT32 *size);
+    UINT16
     TPMS_NV_PUBLIC_Marshal(TPMS_NV_PUBLIC *source, BYTE **buffer, INT32 *size);
     UINT16
     TPM2B_NV_PUBLIC_Marshal(TPM2B_NV_PUBLIC *source, BYTE **buffer, INT32 *size);
+    UINT16
+    TPMS_NV_PUBLIC_EXP_ATTR_Marshal(TPMS_NV_PUBLIC_EXP_ATTR *source, BYTE **buffer, INT32 *size);
+    UINT16
+    TPMU_NV_PUBLIC_2_Marshal(TPMU_NV_PUBLIC_2 *source, BYTE **buffer, INT32 *size, UINT8 selector);
+    UINT16
+    TPMT_NV_PUBLIC_2_Marshal(TPMT_NV_PUBLIC_2 *source, BYTE **buffer, INT32 *size);
+    UINT16
+    TPM2B_NV_PUBLIC_2_Marshal(TPM2B_NV_PUBLIC_2 *source, BYTE **buffer, INT32 *size);
     UINT16
     TPM2B_CONTEXT_DATA_Marshal(TPM2B_CONTEXT_DATA  *source, BYTE **buffer, INT32 *size);
     UINT16
@@ -390,7 +401,16 @@ extern "C" {
     TPMS_AC_OUTPUT_Marshal(TPMS_AC_OUTPUT *source, BYTE **buffer, INT32 *size);
     UINT16
     TPML_AC_CAPABILITIES_Marshal(TPML_AC_CAPABILITIES *source, BYTE **buffer, INT32 *size);
-
+    UINT16
+    TPMU_CAPABILITIES_Marshal(TPMU_CAPABILITIES* source, BYTE** buffer, INT32* size, UINT32 selector);
+    UINT16
+    TPMS_CAPABILITY_DATA_Marshal(TPMS_CAPABILITY_DATA* source, BYTE** buffer, INT32* size);
+    TPM_RC
+    TPMU_SET_CAPABILITIES_Unmarshal(TPMU_SET_CAPABILITIES* target, BYTE** buffer, INT32* size, UINT32 selector);
+    TPM_RC
+    TPMS_SET_CAPABILITY_DATA_Unmarshal(TPMS_SET_CAPABILITY_DATA* target, BYTE** buffer, INT32* size);
+    TPM_RC
+    TPM2B_SET_CAPABILITY_DATA_Unmarshal(TPM2B_SET_CAPABILITY_DATA* target, BYTE** buffer, INT32* size);
 #ifdef __cplusplus
 }
 #endif

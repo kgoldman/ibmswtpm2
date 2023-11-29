@@ -3,7 +3,6 @@
 /*		Command code attribute array for GetCapability	    		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CommandAttributeData.h 1594 2020-03-26 22:15:48Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2020				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -445,6 +444,21 @@ const TPMA_CC    s_ccAttr [] = {
 #endif
 #if (PAD_LIST || CC_ECC_Decrypt)
     TPMA_CC_INITIALIZER(0x019A, 0, 0, 0, 0, 1, 0, 0, 0),
+#endif
+#if (PAD_LIST || CC_PolicyCapability)
+    TPMA_CC_INITIALIZER(0x019B, 0, 0, 0, 0, 1, 0, 0, 0),
+#endif
+#if (PAD_LIST || CC_PolicyParameters)
+    TPMA_CC_INITIALIZER(0x019C, 0, 0, 0, 0, 1, 0, 0, 0),
+#endif
+#if (PAD_LIST || CC_NV_DefineSpace2)
+    TPMA_CC_INITIALIZER(0x019D, 0, 1, 0, 0, 1, 0, 0, 0),
+#endif
+#if (PAD_LIST || CC_NV_ReadPublic2)
+    TPMA_CC_INITIALIZER(0x019E, 0, 0, 0, 0, 1, 0, 0, 0),
+#endif
+#if (PAD_LIST || CC_SetCapability)
+    TPMA_CC_INITIALIZER(0x019F, 0, 1, 0, 0, 1, 0, 0, 0),
 #endif
 #if (PAD_LIST  || CC_Vendor_TCG_Test)
     TPMA_CC_INITIALIZER(0x0000, 0, 0, 0, 0, 0, 0, 1, 0),
@@ -961,8 +975,28 @@ const COMMAND_ATTRIBUTES    s_commandAttributes [] = {
     (COMMAND_ATTRIBUTES)(CC_ECC_Decrypt                 *  // 0x019A
 			 (IS_IMPLEMENTED+DECRYPT_2+HANDLE_1_USER+ENCRYPT_2)),
 #endif
+#if (PAD_LIST || CC_PolicyCapability)
+    (COMMAND_ATTRIBUTES)(CC_PolicyCapability *   	 // 0x019B
+			 (IS_IMPLEMENTED+DECRYPT_2+ALLOW_TRIAL)),
+#endif
+#if (PAD_LIST || CC_PolicyParameters)
+    (COMMAND_ATTRIBUTES)(CC_PolicyParameters *  	// 0x019C
+			 (IS_IMPLEMENTED+DECRYPT_2+ALLOW_TRIAL)),
+#endif
+#if (PAD_LIST || CC_NV_DefineSpace2)
+    (COMMAND_ATTRIBUTES)(CC_NV_DefineSpace2 * 		// 0x019D
+			 (IS_IMPLEMENTED+DECRYPT_2+HANDLE_1_USER+PP_COMMAND)),
+#endif
+#if (PAD_LIST || CC_NV_ReadPublic2)
+    (COMMAND_ATTRIBUTES)(CC_NV_ReadPublic2 * 		// 0x019E
+			 (IS_IMPLEMENTED+ENCRYPT_2)),
+#endif
+#if (PAD_LIST || CC_SetCapability)
+    (COMMAND_ATTRIBUTES)(CC_SetCapability * 		// 0x019F
+			 (IS_IMPLEMENTED+DECRYPT_2+HANDLE_1_USER)),
+#endif
 #if (PAD_LIST  || CC_Vendor_TCG_Test)
-    (COMMAND_ATTRIBUTES)(CC_Vendor_TCG_Test             *  // 0x0000
+    (COMMAND_ATTRIBUTES)(CC_Vendor_TCG_Test          *  // 0x0000
 			 (IS_IMPLEMENTED+DECRYPT_2+ENCRYPT_2)),
 #endif
 

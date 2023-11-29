@@ -3,7 +3,6 @@
 /*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: NV_spt_fp.h 1490 2019-07-26 21:13:22Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -84,4 +83,23 @@ BOOL
 NvIsPinPassIndex(
 		 TPM_HANDLE          index       // IN: Handle to check
 		 );
+TPM2B_NAME* NvGetIndexName(
+			   NV_INDEX* nvIndex,  // IN: the index over which the name is to be
+			   //     computed
+			   TPM2B_NAME* name    // OUT: name of the index
+			   );
+TPM_RC NvPublic2FromNvPublic(
+			     TPMS_NV_PUBLIC*   nvPublic,  // IN: the source S-form NV public area
+			     TPMT_NV_PUBLIC_2* nvPublic2  // OUT: the T-form NV public area to populate
+			     );
+TPM_RC NvPublicFromNvPublic2(
+			     TPMT_NV_PUBLIC_2* nvPublic2,  // IN: the source T-form NV public area
+			     TPMS_NV_PUBLIC*   nvPublic    // OUT: the S-form NV public area to populate
+			     );
+TPM_RC NvDefineSpace(TPMI_RH_PROVISION authHandle,
+		     TPM2B_AUTH*       auth,
+		     TPMS_NV_PUBLIC*   publicInfo,
+		     TPM_RC            blameAuthHandle,
+		     TPM_RC            blameAuth,
+		     TPM_RC            blamePublic);
 #endif

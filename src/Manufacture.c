@@ -3,7 +3,6 @@
 /*			Performs the manufacturing of the TPM 			*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Manufacture.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -84,30 +83,45 @@ TPM_Manufacture(
 		)
 {
     TPM_SU          orderlyShutdown;
+
 #if RUNTIME_SIZE_CHECKS
     // Call the function to verify the sizes of values that result from different
     // compile options.
     if(!TpmSizeChecks())
-	return -1;
+	return MANUF_INVALID_CONFIG;
 #endif
+
 #if LIBRARY_COMPATIBILITY_CHECK
     // Make sure that the attached library performs as expected.
-    if(!MathLibraryCompatibilityCheck())
-	return -1;
+    if(!ExtMath_Debug_CompatibilityCheck())
+	return MANUF_INVALID_CONFIG;
 #endif
+
     // If TPM has been manufactured, return indication.
     if(!firstTime && g_manufactured)
-	return 1;
-    // Do power on initializations of the cryptographic libraries.
+	return MANUF_ALREADY_DONE;
+    // trigger failure mode if called in error.
+
+    int nvReadyState = _plat__GetNvReadyState();
+    pAssert(nvReadyState == NV_READY);  // else failure mode
+    if(nvReadyState != NV_READY)
+	{
+	    return MANUF_NV_NOT_READY;
+	}    // Do power on initializations of the cryptographic libraries.
     CryptInit();
     s_DAPendingOnNV = FALSE;
+
     // initialize NV
     NvManufacture();
+
     // Clear the magic value in the DRBG state
     go.drbgState.magic = 0;
+
     CryptStartup(SU_RESET);
+
     // default configuration for PCR
-    PCRSimStart();
+    PCRManufacture();
+
     // initialize pre-installed hierarchy data
     // This should happen after NV is initialized because hierarchy data is
     // stored in NV.
@@ -122,14 +136,17 @@ TPM_Manufacture(
     orderlyShutdown = TPM_SU_CLEAR;
     NV_WRITE_PERSISTENT(orderlyState, orderlyShutdown);
     // initialize the firmware version
-    gp.firmwareV1 = FIRMWARE_V1;
-#ifdef FIRMWARE_V2
-    gp.firmwareV2 = FIRMWARE_V2;
-#else
-    gp.firmwareV2 = 0;
-#endif
+    gp.firmwareV1 = _plat__GetTpmFirmwareVersionHigh();
+    gp.firmwareV2 = _plat__GetTpmFirmwareVersionLow();
+
+    _plat__GetPlatformManufactureData(gp.platformReserved,
+				      sizeof(gp.platformReserved));
+
+    NV_SYNC_PERSISTENT(platformReserved);
+
     NV_SYNC_PERSISTENT(firmwareV1);
     NV_SYNC_PERSISTENT(firmwareV2);
+
     // initialize the total reset counter to 0
     gp.totalResetCount = 0;
     NV_SYNC_PERSISTENT(totalResetCount);

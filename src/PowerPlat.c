@@ -121,8 +121,10 @@ _plat__Signal_PowerOff(
 		       )
 {
     // Prepare NV memory for power off
-    _plat__NVDisable(0);
+    _plat__NVDisable((void*)FALSE, 0);
+#if ACT_SUPPORT
     // Disable tick ACT tick processing
     _plat__ACT_EnableTicks(FALSE);
+#endif    // Disable tick ACT tick processing
     return;
 }

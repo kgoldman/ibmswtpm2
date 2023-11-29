@@ -3,7 +3,6 @@
 /*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslDesSupport_fp.h 809 2016-11-16 18:31:54Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,29 +54,34 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2023				        */
 /*										*/
 /********************************************************************************/
 
-#ifndef TPMTOOSSLDESSUPPORT_FP_H
-#define TPMTOOSSLDESSUPPORT_FP_H
+#if CC_PolicyCapability  // Command must be enabled
 
-void
-TDES_set_encrypt_key(
-		     const BYTE                  *key,
-		     UINT16                       keySizeInBits,
-		     tpmKeyScheduleTDES          *keySchedule
-		     );
-void TDES_encrypt(
-		  const BYTE              *in,
-		  BYTE                    *out,
-		  tpmKeyScheduleTDES      *ks
-		  );
-void TDES_decrypt(
-		  const BYTE          *in,
-		  BYTE                *out,
-		  tpmKeyScheduleTDES   *ks
-		  );
+#ifndef POLICYCAPABILITY_FP_H
+#define POLICYCAPABILITY_FP_H
 
+typedef struct
+{
+    TPMI_SH_POLICY policySession;
+    TPM2B_OPERAND  operandB;
+    UINT16         offset;
+    TPM_EO         operation;
+    TPM_CAP        capability;
+    UINT32         property;
+} PolicyCapability_In;
 
-#endif
+#define RC_PolicyCapability_policySession (TPM_RC_H + TPM_RC_1)
+#define RC_PolicyCapability_operandB      (TPM_RC_P + TPM_RC_1)
+#define RC_PolicyCapability_offset        (TPM_RC_P + TPM_RC_2)
+#define RC_PolicyCapability_operation     (TPM_RC_P + TPM_RC_3)
+#define RC_PolicyCapability_capability    (TPM_RC_P + TPM_RC_4)
+#define RC_PolicyCapability_property      (TPM_RC_P + TPM_RC_5)
+
+TPM_RC
+TPM2_PolicyCapability(PolicyCapability_In* in);
+
+#endif  // POLICYCAPABILITY_FP_H
+#endif  // CC_PolicyCapability

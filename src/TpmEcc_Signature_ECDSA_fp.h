@@ -1,9 +1,8 @@
 /********************************************************************************/
 /*										*/
-/*			   TPM DES Support	  				*/
+/*						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslDesSupport.c 1476 2019-06-10 19:32:03Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,63 +54,41 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2023				  	*/
 /*										*/
 /********************************************************************************/
 
-/* B.2.3.1. TpmToOsslDesSupport.c */
-/* B.2.3.1.1. Introduction */
-/* The functions in this file are used for initialization of the interface to the OpenSSL
-   library. */
-/* B.2.3.1.2. Defines and Includes */
-#include "Tpm.h"
-#if (defined SYM_LIB_OSSL) && ALG_TDES
-/*     B.2.3.1.3. Functions */
-/* B.2.3.1.3.1. TDES_set_encyrpt_key() */
-/* This function makes creation of a TDES key look like the creation of a key for any of the other
-   OpenSSL block ciphers. It will create three key schedules, one for each of the DES keys. If
-   there are only two keys, then the third schedule is a copy of the first. */
-void
-TDES_set_encrypt_key(
-		     const BYTE                  *key,
-		     UINT16                       keySizeInBits,
-		     tpmKeyScheduleTDES          *keySchedule
-		     )
-{
-    DES_set_key_unchecked((const_DES_cblock *)key, &keySchedule[0]);
-    DES_set_key_unchecked((const_DES_cblock *)&key[8], &keySchedule[1]);
-    // If is two-key, copy the schedule for K1 into K3, otherwise, compute the
-    // the schedule for K3
-    if(keySizeInBits == 128)
-	keySchedule[2] = keySchedule[0];
-    else
-	DES_set_key_unchecked((const_DES_cblock *)&key[16],
-			      &keySchedule[2]);
-}
-/* B.2.3.1.3.2. TDES_encyrpt() */
-/* The TPM code uses one key schedule. For TDES, the schedule contains three schedules. OpenSSL
-   wants the schedules referenced separately. This function does that. */
-void TDES_encrypt(
-		  const BYTE              *in,
-		  BYTE                    *out,
-		  tpmKeyScheduleTDES      *ks
-		  )
-{
-    DES_ecb3_encrypt((const_DES_cblock *)in, (DES_cblock *)out,
-		     &ks[0], &ks[1], &ks[2],
-		     DES_ENCRYPT);
-}
-/* B.2.3.1.3.3. TDES_decrypt() */
-/* As with TDES_encypt() this function bridges between the TPM single schedule model and the
-   OpenSSL three schedule model. */
-void TDES_decrypt(
-		  const BYTE          *in,
-		  BYTE                *out,
-		  tpmKeyScheduleTDES   *ks
-		  )
-{
-    DES_ecb3_encrypt((const_DES_cblock *)in, (DES_cblock *)out,
-		     &ks[0], &ks[1], &ks[2],
-		     DES_DECRYPT);
-}
-#endif // SYM_LIB_OSSL
+#ifndef _TPMECC_SIGNATURE_ECDSA_FP_H_
+#define _TPMECC_SIGNATURE_ECDSA_FP_H_
+#if ALG_ECC && ALG_ECDSA
+
+//*** TpmEcc_SignEcdsa()
+// This function implements the ECDSA signing algorithm. The method is described
+// in the comments below.
+TPM_RC
+TpmEcc_SignEcdsa(Crypt_Int*            bnR,   // OUT: 'r' component of the signature
+		 Crypt_Int*            bnS,   // OUT: 's' component of the signature
+		 const Crypt_EccCurve* E,     // IN: the curve used in the signature
+		 //     process
+		 Crypt_Int*          bnD,     // IN: private signing key
+		 const TPM2B_DIGEST* digest,  // IN: the digest to sign
+		 RAND_STATE*         rand     // IN: used in debug of signing
+		 );
+
+//*** TpmEcc_ValidateSignatureEcdsa()
+// This function validates an ECDSA signature. rIn and sIn should have been checked
+// to make sure that they are in the range 0 < 'v' < 'n'
+//  Return Type: TPM_RC
+//      TPM_RC_SIGNATURE           signature not valid
+TPM_RC
+TpmEcc_ValidateSignatureEcdsa(
+			      Crypt_Int*            bnR,  // IN: 'r' component of the signature
+			      Crypt_Int*            bnS,  // IN: 's' component of the signature
+			      const Crypt_EccCurve* E,    // IN: the curve used in the signature
+			      //     process
+			      const Crypt_Point*  ecQ,    // IN: the public point of the key
+			      const TPM2B_DIGEST* digest  // IN: the digest that was signed
+			      );
+
+#endif  // ALG_ECC && ALG_ECDSA
+#endif  // _TPMECC_SIGNATURE_ECDSA_FP_H_

@@ -316,6 +316,12 @@
 #if CC_PolicyAuthorizeNV
 #include "PolicyAuthorizeNV_fp.h"
 #endif
+#if CC_PolicyCapability
+#include "PolicyCapability_fp.h"
+#endif
+#if CC_PolicyParameters
+#include "PolicyParameters_fp.h"
+#endif
 /* Hierarchy Commands */
 #if CC_CreatePrimary
 #include "CreatePrimary_fp.h"
@@ -436,6 +442,15 @@
 #endif
 #if CC_NV_Certify
 #include "NV_Certify_fp.h"
+#endif
+#if CC_NV_DefineSpace2
+#  include "NV_DefineSpace2_fp.h"
+#endif
+#if CC_NV_ReadPublic2
+#  include "NV_ReadPublic2_fp.h"
+#endif
+#if CC_SetCapability
+#  include "SetCapability_fp.h"
 #endif
 
 /* Attached Components */

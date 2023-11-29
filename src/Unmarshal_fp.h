@@ -3,7 +3,6 @@
 /*			    Unmarshal Prototypes				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Unmarshal_fp.h 1603 2020-04-03 17:48:43Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2012 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2012 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -169,6 +168,12 @@ extern "C" {
     TPMI_RH_LOCKOUT_Unmarshal(TPMI_RH_LOCKOUT *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPMI_RH_NV_INDEX_Unmarshal(TPMI_RH_NV_INDEX *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPMI_RH_NV_DEFINED_INDEX_Unmarshal(TPMI_RH_NV_DEFINED_INDEX *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPMI_RH_NV_LEGACY_INDEX_Unmarshal(TPMI_RH_NV_LEGACY_INDEX *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPMI_RH_NV_INDEX_Unmarshal(TPMI_RH_NV_EXP_INDEX *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPMI_RH_AC_Unmarshal(TPMI_RH_AC *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
@@ -291,6 +296,12 @@ extern "C" {
     TPM2B_ATTEST_Unmarshal(TPM2B_ATTEST *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPMS_CAPABILITY_DATA_Unmarshal(TPMS_CAPABILITY_DATA *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPMU_SET_CAPABILITIES_Unmarshal(TPMU_SET_CAPABILITIES *target, BYTE **buffer, INT32 *size, UINT32 selector);
+    LIB_EXPORT TPM_RC
+    TPMS_SET_CAPABILITY_DATA_Unmarshal(TPMS_SET_CAPABILITY_DATA *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPM2B_SET_CAPABILITY_DATA_Unmarshal(TPM2B_SET_CAPABILITY_DATA *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPMI_AES_KEY_BITS_Unmarshal(TPMI_AES_KEY_BITS *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
@@ -454,7 +465,17 @@ extern "C" {
     LIB_EXPORT TPM_RC
     TPMS_NV_PUBLIC_Unmarshal(TPMS_NV_PUBLIC *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
+    TPMA_NV_EXP_Unmarshal(TPMA_NV_EXP *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPMS_NV_PUBLIC_EXP_ATTR_Unmarshal(TPMS_NV_PUBLIC_EXP_ATTR *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPMU_NV_PUBLIC_2_Unmarshal( TPMU_NV_PUBLIC_2 *target, BYTE **buffer, INT32 *size, UINT8 selector);
+    LIB_EXPORT TPM_RC
+    TPMT_NV_PUBLIC_2_Unmarshal(TPMT_NV_PUBLIC_2 *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
     TPM2B_NV_PUBLIC_Unmarshal(TPM2B_NV_PUBLIC *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
+    TPM2B_NV_PUBLIC_2_Unmarshal(TPM2B_NV_PUBLIC_2 *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPM2B_CONTEXT_SENSITIVE_Unmarshal(TPM2B_CONTEXT_SENSITIVE *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
@@ -463,7 +484,7 @@ extern "C" {
     TPMS_CONTEXT_Unmarshal(TPMS_CONTEXT *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPM_AT_Unmarshal(TPM_AT *target, BYTE **buffer, INT32 *size);
-    
+
 #ifdef __cplusplus
 }
 #endif

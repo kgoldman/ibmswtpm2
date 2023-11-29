@@ -1,9 +1,8 @@
 /********************************************************************************/
 /*										*/
-/*			  TPM to OpenSSL BigNum Shim Layer			*/
+/*						*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TpmToOsslMath_fp.h 1519 2019-11-15 20:43:51Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,91 +54,72 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2023				  	*/
 /*										*/
 /********************************************************************************/
 
-#ifndef TPMTOOSSLMATH_FP_H
-#define TPMTOOSSLMATH_FP_H
+// This file contains compiler specific switches.
+// These definitions are for the Microsoft compiler
+//
 
-#include <openssl/bn.h>
+#ifndef _COMPILER_DEPENDENCIES_MSVC_H_
+#define _COMPILER_DEPENDENCIES_MSVC_H_
 
-BOOL
-OsslToTpmBn(
-	    bigNum          bn,
-	    BIGNUM          *osslBn
-	    );
-BIGNUM *
-BigInitialized(
-	       BIGNUM             *toInit,
-	       bigConst            initializer
-	       );
-LIB_EXPORT BOOL
-BnModMult(
-	  bigNum              result,
-	  bigConst            op1,
-	  bigConst            op2,
-	  bigConst            modulus
-	  );
-LIB_EXPORT BOOL
-BnMult(
-       bigNum               result,
-       bigConst             multiplicand,
-       bigConst             multiplier
-       );
-LIB_EXPORT BOOL
-BnDiv(
-      bigNum               quotient,
-      bigNum               remainder,
-      bigConst             dividend,
-      bigConst             divisor
-      );
-LIB_EXPORT BOOL
-BnGcd(
-      bigNum      gcd,            // OUT: the common divisor
-      bigConst    number1,        // IN:
-      bigConst    number2         // IN:
-      );
-LIB_EXPORT BOOL
-BnModExp(
-	 bigNum               result,         // OUT: the result
-	 bigConst             number,         // IN: number to exponentiate
-	 bigConst             exponent,       // IN:
-	 bigConst             modulus         // IN:
-	 );
-LIB_EXPORT BOOL
-BnModInverse(
-	     bigNum               result,
-	     bigConst             number,
-	     bigConst             modulus
-	     );
-bigCurve
-BnCurveInitialize(
-		  bigCurve          E,           // IN: curve structure to initialize
-		  TPM_ECC_CURVE     curveId      // IN: curve identifier
-		  );
-LIB_EXPORT BOOL
-BnEccModMult(
-	     bigPoint             R,         // OUT: computed point
-	     pointConst           S,         // IN: point to multiply by 'd' (optional)
-	     bigConst             d,         // IN: scalar for [d]S
-	     bigCurve             E
-	     );
-LIB_EXPORT BOOL
-BnEccModMult2(
-	      bigPoint             R,         // OUT: computed point
-	      pointConst           S,         // IN: optional point
-	      bigConst             d,         // IN: scalar for [d]S or [d]G
-	      pointConst           Q,         // IN: second point
-	      bigConst             u,         // IN: second scalar
-	      bigCurve             E          // IN: curve
-	      );
-LIB_EXPORT BOOL
-BnEccAdd(
-	 bigPoint             R,         // OUT: computed point
-	 pointConst           S,         // IN: point to multiply by 'd'
-	 pointConst           Q,         // IN: second point
-	 bigCurve             E          // IN: curve
-	 );
-
+#if !defined(_MSC_VER)
+#  error CompilerDependencies_msvc.h included for wrong compiler
 #endif
+
+// Endian conversion for aligned structures
+#define REVERSE_ENDIAN_16(_Number) _byteswap_ushort(_Number)
+#define REVERSE_ENDIAN_32(_Number) _byteswap_ulong(_Number)
+#define REVERSE_ENDIAN_64(_Number) _byteswap_uint64(_Number)
+
+// Avoid compiler warning for in line of stdio (or not)
+//#define _NO_CRT_STDIO_INLINE
+
+// This macro is used to handle LIB_EXPORT of function and variable names in lieu
+// of a .def file. Visual Studio requires that functions be explicitly exported and
+// imported.
+#ifdef TPM_AS_DLL
+#  define LIB_EXPORT __declspec(dllexport)  // VS compatible version
+#  define LIB_IMPORT __declspec(dllimport)
+#else
+// building static libraries
+#  define LIB_EXPORT
+#  define LIB_IMPORT
+#endif
+
+#define TPM_INLINE inline
+
+// This is defined to indicate a function that does not return. Microsoft compilers
+// do not support the _Noretrun function parameter.
+#define NORETURN __declspec(noreturn)
+#if _MSC_VER >= 1400  // SAL processing when needed
+#  include <sal.h>
+#endif
+
+// #  ifdef _WIN64
+// #    define _INTPTR 2
+// #  else
+// #    define _INTPTR 1
+// #  endif
+
+#define NOT_REFERENCED(x) (x)
+
+// Lower the compiler error warning for system include
+// files. They tend not to be that clean and there is no
+// reason to sort through all the spurious errors that they
+// generate when the normal error level is set to /Wall
+#define _REDUCE_WARNING_LEVEL_(n) __pragma(warning(push, n))
+// Restore the compiler warning level
+#define _NORMAL_WARNING_LEVEL_ __pragma(warning(pop))
+#include <stdint.h>
+
+#ifdef TPM_STATIC_ASSERT
+#  error TPM_STATIC_ASSERT already defined
+#endif
+
+// MSVC: failure results in error C2118: negative subscript error
+#define TPM_STATIC_ASSERT(e) typedef char __C_ASSERT__[(e) ? 1 : -1]
+
+#endif  // _COMPILER_DEPENDENCIES_MSVC_H_

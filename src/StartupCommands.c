@@ -3,7 +3,6 @@
 /*			 	Startup Commands   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: StartupCommands.c 1594 2020-03-26 22:15:48Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,24 +54,21 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
-/* 9.2	_TPM_Init */
-#include "Tpm.h"
-#include "PlatformACT_fp.h"		/* added kgold */
-#include "_TPM_Init_fp.h"
-
 extern int verbose;
 
+#include "Tpm.h"
+// TODO_RENAME_INC_FOLDER:platform_interface refers to the TPM_CoreLib platform interface
+#include "_TPM_Init_fp.h"
+
 // This function is used to process a _TPM_Init indication.
-LIB_EXPORT void
-_TPM_Init(
-	  void
-	  )
+LIB_EXPORT void _TPM_Init(void)
 {
     g_powerWasLost = g_powerWasLost | _plat__WasPowerLost();
+
 #if SIMULATION && DEBUG
     // If power was lost and this was a simulation, put canary in RAM used by NV
     // so that uninitialized memory can be detected more easily
@@ -84,34 +80,46 @@ _TPM_Init(
 	    memset(&go, 0xbb, sizeof(go));
 	}
 #endif
-#if SIMULATION
+
+#if ALLOW_FORCE_FAILURE_MODE
     // Clear the flag that forces failure on self-test
     g_forceFailureMode = FALSE;
 #endif
+
     // Disable the tick processing
+#if ACT_SUPPORT
     _plat__ACT_EnableTicks(FALSE);
+#endif
+
     // Set initialization state
     TPMInit();
+
     // Set g_DRTMHandle as unassigned
     g_DRTMHandle = TPM_RH_UNASSIGNED;
+
     // No H-CRTM, yet.
     g_DrtmPreStartup = FALSE;
+
     // Initialize the NvEnvironment.
     g_nvOk = NvPowerOn();
+
     // Initialize cryptographic functions
     g_inFailureMode = (g_nvOk == FALSE) || (CryptInit() == FALSE);
     if(!g_inFailureMode)
 	{
 	    // Load the persistent data
 	    NvReadPersistent();
+
 	    // Load the orderly data (clock and DRBG state).
 	    // If this is not done here, things break
 	    NvRead(&go, NV_ORDERLY_DATA, sizeof(go));
+
 	    // Start clock. Need to do this after NV has been restored.
 	    TimePowerOn();
 	}
     return;
 }
+
 #include "Tpm.h"
 #include "Startup_fp.h"
 #if CC_Startup	 // Conditional expansion of this file
@@ -209,11 +217,14 @@ TPM2_Startup(
     // When the cryptographic library has been started, indicate that a TPM2_Startup
     // command has been received.
     OK = OK && TPMRegisterStartup();
-    // Read the platform unique value that is used as VENDOR_PERMANENT
+
+#  if VENDOR_PERMANENT_AUTH_ENABLED == YES
+    // Read the platform unique value that is used as VENDOR_PERMANENT_AUTH_HANDLE
     // authorization value
-    g_platformUniqueDetails.t.size
-	= (UINT16)_plat__GetUnique(1, sizeof(g_platformUniqueDetails.t.buffer),
-				   g_platformUniqueDetails.t.buffer);
+    g_platformUniqueAuth.t.size = (UINT16)_plat__GetUniqueAuth
+				  ((g_platformUniqueAuth.t.buffer), g_platformUniqueAuth.t.buffer);
+#  endif
+
     // Start up subsystems
     // Start set the safe flag
     OK = OK && TimeStartup(startup);

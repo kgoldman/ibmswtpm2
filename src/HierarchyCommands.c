@@ -3,7 +3,6 @@
 /*			     Hierarchy Commands					*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: HierarchyCommands.c 1519 2019-11-15 20:43:51Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -76,6 +75,7 @@ TPM2_CreatePrimary(
     DRBG_STATE           rand;
     OBJECT              *newObject;
     TPM2B_NAME           name;
+    TPM2B_SEED     	primary_seed;
     if (verbose) {
 	FILE *f = fopen("trace.txt", "a");
 	fprintf(f, "TPM2_CreatePrimary: primaryHandle %08x\n", in->primaryHandle);
@@ -88,18 +88,19 @@ TPM2_CreatePrimary(
 	return TPM_RC_OBJECT_MEMORY;
     // Get the address of the public area in the new object
     // (this is just to save typing)
-    publicArea = &newObject->publicArea;
+    publicArea  = &newObject->publicArea;
+
     *publicArea = in->inPublic.publicArea;
+
     // Check attributes in input public area. CreateChecks() checks the things that
     // are unique to creation and then validates the attributes and values that are
     // common to create and load.
-    result = CreateChecks(NULL, publicArea,
-			  in->inSensitive.sensitive.data.t.size);
+    result = CreateChecks(
+			  NULL, in->primaryHandle, publicArea, in->inSensitive.sensitive.data.t.size);
     if(result != TPM_RC_SUCCESS)
 	return RcSafeAddToResult(result, RC_CreatePrimary_inPublic);
     // Validate the sensitive area values
-    if(!AdjustAuthSize(&in->inSensitive.sensitive.userAuth,
-		       publicArea->nameAlg))
+    if(!AdjustAuthSize(&in->inSensitive.sensitive.userAuth, publicArea->nameAlg))
 	return TPM_RCS_SIZE + RC_CreatePrimary_inSensitive;
     // Command output
     // Compute the name using out->name as a scratch area (this is not the value
@@ -107,34 +108,57 @@ TPM2_CreatePrimary(
     // used as a random number generator during the object creation.
     // The caller does not know the seed values so the actual name does not have
     // to be over the input, it can be over the unmarshaled structure.
-    result = DRBG_InstantiateSeeded(&rand,
-				    &HierarchyGetPrimarySeed(in->primaryHandle)->b,
-				    PRIMARY_OBJECT_CREATION,
-				    (TPM2B *)PublicMarshalAndComputeName(publicArea, &name),
-				    &in->inSensitive.sensitive.data.b);
-    if (result == TPM_RC_SUCCESS)
+
+    result = HierarchyGetPrimarySeed(in->primaryHandle, &primary_seed);
+    if(result != TPM_RC_SUCCESS)
+	return result;
+
+    result =
+	DRBG_InstantiateSeeded(&rand,
+			       &primary_seed.b,
+			       PRIMARY_OBJECT_CREATION,
+			       (TPM2B*)PublicMarshalAndComputeName(publicArea, &name),
+			       &in->inSensitive.sensitive.data.b);
+    MemorySet(primary_seed.b.buffer, 0, primary_seed.b.size);
+
+    if(result == TPM_RC_SUCCESS)
 	{
 	    newObject->attributes.primary = SET;
-	    if(in->primaryHandle == TPM_RH_ENDORSEMENT)
+	    if(HierarchyNormalizeHandle(in->primaryHandle) == TPM_RH_ENDORSEMENT)
 		newObject->attributes.epsHierarchy = SET;
+
 	    // Create the primary object.
-	    result = CryptCreateObject(newObject, &in->inSensitive.sensitive,
-				       (RAND_STATE *)&rand);
+	    result = CryptCreateObject(
+				       newObject, &in->inSensitive.sensitive, (RAND_STATE*)&rand);
+	    DRBG_Uninstantiate(&rand);
 	}
     if(result != TPM_RC_SUCCESS)
 	return result;
+
     // Set the publicArea and name from the computed values
     out->outPublic.publicArea = newObject->publicArea;
-    out->name = newObject->name;
+    out->name                 = newObject->name;
+
     // Fill in creation data
-    FillInCreationData(in->primaryHandle, publicArea->nameAlg,
-		       &in->creationPCR, &in->outsideInfo, &out->creationData,
+    FillInCreationData(in->primaryHandle,
+		       publicArea->nameAlg,
+		       &in->creationPCR,
+		       &in->outsideInfo,
+		       &out->creationData,
 		       &out->creationHash);
+
     // Compute creation ticket
-    TicketComputeCreation(EntityGetHierarchy(in->primaryHandle), &out->name,
-			  &out->creationHash, &out->creationTicket);
+    result = TicketComputeCreation(EntityGetHierarchy(in->primaryHandle),
+				   &out->name,
+				   &out->creationHash,
+				   &out->creationTicket);
+    if(result != TPM_RC_SUCCESS)
+	return result;
+
     // Set the remaining attributes for a loaded object
     ObjectSetLoadedAttributes(newObject, in->primaryHandle);
+    return result;
+
     if (verbose) {
 	FILE *f = fopen("trace.txt", "a");
 	fprintf(f, "TPM2_CreatePrimary: objectHandle %08x\n", out->objectHandle);
@@ -300,7 +324,7 @@ TPM2_SetPrimaryPolicy(
 	      go.ACT_##N.authPolicy = in->authPolicy;			\
 	      g_clearOrderly = TRUE;					\
 	      break;
-	    
+
 	    FOR_EACH_ACT(SET_ACT_POLICY)
 
 	  default:
@@ -553,4 +577,3 @@ TPM2_HierarchyChangeAuth(
     return TPM_RC_SUCCESS;
 }
 #endif // CC_HierarchyChangeAuth
-

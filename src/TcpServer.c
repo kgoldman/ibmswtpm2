@@ -3,7 +3,6 @@
 /*		Socket Interface to a TPM Simulator    				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TcpServer.c 1658 2021-01-22 23:14:01Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,14 +54,17 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
+
+#include "simulatorPrivate.h"
 
 /* D.3 TcpServer.c */
 /* D.3.1. Description */
 /* This file contains the socket interface to a TPM simulator. */
 /* D.3.2. Includes, Locals, Defines and Function Prototypes */
+#if 0
 #include "TpmBuildSwitches.h"
 #include <stdio.h>
 #include <stdbool.h>
@@ -81,8 +83,10 @@ typedef int socklen_t;
 #include "TpmProfile.h"
 #include "Simulator_fp.h"
 #include "TcpServer_fp.h"
-#include "Platform_fp.h"
+//#include "Platform_fp.h"
 #include "PlatformACT_fp.h"		/* added kgold */
+
+#endif
 
 /*     To access key cache control in TPM */
 void RsaKeyCacheControl(int state);

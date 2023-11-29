@@ -3,7 +3,6 @@
 /*		For accessing the TPM_CAP_TPM_PROPERTY values	  		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: PropertyCap.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -103,40 +102,26 @@ TPMPropertyIsDefined(
 	    *value = TPM_SPEC_YEAR;
 	    break;
 	  case TPM_PT_MANUFACTURER:
+	    *value = _plat__GetManufacturerCapabilityCode();
 	    // vendor ID unique to each TPM manufacturer
-	    *value = BYTE_ARRAY_TO_UINT32(MANUFACTURER);
 	    break;
 	  case TPM_PT_VENDOR_STRING_1:
 	    // first four characters of the vendor ID string
-	    *value = BYTE_ARRAY_TO_UINT32(VENDOR_STRING_1);
+	    *value = _plat__GetVendorCapabilityCode(1);
 	    break;
 	  case TPM_PT_VENDOR_STRING_2:
-	    // second four characters of the vendor ID string
-#ifdef VENDOR_STRING_2
-	    *value = BYTE_ARRAY_TO_UINT32(VENDOR_STRING_2);
-#else
-	    *value = 0;
-#endif
+	    *value = _plat__GetVendorCapabilityCode(2);
 	    break;
 	  case TPM_PT_VENDOR_STRING_3:
 	    // third four characters of the vendor ID string
-#ifdef VENDOR_STRING_3
-	    *value = BYTE_ARRAY_TO_UINT32(VENDOR_STRING_3);
-#else
-	    *value = 0;
-#endif
+	    *value = _plat__GetVendorCapabilityCode(3);
 	    break;
 	  case TPM_PT_VENDOR_STRING_4:
 	    // fourth four characters of the vendor ID string
-#ifdef VENDOR_STRING_4
-	    *value = BYTE_ARRAY_TO_UINT32(VENDOR_STRING_4);
-#else
-	    *value = 0;
-#endif
+	    *value = _plat__GetVendorCapabilityCode(4);
 	    break;
 	  case TPM_PT_VENDOR_TPM_TYPE:
-	    // vendor-defined value indicating the TPM model
-	    *value = 1;
+	    *value = _plat__GetTpmType();
 	    break;
 	  case TPM_PT_FIRMWARE_VERSION_1:
 	    // more significant 32-bits of a vendor-specific value
@@ -601,4 +586,22 @@ TPMCapGetProperties(
 		}
 	}
     return more;
+}
+
+//*** TPMCapGetOneProperty()
+// This function returns a single TPM property, if present.
+BOOL TPMCapGetOneProperty(TPM_PT                pt,       // IN: the TPM property
+			  TPMS_TAGGED_PROPERTY* property  // OUT: tagged property
+			  )
+{
+    UINT32 value;
+
+    if(TPMPropertyIsDefined((TPM_PT)pt, &value))
+	{
+	    property->property = (TPM_PT)pt;
+	    property->value    = value;
+	    return TRUE;
+	}
+
+    return FALSE;
 }

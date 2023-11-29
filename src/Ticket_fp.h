@@ -3,7 +3,6 @@
 /*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Ticket_fp.h 1490 2019-07-26 21:13:22Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2023					*/
 /*										*/
 /********************************************************************************/
 
@@ -66,14 +65,14 @@ BOOL
 TicketIsSafe(
 	     TPM2B           *buffer
 	     );
-void
+TPM_RC
 TicketComputeVerified(
 		      TPMI_RH_HIERARCHY    hierarchy,     // IN: hierarchy constant for ticket
 		      TPM2B_DIGEST        *digest,        // IN: digest
 		      TPM2B_NAME          *keyName,       // IN: name of key that signed the values
 		      TPMT_TK_VERIFIED    *ticket         // OUT: verified ticket
 		      );
-void
+TPM_RC
 TicketComputeAuth(
 		  TPM_ST               type,          // IN: the type of ticket.
 		  TPMI_RH_HIERARCHY    hierarchy,     // IN: hierarchy constant for ticket
@@ -85,14 +84,14 @@ TicketComputeAuth(
 		  TPM2B_NAME          *entityName,    // IN: name of entity
 		  TPMT_TK_AUTH        *ticket         // OUT: Created ticket
 		  );
-void
+TPM_RC
 TicketComputeHashCheck(
 		       TPMI_RH_HIERARCHY    hierarchy,     // IN: hierarchy constant for ticket
 		       TPM_ALG_ID           hashAlg,       // IN: the hash algorithm for 'digest'
 		       TPM2B_DIGEST        *digest,        // IN: input digest
 		       TPMT_TK_HASHCHECK   *ticket         // OUT: Created ticket
 		       );
-void
+TPM_RC
 TicketComputeCreation(
 		      TPMI_RH_HIERARCHY    hierarchy,     // IN: hierarchy for ticket
 		      TPM2B_NAME          *name,          // IN: object name

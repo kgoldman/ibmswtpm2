@@ -3,7 +3,6 @@
 /*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: Handle_fp.h 1490 2019-07-26 21:13:22Z kgoldman $			*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 -2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -76,12 +75,16 @@ PermanentCapGetHandles(
 		       UINT32           count,         // IN: count of returned handles
 		       TPML_HANDLE     *handleList     // OUT: list of handle
 		       );
+BOOL PermanentCapGetOneHandle(TPM_HANDLE handle  // IN: handle
+			      );
 TPMI_YES_NO
 PermanentHandleGetPolicy(
 			 TPM_HANDLE           handle,        // IN: start handle
 			 UINT32               count,         // IN: count of returned handles
 			 TPML_TAGGED_POLICY  *policyList     // OUT: list of handle
 			 );
-
+BOOL PermanentHandleGetOnePolicy(TPM_HANDLE          handle,  // IN: handle
+				 TPMS_TAGGED_POLICY* policy   // OUT: tagged policy
+				 );
 
 #endif

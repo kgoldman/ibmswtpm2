@@ -104,7 +104,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO;TPM_NUVOTON;ALG_CAMELLIA=NO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO;TPM_NUVOTON;SYM_LIB=Ossl;HASH_LIB=Ossl;MATH_LIB=TpmBigNum;BN_MATH_LIB=Ossl</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>c:/program files/openssl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <ShowIncludes>false</ShowIncludes>
@@ -148,7 +148,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO;TPM_NUVOTON;ALG_CAMELLIA=NO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;TPM_WINDOWS;_CRT_SECURE_NO_WARNINGS;USE_BIT_FIELD_STRUCTURES=NO;TPM_NUVOTON;SYM_LIB=Ossl;HASH_LIB=Ossl;MATH_LIB=TpmBigNum;BN_MATH_LIB=Ossl</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>c:/program files/openssl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <ShowIncludes>false</ShowIncludes>
@@ -177,8 +177,11 @@
     <ClCompile Include="..\..\src\AuditCommands.c" />
     <ClCompile Include="..\..\src\Bits.c" />
     <ClCompile Include="..\..\src\BnConvert.c" />
+    <ClCompile Include="..\..\src\BnEccConstants.c" />
     <ClCompile Include="..\..\src\BnMath.c" />
     <ClCompile Include="..\..\src\BnMemory.c" />
+    <ClCompile Include="..\..\src\BnToOsslMath.c" />
+    <ClCompile Include="..\..\src\BnUtil.c" />
     <ClCompile Include="..\..\src\Cancel.c" />
     <ClCompile Include="..\..\src\CapabilityCommands.c" />
     <ClCompile Include="..\..\src\Clock.c" />
@@ -214,6 +217,7 @@
     <ClCompile Include="..\..\src\Entropy.c" />
     <ClCompile Include="..\..\src\EphemeralCommands.c" />
     <ClCompile Include="..\..\src\ExecCommand.c" />
+    <ClCompile Include="..\..\src\ExtraData.c" />
     <ClCompile Include="..\..\src\Global.c" />
     <ClCompile Include="..\..\src\Handle.c" />
     <ClCompile Include="..\..\src\HashCommands.c" />
@@ -241,6 +245,7 @@
     <ClCompile Include="..\..\src\PCR.c" />
     <ClCompile Include="..\..\src\PlatformACT.c" />
     <ClCompile Include="..\..\src\PlatformData.c" />
+    <ClCompile Include="..\..\src\PlatformPCR.c" />
     <ClCompile Include="..\..\src\Policy_spt.c" />
     <ClCompile Include="..\..\src\Power.c" />
     <ClCompile Include="..\..\src\PowerPlat.c" />
@@ -264,18 +269,26 @@
     <ClCompile Include="..\..\src\Ticket.c" />
     <ClCompile Include="..\..\src\Time.c" />
     <ClCompile Include="..\..\src\TpmAsn1.c" />
+    <ClCompile Include="..\..\src\TpmBigNumThunks.c" />
     <ClCompile Include="..\..\src\TPMCmdp.c" />
     <ClCompile Include="..\..\src\TPMCmds.c" />
+    <ClCompile Include="..\..\src\TpmEcc_Signature_ECDAA.c" />
+    <ClCompile Include="..\..\src\TpmEcc_Signature_ECDSA.c" />
+    <ClCompile Include="..\..\src\TpmEcc_Signature_Schnorr.c" />
+    <ClCompile Include="..\..\src\TpmEcc_Signature_SM2.c" />
+    <ClCompile Include="..\..\src\TpmEcc_Signature_Util.c" />
+    <ClCompile Include="..\..\src\TpmEcc_Util.c" />
     <ClCompile Include="..\..\src\TpmFail.c" />
+    <ClCompile Include="..\..\src\TpmMath_Debug.c" />
+    <ClCompile Include="..\..\src\TpmMath_Util.c" />
     <ClCompile Include="..\..\src\TpmSizeChecks.c" />
-    <ClCompile Include="..\..\src\TpmToOsslDesSupport.c" />
-    <ClCompile Include="..\..\src\TpmToOsslMath.c" />
     <ClCompile Include="..\..\src\TpmToOsslSupport.c" />
     <ClCompile Include="..\..\src\Unique.c" />
     <ClCompile Include="..\..\src\Unmarshal.c">
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ShowIncludes>
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ShowIncludes>
     </ClCompile>
+    <ClCompile Include="..\..\src\VendorInfo.c" />
     <ClCompile Include="..\..\src\Vendor_TCG_Test.c" />
     <ClCompile Include="..\..\src\X509_ECC.c" />
     <ClCompile Include="..\..\src\X509_RSA.c" />

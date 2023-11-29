@@ -59,6 +59,7 @@
 /*										*/
 /********************************************************************************/
 
+#if 0
 /* D.5 TPMCmds.c */
 /* D.5.1. Description */
 /* This file contains the entry point for the simulator. */
@@ -75,7 +76,7 @@
 #endif
 #include "TpmTcpProtocol.h"
 #include "Manufacture_fp.h"
-#include "Platform_fp.h"
+//#include "Platform_fp.h"
 #include "Simulator_fp.h"
 #ifdef TPM_WINDOWS
 #include "TcpServer_fp.h"
@@ -84,6 +85,9 @@
 #include "TcpServerPosix_fp.h"
 #endif
 #include "TpmProfile.h"		/* kgold */
+#endif
+
+#include "simulatorPrivate.h"
 
 #define PURPOSE							\
     "TPM Reference Simulator.\nCopyright Microsoft Corp.\n"
@@ -126,7 +130,7 @@ main(
 {
     int		i;				/* argc iterator */
     int		irc;
-    
+
     /* command line argument defaults */
     int manufacture = 0;
     int portNum = DEFAULT_TPM_PORT;
@@ -164,8 +168,8 @@ main(
     printf("LIBRARY_COMPATIBILITY_CHECK is %s\n",
 	   (LIBRARY_COMPATIBILITY_CHECK ? "ON" : "OFF"));
     // Enable NV memory
-    _plat__NVEnable(NULL);
-    
+    _plat__NVEnable(NULL, 0);
+
     if (manufacture || _plat__NVNeedsManufacture())
 	{
 	    printf("Manufacturing NV state...\n");
@@ -174,7 +178,7 @@ main(
 		    // if the manufacture didn't work, then make sure that the NV file doesn't
 		    // survive. This prevents manufacturing failures from being ignored the
 		    // next time the code is run.
-		    _plat__NVDisable(1);
+		    _plat__NVDisable((void*)TRUE, 0);
 		    exit(1);
 		}
 	    // Coverage test - repeated manufacturing attempt
@@ -190,7 +194,7 @@ main(
 		}
 	}
     // Disable NV memory
-    _plat__NVDisable(0);
+    _plat__NVDisable((void*)FALSE, 0);
     /* power on the TPM  - kgold MS simulator comes up powered off */
     _rpc__Signal_PowerOn(FALSE);
     _rpc__Signal_NvOn();
@@ -205,4 +209,3 @@ main(
 	return 4;
     }
 }
-

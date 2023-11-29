@@ -3,7 +3,6 @@
 /*		Dynamic space for user defined NV 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: NVDynamic_fp.h 1476 2019-06-10 19:32:03Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -155,12 +154,6 @@ NvWriteUINT64Data(
 		  UINT64           intValue       // IN: the value to write
 		  );
 TPM2B_NAME *
-NvGetIndexName(
-	       NV_INDEX        *nvIndex,       // IN: the index over which the name is to be
-	       //     computed
-	       TPM2B_NAME      *name           // OUT: name of the index
-	       );
-TPM2B_NAME *
 NvGetNameByIndexHandle(
 		       TPMI_RH_NV_INDEX     handle,        // IN: handle of the index
 		       TPM2B_NAME          *name           // OUT: name of the index
@@ -198,12 +191,20 @@ NvCapGetPersistent(
 		   UINT32           count,         // IN: maximum number of returned handles
 		   TPML_HANDLE     *handleList     // OUT: list of handle
 		   );
+//*** NvCapGetOnePersistent()
+// This function returns whether a given persistent handle exists.
+//
+// 'Handle' must be in valid persistent object handle range.
+BOOL NvCapGetOnePersistent(TPMI_DH_OBJECT handle  // IN: handle
+			   );
+
 TPMI_YES_NO
 NvCapGetIndex(
 	      TPMI_DH_OBJECT   handle,        // IN: start handle
 	      UINT32           count,         // IN: max number of returned handles
 	      TPML_HANDLE     *handleList     // OUT: list of handle
 	      );
+BOOL NvCapGetOneIndex(TPMI_DH_OBJECT handle);  // IN: start handle
 UINT32
 NvCapGetIndexNumber(
 		    void

@@ -3,7 +3,6 @@
 /*			     				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: AlgorithmCap_fp.h 1490 2019-07-26 21:13:22Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016					*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -68,6 +67,14 @@ AlgorithmCapGetImplemented(
 			   UINT32                       count,     // IN: count of returned algorithms
 			   TPML_ALG_PROPERTY           *algList    // OUT: algorithm list
 			   );
+//** AlgorithmCapGetOneImplemented()
+// This function returns whether a single algorithm was implemented, along
+// with its properties (if implemented).
+BOOL AlgorithmCapGetOneImplemented(
+				   TPM_ALG_ID         algID,       // IN: the algorithm ID
+				   TPMS_ALG_PROPERTY* algProperty  // OUT: algorithm properties
+				   );
+
 LIB_EXPORT
 void
 AlgorithmGetImplementedVector(

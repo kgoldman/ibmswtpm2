@@ -82,7 +82,7 @@
 #include "TcpServerPosix_fp.h"
 #include "Simulator_fp.h"
 #include "TpmProfile.h"		/* kgold */
-#include "Platform_fp.h"	/* kgold */
+//#include "Platform_fp.h"	/* kgold */
 #include "PlatformACT_fp.h"	/* added kgold */
 
 bool				/* kgold */
