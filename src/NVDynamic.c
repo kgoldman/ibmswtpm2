@@ -122,7 +122,7 @@ NvNextByType(
 	    if(HandleGetType(nvHandle) == type)
 		break;
 	}
-    if(handle != NULL)
+    if(addr && (handle != NULL))
 	*handle = nvHandle;
     return addr;
 }
