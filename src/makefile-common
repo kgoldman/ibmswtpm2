@@ -280,8 +280,8 @@ HEADERS = 				\
 	tpm_public.h			\
 	Tpm.h				\
 	TpmAlgorithmDefines.h		\
-	TpmAsn1.h			\
-	TpmAsn1_fp.h			\
+	TpmASN1.h			\
+	TpmASN1_fp.h			\
 	TPMB.h				\
 	TpmBigNum.h			\
 	TpmBuildSwitches.h		\
