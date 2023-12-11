@@ -59,6 +59,8 @@
 /*										*/
 /********************************************************************************/
 
+#include "simulatorPrivate.h"
+
 // D.3	TcpServer.c
 // D.3.1. Description
 // This file contains the socket interface to a TPM simulator.

@@ -64,29 +64,6 @@
 /* D.3.1. Description */
 /* This file contains the socket interface to a TPM simulator. */
 /* D.3.2. Includes, Locals, Defines and Function Prototypes */
-#if 0
-#include "TpmBuildSwitches.h"
-#include <stdio.h>
-#include <stdbool.h>
-
-#ifdef TPM_WINDOWS
-#include <windows.h>
-#include <winsock.h>
-typedef int socklen_t;
-#endif
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "TpmTcpProtocol.h"
-#include "Manufacture_fp.h"
-#include "TpmProfile.h"
-#include "Simulator_fp.h"
-#include "TcpServer_fp.h"
-//#include "Platform_fp.h"
-#include "PlatformACT_fp.h"		/* added kgold */
-
-#endif
 
 /*     To access key cache control in TPM */
 void RsaKeyCacheControl(int state);
@@ -241,7 +218,7 @@ PlatformServer(
 }
 /* D.3.3.3. PlatformSvcRoutine() */
 /* This function is called to set up the socket interfaces to listen for commands. */
-DWORD WINAPI
+int
 PlatformSvcRoutine(
 		   void *port
 		   )

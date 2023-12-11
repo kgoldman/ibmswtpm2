@@ -63,6 +63,7 @@
 // for Ecc functions.
 #include "Tpm.h"
 #include "TpmMath_Util_fp.h"
+#include "TpmEcc_Util_fp.h"
 
 #if ALG_ECC
 

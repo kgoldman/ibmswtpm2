@@ -405,7 +405,7 @@ LIB_EXPORT int _plat__NvCommit(void)
 //***_plat__TearDown
 // notify platform that TPM_TearDown was called so platform can cleanup or
 // zeroize anything in the Platform.  This should zeroize NV as well.
-LIB_EXPORT void _plat__TearDown()
+LIB_EXPORT void _plat__TearDown(void)
 {
 #if FILE_BACKED_NV
     // remove(s_NvFilePath);

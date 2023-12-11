@@ -341,10 +341,10 @@ BOOL PcrIsAllocated(UINT32        pcr,     // IN: The number of the PCR
 // CAUTION: This function does not validate the pcrNumber
 // vs the size of the array.
 // See Also: GetPcrPointerIfAllocated
-BYTE* GetPcrPointerFromPcrArray(PCR*       pPcrArray,
-				TPM_ALG_ID alg,       // IN: algorithm for bank
-				UINT32     pcrNumber  // IN: PCR number
-				)
+static BYTE* GetPcrPointerFromPcrArray(PCR*       pPcrArray,
+				       TPM_ALG_ID alg,       // IN: algorithm for bank
+				       UINT32     pcrNumber  // IN: PCR number
+				       )
 {
     switch(alg)
 	{

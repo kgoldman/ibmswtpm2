@@ -343,11 +343,11 @@ static TPM_RC GetAdditionalSecret(const HIERARCHY_MODIFIER* modifier,       // I
 //                              does not support SVN-limited objects or the TPM failed
 //                              to derive the Firmware SVN Secret for the requested
 //                              SVN.
-TPM_RC MixAdditionalSecret(const HIERARCHY_MODIFIER* modifier,           // IN
-			   const TPM2B*              base_secret_label,  // IN
-			   const TPM2B*              base_secret,        // IN
-			   TPM2B*                    output_secret       // OUT
-			   )
+static TPM_RC MixAdditionalSecret(const HIERARCHY_MODIFIER* modifier,           // IN
+				  const TPM2B*              base_secret_label,  // IN
+				  const TPM2B*              base_secret,        // IN
+				  TPM2B*                    output_secret       // OUT
+				  )
 {
     TPM_RC       result = TPM_RC_SUCCESS;
     TPM2B_SEED   additional_secret;
