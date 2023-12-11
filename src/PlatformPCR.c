@@ -156,7 +156,7 @@ PCR_Attributes _platPcr__GetPcrInitializationAttributes(UINT32 pcrNumber)
 BOOL _platPcr_IsPcrBankDefaultActive(TPM_ALG_ID pcrAlg)
 {
     // brute force search is fast enough for a small array.
-    for(int i = 0; i < ARRAYSIZE(DefaultActivePcrBanks); i++)
+    for(size_t i = 0; i < ARRAYSIZE(DefaultActivePcrBanks); i++)
 	{
 	    if(DefaultActivePcrBanks[i] == pcrAlg)
 		{
