@@ -82,7 +82,9 @@
 
 // Defines according to the processor being built for.
 // Are building for a BIG_ENDIAN processor?
+#ifndef BIG_ENDIAN_TPM
 #define  BIG_ENDIAN_TPM             NO
+#endif
 #define  LITTLE_ENDIAN_TPM          !BIG_ENDIAN_TPM
 // Does the processor put the most-significant bit at bit position 0?
 #define MOST_SIGNIFICANT_BIT_0      NO
