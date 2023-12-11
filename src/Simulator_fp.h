@@ -79,7 +79,7 @@ bool PlatformServer(SOCKET s);
 //*** PlatformSvcRoutine()
 // This function is called to set up the socket interfaces to listen for
 // commands.
-DWORD WINAPI PlatformSvcRoutine(LPVOID port);
+int  PlatformSvcRoutine(LPVOID port);
 
 //*** PlatformSignalService()
 // This function starts a new thread waiting for platform signals.

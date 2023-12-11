@@ -68,7 +68,7 @@ bool
 PlatformServer(
 	       SOCKET           s
 	       );
-DWORD WINAPI
+int
 PlatformSvcRoutine(
 		   void *port
 		   );
