@@ -173,6 +173,8 @@ extern "C" {
     LIB_EXPORT TPM_RC
     TPMI_RH_NV_LEGACY_INDEX_Unmarshal(TPMI_RH_NV_LEGACY_INDEX *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
+    TPMI_RH_NV_EXP_INDEX_Unmarshal(TPMI_RH_NV_EXP_INDEX *target, BYTE **buffer, INT32 *size);
+    LIB_EXPORT TPM_RC
     TPMI_RH_NV_INDEX_Unmarshal(TPMI_RH_NV_EXP_INDEX *target, BYTE **buffer, INT32 *size);
     LIB_EXPORT TPM_RC
     TPMI_RH_AC_Unmarshal(TPMI_RH_AC *target, BYTE **buffer, INT32 *size);
