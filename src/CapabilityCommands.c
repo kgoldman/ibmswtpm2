@@ -3,7 +3,6 @@
 /*			  	Capability Commands   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: CapabilityCommands.c 1519 2019-11-15 20:43:51Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
 /*										*/
 /********************************************************************************/
 
@@ -206,6 +205,7 @@ TPM2_GetCapability(
     return TPM_RC_SUCCESS;
 }
 #endif // CC_GetCapability
+
 #include "Tpm.h"
 #include "TestParms_fp.h"
 #if CC_TestParms  // Conditional expansion of this file
@@ -226,3 +226,25 @@ TPM2_TestParms(
     return TPM_RC_SUCCESS;
 }
 #endif // CC_TestParms
+
+#include "Tpm.h"
+#include "SetCapability_fp.h"
+
+#if CC_SetCapability  // Conditional expansion of this file
+
+/*(See part 3 specification)
+// This command allows configuration of the TPM's capabilities.
+*/
+//  Return Type: TPM_RC
+//      TPM_RC_HANDLE       value of 'property' is in an unsupported handle range
+//                          for the TPM_CAP_HANDLES 'capability' value
+//      TPM_RC_VALUE        invalid 'capability'
+TPM_RC
+TPM2_SetCapability(SetCapability_In* in  // IN: input parameter list
+		   )
+{
+    // This reference implementation does not implement any settable capabilities.
+    return TPM_RCS_VALUE + SetCapability_setCapabilityData;
+}
+
+#endif  // CC_SetCapability
