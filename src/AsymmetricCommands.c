@@ -3,7 +3,6 @@
 /*			  Asymmetric Commands   				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: AsymmetricCommands.c 1490 2019-07-26 21:13:22Z kgoldman $	*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2022				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2024				*/
 /*										*/
 /********************************************************************************/
 
@@ -251,6 +250,11 @@ TPM2_ECC_Parameters(
 		    ECC_Parameters_Out  *out            // OUT: output parameter list
 		    )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ECC_Parameters: curveID %04x\n", in->curveID);
+	fclose(f);
+    }
     // Command Output
     // Get ECC curve parameters
     if(CryptEccGetParameters(in->curveID, &out->parameters))
@@ -335,6 +339,11 @@ TPM2_ECC_Encrypt(
 		 ECC_Encrypt_Out  *out            // OUT: output parameter list
 		 )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ECC_Encrypt: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     OBJECT          *pubKey = HandleToObject(in->keyHandle);
     // Parameter validation
     if (pubKey->publicArea.type != TPM_ALG_ECC)
@@ -358,6 +367,11 @@ TPM2_ECC_Decrypt(
 		 ECC_Decrypt_Out  *out            // OUT: output parameter list
 		 )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ECC_Decrypt: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     OBJECT          *key = HandleToObject(in->keyHandle);
     // Parameter validation
     // Must be the correct type of key with correct attributes

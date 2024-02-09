@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2024				*/
 /*										*/
 /********************************************************************************/
 
@@ -804,6 +804,11 @@ TPM2_NV_ReadPublic2(NV_ReadPublic2_In*  in,  // IN: input parameter list
 {
     TPM_RC    result;
     NV_INDEX* nvIndex;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_ReadPublic2: nvIndex %08x\n", in->nvIndex);
+	fclose(f);
+    }
 
     nvIndex = NvGetIndexInfo(in->nvIndex, NULL);
 
@@ -854,6 +859,13 @@ TPM2_NV_DefineSpace2(NV_DefineSpace2_In* in  // IN: input parameter list
 {
     TPM_RC         result;
     TPMS_NV_PUBLIC legacyPublic;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_NV_DefineSpace2: authHandle %08x\n", in->authHandle);
+	fprintf(f, "TPM2_NV_DefineSpace2: nvIndex %08x\n",
+		in->publicInfo.nvPublic2.nvPublic2.nvIndex.nvIndex);
+	fclose(f);
+    }
 
     // Input Validation
 

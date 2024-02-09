@@ -290,6 +290,11 @@ ExecuteCommand(
 	    goto Cleanup;
 	}
  Cleanup:
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "\t\tReturn Code %08x\n", result);
+	fclose(f);
+    }
     if(g_clearOrderly == TRUE
        && NV_IS_ORDERLY)
 	{

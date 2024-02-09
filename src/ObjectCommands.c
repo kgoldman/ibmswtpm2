@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2024				*/
 /*										*/
 /********************************************************************************/
 
@@ -314,6 +314,11 @@ TPM2_LoadExternal(
 	    // Set the common OBJECT attributes for a loaded object.
 	    ObjectSetLoadedAttributes(object, in->hierarchy);
 	}
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_LoadExternal: objectHandle %08x\n", out->objectHandle);
+	fclose(f);
+    }
     return result;
 }
 #endif // CC_LoadExternal
@@ -327,6 +332,11 @@ TPM2_ReadPublic(
 		)
 {
     OBJECT                  *object = HandleToObject(in->objectHandle);
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ReadPublic: objectHandle %08x\n", in->objectHandle);
+	fclose(f);
+    }
     // Input Validation
     // Can not read public area of a sequence object
     if(ObjectIsSequence(object))
@@ -335,11 +345,6 @@ TPM2_ReadPublic(
     out->outPublic.publicArea = object->publicArea;
     out->name = object->name;
     out->qualifiedName = object->qualifiedName;
-    if (verbose) {
-	FILE *f = fopen("trace.txt", "a");
-	fprintf(f, "TPM2_ReadPublic: objectHandle %08x\n", in->objectHandle);
-	fclose(f);
-    }
     return TPM_RC_SUCCESS;
 }
 #endif // CC_ReadPublic
@@ -357,6 +362,12 @@ TPM2_ActivateCredential(
     OBJECT                  *object;            // decrypt key
     OBJECT                  *activateObject;    // key associated with credential
     TPM2B_DATA               data;          // credential data
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ActivateCredential: activateHandle %08x\n", in->activateHandle);
+	fprintf(f, "TPM2_ActivateCredential: keyHandle %08x\n", in->keyHandle);
+	fclose(f);
+    }
     // Input Validation
     // Get decrypt key pointer
     object = HandleToObject(in->keyHandle);
@@ -410,7 +421,12 @@ TPM2_MakeCredential(
     TPM_RC               result = TPM_RC_SUCCESS;
     OBJECT              *object;
     TPM2B_DATA           data;
-    // Input Validation
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_MakeCredential: handle %08x\n", in->handle);
+	fclose(f);
+    }
+   // Input Validation
     // Get object pointer
     object = HandleToObject(in->handle);
     // input key must be an asymmetric, restricted decryption key
@@ -445,6 +461,11 @@ TPM2_Unseal(
 	    )
 {
     OBJECT                  *object;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_Unseal: itemHandle %08x\n", in->itemHandle);
+	fclose(f);
+    }
     // Input Validation
     // Get pointer to loaded object
     object = HandleToObject(in->itemHandle);
@@ -474,6 +495,12 @@ TPM2_ObjectChangeAuth(
     TPMT_SENSITIVE           sensitive;
     OBJECT                  *object = HandleToObject(in->objectHandle);
     TPM2B_NAME               QNCompare;
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_ObjectChangeAuth: objectHandle %08x\n", in->objectHandle);
+	fprintf(f, "TPM2_ObjectChangeAuth: parentHandle %08x\n", in->parentHandle);
+	fclose(f);
+    }
     // Input Validation
     // Can not change authorization on sequence object
     if(ObjectIsSequence(object))

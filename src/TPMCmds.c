@@ -156,6 +156,11 @@ main(
 	}
 	else if (strcmp(argv[i],"-v") == 0) {
 	    verbose = 1;
+	    {
+		/* restart the tracing file */
+		FILE *f = fopen("trace.txt", "w");
+		fclose(f);
+	    }
 	}
 	else if (strcmp(argv[i],"-h") == 0) {
 	    Usage(argv[0]);

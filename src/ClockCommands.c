@@ -3,7 +3,6 @@
 /*			    Clocks and Timers	 				*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: ClockCommands.c 1519 2019-11-15 20:43:51Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2024				*/
 /*										*/
 /********************************************************************************/
 
@@ -91,7 +90,7 @@ TPM2_ClockSet(
 {
     if (verbose) {
 	FILE *f = fopen("trace.txt", "a");
-	fprintf(f, "TPM2_ClockSet:\n");
+	fprintf(f, "TPM2_ClockSet: auth %08x\n", in->auth);
 	fclose(f);
     }
     // Input Validation
@@ -117,7 +116,7 @@ TPM2_ClockRateAdjust(
 {
     if (verbose) {
 	FILE *f = fopen("trace.txt", "a");
-	fprintf(f, "TPM2_ClockRateAdjust:\n");
+	fprintf(f, "TPM2_ClockRateAdjust: auth %08x\n", in->auth);
 	fclose(f);
     }
     // Internal Data Update

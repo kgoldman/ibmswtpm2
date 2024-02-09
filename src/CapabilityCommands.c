@@ -243,6 +243,11 @@ TPM_RC
 TPM2_SetCapability(SetCapability_In* in  // IN: input parameter list
 		   )
 {
+    if (verbose) {
+	FILE *f = fopen("trace.txt", "a");
+	fprintf(f, "TPM2_SetCapability:\n");
+	fclose(f);
+    }
     // This reference implementation does not implement any settable capabilities.
     return TPM_RCS_VALUE + SetCapability_setCapabilityData;
 }
