@@ -74,7 +74,8 @@ TPM2_NV_DefineSpace(
     if (verbose) {
 	FILE *f = fopen("trace.txt", "a");
 	fprintf(f, "TPM2_NV_DefineSpace: authHandle %08x\n", in->authHandle);
-	fprintf(f, "TPM2_NV_DefineSpace: nvIndex %08x\n", in->publicInfo.nvPublic.nvIndex);
+	fprintf(f, "TPM2_NV_DefineSpace: nvIndex %08x attributes %08x\n",
+		in->publicInfo.nvPublic.nvIndex, in->publicInfo.nvPublic.attributes);
 	fclose(f);
     }
     nameSize = CryptHashGetDigestSize(in->publicInfo.nvPublic.nameAlg);
