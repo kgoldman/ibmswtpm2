@@ -73,8 +73,8 @@
 #define VENDOR_STRING_2 " TPM"
 #define VENDOR_STRING_3 "\0\0\0\0"
 #define VENDOR_STRING_4 "\0\0\0\0"
-#define FIRMWARE_V1     (0x20231120)
-#define FIRMWARE_V2     (0x00163636)
+#define FIRMWARE_V1     (0x20240125)
+#define FIRMWARE_V2     (0x00120000)
 #define MAX_SVN         255
 
 static uint32_t currentHash = FIRMWARE_V2;

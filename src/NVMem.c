@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2024				*/
 /*										*/
 /********************************************************************************/
 
@@ -242,8 +242,9 @@ LIB_EXPORT void _plat__NVDisable(
 				 )
 {
     NOT_REFERENCED(paramSize);  // to keep compiler quiet
-    int delete =
-	(intptr_t)platParameter;  // IN: If TRUE (!=0), delete the NV contents.
+    int delete = ((intptr_t)platParameter != 0)
+		 ? TRUE
+		 : FALSE;  // IN: If TRUE (!=0), delete the NV contents.
 
 #if FILE_BACKED_NV
     if(NULL != s_NvFile)

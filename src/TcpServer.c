@@ -54,11 +54,12 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2024				*/
 /*										*/
 /********************************************************************************/
 
 #include "simulatorPrivate.h"
+#include <string.h>
 
 /* D.3 TcpServer.c */
 /* D.3.1. Description */

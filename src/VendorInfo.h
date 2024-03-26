@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2023					*/
+/*  (c) Copyright IBM Corp. and others, 2023-2024				*/
 /*										*/
 /********************************************************************************/
 
@@ -64,9 +64,9 @@
 // Define the TPM specification-specific capability values.
 #define TPM_SPEC_FAMILY      (0x322E3000)
 #define TPM_SPEC_LEVEL       (00)
-#define TPM_SPEC_VERSION     (180)
-#define TPM_SPEC_YEAR        (2023)
-#define TPM_SPEC_DAY_OF_YEAR (321)
+#define TPM_SPEC_VERSION     (183)
+#define TPM_SPEC_YEAR        (2024)
+#define TPM_SPEC_DAY_OF_YEAR (25)
 #define MAX_VENDOR_PROPERTY  (1)
 
 // Define the platform specification-specific capability values.
