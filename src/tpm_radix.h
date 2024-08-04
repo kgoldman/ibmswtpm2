@@ -61,27 +61,9 @@
 //** Introduction
 // Common defines for supporting large numbers and cryptographic buffer sizing.
 //*********************
-#ifndef RADIX_BITS
-#  if defined(__x86_64__) || defined(__x86_64) || defined(__amd64__)	\
-    || defined(__amd64) || defined(_WIN64) || defined(_M_X64) || defined(_M_ARM64) \
-    || defined(__aarch64__) || defined(__PPC64__) || defined(__s390x__) \
-    || defined(__powerpc64__) || defined(__ppc64__)
-#    define RADIX_BITS 64
-#  elif defined(__i386__) || defined(__i386) || defined(i386) || defined(_WIN32) \
-    || defined(_M_IX86)
-#    define RADIX_BITS 32
-#  elif defined(_M_ARM) || defined(__arm__) || defined(__thumb__)
-#    define RADIX_BITS 32
-#  elif defined(__riscv)
-// __riscv and __riscv_xlen are standardized by the RISC-V community and should be available
-// on any compliant compiler.
-//
-// https://github.com/riscv-non-isa/riscv-toolchain-conventions
-#    define RADIX_BITS __riscv_xlen
-#  else
-#    error Unable to determine RADIX_BITS from compiler environment
-#  endif
-#endif  // RADIX_BITS
+#include <limits.h>
+
+#define RADIX_BITS LONG_BIT
 
 #if RADIX_BITS == 64
 #  define RADIX_BYTES 8
