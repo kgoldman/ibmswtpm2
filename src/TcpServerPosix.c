@@ -67,6 +67,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>

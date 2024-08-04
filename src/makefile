@@ -47,6 +47,8 @@ CCFLAGS = -Wall  			\
 	 -c -ggdb -O0 			\
 	-DTPM_POSIX			\
 	-D_POSIX_			\
+	-D_DEFAULT_SOURCE		\
+	-D_XOPEN_SOURCE=500		\
 	-DTPM_NUVOTON
 
 # add this line for big endian platforms
