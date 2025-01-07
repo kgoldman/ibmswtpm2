@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2023				  	*/
+/*  (c) Copyright IBM Corp. and others, 2023 - 2025			  	*/
 /*										*/
 /********************************************************************************/
 
@@ -68,7 +68,7 @@
     || defined(__powerpc64__) || defined(__ppc64__)
 #    define RADIX_BITS 64
 #  elif defined(__i386__) || defined(__i386) || defined(i386) || defined(_WIN32) \
-    || defined(_M_IX86)
+    || defined(_M_IX86) || defined(__PPC__)
 #    define RADIX_BITS 32
 #  elif defined(_M_ARM) || defined(__arm__) || defined(__thumb__)
 #    define RADIX_BITS 32
