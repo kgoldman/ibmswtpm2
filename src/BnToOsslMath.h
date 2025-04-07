@@ -81,7 +81,7 @@
 // Check the bignum_st definition against the one below and either update the
 // version check or provide the new definition for this version.
 #  error Untested OpenSSL version
-#elif OPENSSL_VERSION_NUMBER >= 0x10100000L
+#elif OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(OPENSSL_IS_AWSLC)
 // from crypto/bn/bn_lcl.h (OpenSSL 1.x) or crypto/bn/bn_local.h (OpenSSL 3.0)
 struct bignum_st
 {
