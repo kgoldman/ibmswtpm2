@@ -65,6 +65,8 @@
 // Requires basic YES/NO defines are already set (by TpmBuildSwitches.h)
 // Less frequently changed items are in other TpmProfile Headers.
 
+#include <openssl/opensslconf.h>
+
 #ifndef _TPM_PROFILE_COMMON_H_
 #define _TPM_PROFILE_COMMON_H_
 // YES & NO defined by TpmBuildSwitches.h
@@ -107,6 +109,10 @@
 #define     SM4_128                     (NO  * ALG_SM4)
 
 #define ALG_CAMELLIA                ALG_YES
+#ifdef OPENSSL_NO_CAMELLIA
+#undef ALG_CAMELLIA
+#define ALG_CAMELLIA                ALG_NO
+#endif
 
 #define     CAMELLIA_128                (YES * ALG_CAMELLIA)
 #define     CAMELLIA_192                (NO  * ALG_CAMELLIA)

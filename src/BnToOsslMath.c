@@ -86,6 +86,12 @@
 #ifdef MATH_LIB_OSSL
 #  include "BnToOsslMath_fp.h"
 
+#ifdef OPENSSL_IS_AWSLC
+    #define BN_FIELD_SIZE(a) (BN_get_minimal_width(a))
+#else
+    #define BN_FIELD_SIZE(a) ((a)->top)
+#endif
+
 //** Functions
 
 //*** OsslToTpmBn()
@@ -105,10 +111,10 @@ BOOL OsslToTpmBn(bigNum bn, BIGNUM* osslBn)
 	{
 	    int i;
 	    //
-	    GOTO_ERROR_UNLESS((unsigned)osslBn->top <= BnGetAllocated(bn));
-	    for(i = 0; i < osslBn->top; i++)
+	    GOTO_ERROR_UNLESS((unsigned)BN_FIELD_SIZE(osslBn) <= BnGetAllocated(bn));
+	    for(i = 0; i < BN_FIELD_SIZE(osslBn); i++)
 		bn->d[i] = osslBn->d[i];
-	    BnSetTop(bn, osslBn->top);
+	    BnSetTop(bn, BN_FIELD_SIZE(osslBn));
 	}
     return TRUE;
  Error:
@@ -127,7 +133,11 @@ BIGNUM* BigInitialized(BIGNUM* toInit, bigConst initializer)
 	return NULL;
     toInit->d     = (BN_ULONG*)&initializer->d[0];
     toInit->dmax  = (int)initializer->allocated;
+#ifdef OPENSSL_IS_AWSLC
+    toInit->width = (int)initializer->size;
+#else
     toInit->top   = (int)initializer->size;
+#endif
     toInit->neg   = 0;
     toInit->flags = 0;
     return toInit;
@@ -156,7 +166,7 @@ static void BIGNUM_print(const char* label, const BIGNUM* a, BOOL eol)
 	}
     if(a->neg)
 	printf("-");
-    for(i = a->top, d = &a->d[i - 1]; i > 0; i--)
+    for(i = BN_FIELD_SIZE(a), d = &a->d[i - 1]; i > 0; i--)
 	{
 	    int      j;
 	    BN_ULONG l = *d--;
@@ -209,7 +219,7 @@ BOOL BnMathLibraryCompatibilityCheck(void)
     // Convert the test data to an OpenSSL BIGNUM
     BN_bin2bn(test, sizeof(test), osslTemp);
     // Make sure the values are consistent
-    GOTO_ERROR_UNLESS(osslTemp->top == (int)tpmTemp->size);
+    GOTO_ERROR_UNLESS(BN_FIELD_SIZE(osslTemp) == (int)tpmTemp->size);
     for(i = 0; i < tpmTemp->size; i++)
 	GOTO_ERROR_UNLESS(osslTemp->d[i] == tpmTemp->d[i]);
     OSSL_LEAVE();
@@ -558,6 +568,18 @@ LIB_EXPORT BOOL BnEccModMult2(bigPoint            R,  // OUT: computed point
 	EC_POINT_mul(E->G, pR, bnD, pQ, bnU, E->CTX);
     else
 	{
+#ifdef OPENSSL_IS_AWSLC
+        EC_POINT *pR1 = EC_POINT_new(E->G);
+        EC_POINT *pR2 = EC_POINT_new(E->G);
+        int OK;
+
+        OK = EC_POINT_mul(E->G, pR1, NULL, pS, bnD, E->CTX);
+        OK &= EC_POINT_mul(E->G, pR2, NULL, pQ, bnU, E->CTX);
+        OK &= EC_POINT_add(E->G, pR, pR1, pR2, E->CTX);
+
+        EC_POINT_free(pR1);
+        EC_POINT_free(pR2);
+#else
 	    const EC_POINT* points[2];
 	    const BIGNUM*   scalars[2];
 	    points[0]  = pS;
@@ -565,6 +587,7 @@ LIB_EXPORT BOOL BnEccModMult2(bigPoint            R,  // OUT: computed point
 	    scalars[0] = bnD;
 	    scalars[1] = bnU;
 	    EC_POINTs_mul(E->G, pR, NULL, 2, points, scalars, E->CTX);
+#endif
 	}
     PointFromOssl(R, pR, E);
     EC_POINT_free(pR);

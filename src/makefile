@@ -47,7 +47,7 @@ CCFLAGS = -Wall  			\
 	 -c -ggdb -O0 			\
 	-DTPM_POSIX			\
 	-D_POSIX_			\
-	-DTPM_NUVOTON
+	-DTPM_NUVOTON $(CFLAGS)
 
 # add this line for big endian platforms
 #	-DBIG_ENDIAN_TPM=YES
@@ -59,7 +59,7 @@ LNFLAGS = -ggdb 			\
 	-lcrypto			\
 	-lpthread			\
 	-lrt				\
-	-I.
+	-I. $(LDFLAGS)
 
 #	--coverage -lgcov
 
