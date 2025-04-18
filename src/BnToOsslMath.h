@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2023				  	*/
+/*  (c) Copyright IBM Corp. and others, 2023 - 2025			  	*/
 /*										*/
 /********************************************************************************/
 
@@ -77,7 +77,7 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 
-#if OPENSSL_VERSION_NUMBER >= 0x30400ff0L
+#if OPENSSL_VERSION_NUMBER >= 0x30500ff0L
 // Check the bignum_st definition against the one below and either update the
 // version check or provide the new definition for this version.
 #  error Untested OpenSSL version
