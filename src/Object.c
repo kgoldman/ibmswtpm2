@@ -443,8 +443,10 @@ ObjectLoad(OBJECT* object,           // IN: pointer to object slot
 	    // Initialize public
 	    object->publicArea = *publicArea;
 	    // Copy sensitive if there is one
-	    if(sensitive == NULL)
+	    if(sensitive == NULL) {			// libtpms changed begin
 		object->attributes.publicOnly = SET;
+		MemorySet(&object->sensitive, 0, sizeof(object->sensitive)); // needed for libtpms.
+	    }						// libtpms changed end
 	    else
 		object->sensitive = *sensitive;
 	    // Set the name, if one was provided
