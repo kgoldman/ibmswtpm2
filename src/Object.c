@@ -248,8 +248,9 @@ OBJECT* FindEmptyObjectSlot(TPMI_DH_OBJECT* handle  // OUT: (optional)
 		    if(handle)
 			*handle = i + TRANSIENT_FIRST;
 		    // Initialize the object attributes
-		    MemorySet(&object->attributes, 0, sizeof(OBJECT_ATTRIBUTES));
-		    object->hierarchy = TPM_RH_NULL;
+		    // MemorySet(&object->attributes, 0, sizeof(OBJECT_ATTRIBUTES));
+		    MemorySet(object, 0, sizeof(*object)); // libtpms added: Initialize the whole
+							   // object
 		    return object;
 		}
 	}
