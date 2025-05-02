@@ -248,8 +248,9 @@ OBJECT* FindEmptyObjectSlot(TPMI_DH_OBJECT* handle  // OUT: (optional)
 		    if(handle)
 			*handle = i + TRANSIENT_FIRST;
 		    // Initialize the object attributes
-		    MemorySet(&object->attributes, 0, sizeof(OBJECT_ATTRIBUTES));
-		    object->hierarchy = TPM_RH_NULL;
+		    // MemorySet(&object->attributes, 0, sizeof(OBJECT_ATTRIBUTES));
+		    MemorySet(object, 0, sizeof(*object)); // libtpms added: Initialize the whole
+							   // object
 		    return object;
 		}
 	}
@@ -442,8 +443,10 @@ ObjectLoad(OBJECT* object,           // IN: pointer to object slot
 	    // Initialize public
 	    object->publicArea = *publicArea;
 	    // Copy sensitive if there is one
-	    if(sensitive == NULL)
+	    if(sensitive == NULL) {			// libtpms changed begin
 		object->attributes.publicOnly = SET;
+		MemorySet(&object->sensitive, 0, sizeof(object->sensitive)); // needed for libtpms.
+	    }						// libtpms changed end
 	    else
 		object->sensitive = *sensitive;
 	    // Set the name, if one was provided

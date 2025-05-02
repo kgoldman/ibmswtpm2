@@ -641,6 +641,7 @@ LIB_EXPORT BOOL CryptEccIsPointOnCurve(
     //
     pAssert(Qin != NULL);
     OK = (E != NULL && (ExtEcc_IsPointOnCurve(ecQ, E)));
+    CRYPT_CURVE_FREE(E); // libtpms added
     return OK;
 }
 
