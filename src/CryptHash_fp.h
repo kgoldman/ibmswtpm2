@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2025				*/
 /*										*/
 /********************************************************************************/
 
@@ -90,7 +90,7 @@ CryptGetHashDef(TPM_ALG_ID hashAlg);
 //      TRUE(1)         hashAlg is a valid, implemented hash on this TPM
 //      FALSE(0)        hashAlg is not valid for this TPM
 BOOL CryptHashIsValidAlg(TPM_ALG_ID hashAlg,  // IN: the algorithm to check
-			 BOOL       flag  // IN: TRUE if TPM_ALG_NULL is to be treated
+			 BOOL       isAlgNullValid	// IN: TRUE if TPM_ALG_NULL is to be treated
 			 //     as a valid hash
 			 );
 
