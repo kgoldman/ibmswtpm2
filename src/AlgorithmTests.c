@@ -162,7 +162,7 @@ static TPM_RC TestHash(TPM_ALG_ID hashAlg, ALGORITHM_VECTOR* toTest)
 // Internal function to make the appropriate IV depending on the mode.
 static UINT32 MakeIv(TPM_ALG_ID mode,  // IN: symmetric mode
 		     UINT32     size,  // IN: block size of the algorithm
-		     BYTE*      iv     // OUT: IV to fill in
+		     volatile BYTE*      iv     // OUT: IV to fill in
 		     )
 {
     BYTE i;
