@@ -640,7 +640,7 @@ WriteBytes(
     while(numSent<NumBytes)
 	{
 	    res = write(s, buffer+numSent, NumBytes-numSent);
-	    if(res == 0)
+	    if(res <= 0)
 		{
 		    printf("write() error. Error is %d %s\n",  errno, strerror(errno));
 		    return false;
