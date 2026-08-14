@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2024				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2026				*/
 /*										*/
 /********************************************************************************/
 
@@ -81,18 +81,59 @@ struct
     uint32_t    largestResponse;
 } CommandResponseSizes = {0};
 #endif // __IGNORE_STATE___
+
+/* static function prototypes */
+static bool
+ReadUINT32(
+	   SOCKET           s,
+	   uint32_t         *val
+	   );
+static bool
+WriteUINT32(
+	    SOCKET           s,
+	    uint32_t 	     val
+	    );
+static bool
+ReadBytes(
+	  SOCKET           s,
+	  char            *buffer,
+	  int              NumBytes
+	  );
+static bool
+WriteBytes(
+	   SOCKET           s,
+	   char            *buffer,
+	   int              NumBytes
+	   );
+static bool
+WriteVarBytes(
+	      SOCKET           s,
+	      char            *buffer,
+	      int              BytesToSend
+	      );
+static bool
+TpmServer(
+	  SOCKET           s
+	  );
+
 /* D.3.3. Functions */
 /* D.3.3.1. CreateSocket() */
 /* This function creates a socket listening on PortNumber. */
 static int
 CreateSocket(
 	     int                  PortNumber,
+	     const char		 *ipaddr,
 	     SOCKET              *listenSocket
 	     )
 {
     WSADATA              wsaData;
     struct               sockaddr_in MyAddress;
     int res;
+
+    if (ipaddr != NULL) {
+	printf("CreateSocket with ipaddr not NULL is not supported\n");
+	return -1;
+   }
     // Initialize Winsock
     res = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if(res != 0)
@@ -112,6 +153,16 @@ CreateSocket(
     ZeroMemory(&MyAddress, sizeof(MyAddress));
     MyAddress.sin_port = htons((short)PortNumber);
     MyAddress.sin_family = AF_INET;
+#if 0	/* not supported yet */
+    if (ipaddr != NULL) {
+	res = InetPton(AF_INET, ipaddr, &MyAddress.sin_addr);
+	if (res != 1) {
+	    printf("inet_pton Error, invalid ipv4 address: %s\n", ipaddr);
+	    close(*listenSocket);
+	    return -1;
+	}
+    }
+#endif
     res = bind(*listenSocket, (struct sockaddr*) &MyAddress, sizeof(MyAddress));
     if(res == SOCKET_ERROR)
 	{
@@ -129,7 +180,7 @@ CreateSocket(
 }
 /* D.3.3.2. PlatformServer() */
 /* This function processes incoming platform requests. */
-bool
+static bool
 PlatformServer(
 	       SOCKET           s
 	       )
@@ -220,18 +271,17 @@ PlatformServer(
 }
 /* D.3.3.3. PlatformSvcRoutine() */
 /* This function is called to set up the socket interfaces to listen for commands. */
-int
-PlatformSvcRoutine(
-		   void *port
-		   )
+static int
+PlatformSvcRoutine(const ThreadParams *params)
 {
-    int                  PortNumber = *(int *)port;
+    int			 PortNumber = params->portp;
+    const char 		*ipaddr = params->ipaddr;
     SOCKET               listenSocket, serverSocket;
     struct               sockaddr_in HerAddress;
     int                  res;
     socklen_t            length;
     bool                 continueServing;
-    res = CreateSocket(PortNumber, &listenSocket);
+    res = CreateSocket(PortNumber, ipaddr, &listenSocket);
     if(res != 0)
 	{
 	    printf("Create platform service socket fail\n");
@@ -264,18 +314,19 @@ PlatformSvcRoutine(
 /* D.3.3.4. PlatformSignalService() */
 /* This function starts a new thread waiting for platform signals. Platform signals are processed
    one at a time in the order in which they are received. */
-int
+static int
 PlatformSignalService(
-		      int              *PortNumberPlatform
+		      ThreadParams 	 *params
 		      )
 {
     HANDLE               hPlatformSvc;
     int                  ThreadId;
 
+
     // Create service thread for platform signals
     hPlatformSvc = CreateThread(NULL, 0,
 				(LPTHREAD_START_ROUTINE)PlatformSvcRoutine,
-				(void *)PortNumberPlatform, 0, (LPDWORD)&ThreadId);
+				(void *)params, 0, (LPDWORD)&ThreadId);
     if(hPlatformSvc == NULL)
 	{
 	    printf("Thread Creation failed\n");
@@ -285,9 +336,9 @@ PlatformSignalService(
 }
 /* D.3.3.5. RegularCommandService() */
 /* This function services regular commands. */
-int
+static int
 RegularCommandService(
-		      int              *PortNumber
+		      ThreadParams 	 *params
 		      )
 {
     SOCKET               listenSocket;
@@ -296,7 +347,7 @@ RegularCommandService(
     int 		 res;
     socklen_t 		 length;
     bool 		 continueServing;
-    res = CreateSocket(*PortNumber, &listenSocket);
+    res = CreateSocket(params->portc, params->ipaddr, &listenSocket);
     if(res != 0)
 	{
 	    printf("Create platform service socket fail\n");
@@ -307,7 +358,7 @@ RegularCommandService(
     // a new connection until the prior connection drops.
     do
 	{
-	    printf("TPM command server listening on port %d\n", *PortNumber);
+	    printf("TPM command server listening on port %d\n", params->portc);
 	    // blocking accept
 	    length = sizeof(HerAddress);
 	    serverSocket = accept(listenSocket,
@@ -424,12 +475,10 @@ ActTimeService(
 /* Main entry-point to the TCP server.  The server listens on port specified. Note that there is no
    way to specify the network interface in this implementation. */
 int
-StartTcpServer(
-	       int              *PortNumber,
-	       int              *PortNumberPlatform
-	       )
+StartTcpServer(ThreadParams *params)
 {
     int                  res;
+
 #ifdef RH_ACT_0
     // Start the Time Service routine
     res = ActTimeService();
@@ -440,17 +489,17 @@ StartTcpServer(
 	}
 #endif
     // Start Platform Signal Processing Service
-    res = PlatformSignalService(PortNumberPlatform);
+    res = PlatformSignalService(params);
     if(res != 0)
 	{
-	    printf("PlatformSignalService failed\n");
+	    printf("PlatformSignalService failed port %d\n", params->portp);
 	    return res;
 	}
     // Start Regular/DRTM TPM command service
-    res = RegularCommandService(PortNumber);
+    res = RegularCommandService(params);
     if(res != 0)
 	{
-	    printf("RegularCommandService failed\n");
+	    printf("RegularCommandService failed port %d\n", params->portc);
 	    return res;
 	}
     return 0;
@@ -458,7 +507,7 @@ StartTcpServer(
 /* D.3.3.7. ReadBytes() */
 /* This function reads the indicated number of bytes (NumBytes) into buffer from the indicated
    socket. */
-bool
+static bool
 ReadBytes(
 	  SOCKET           s,
 	  char            *buffer,
@@ -486,7 +535,7 @@ ReadBytes(
 }
 /* D.3.3.8. WriteBytes() */
 /* This function will send the indicated number of bytes (NumBytes) to the indicated socket */
-bool
+static bool
 WriteBytes(
 	   SOCKET           s,
 	   char            *buffer,
@@ -517,7 +566,7 @@ WriteBytes(
 /* D.3.3.9. WriteUINT32() */
 /* Send 4 byte integer */
 
-bool
+static bool
 WriteUINT32(
 	    SOCKET           s,
 	    uint32_t         val
@@ -530,7 +579,7 @@ WriteUINT32(
 /* D.3.2.11.	ReadUINT32() */
 /* Function to read 4 byte integer from socket. */
 
-bool
+static bool
 ReadUINT32(
 	   SOCKET           s,
 	   uint32_t         *val
@@ -548,7 +597,7 @@ ReadUINT32(
 /* Get a uint32_t-length-prepended binary array.  Note that the 4-byte length is in network byte order
    (big-endian). */
 
-bool
+static bool
 ReadVarBytes(
 	     SOCKET           s,
 	     char            *buffer,
@@ -576,7 +625,7 @@ ReadVarBytes(
 /* D.3.3.11. WriteVarBytes() */
 /* Send a uint32_t-length-prepended binary array.  Note that the 4-byte length is in network byte
    order (big-endian). */
-bool
+static bool
 WriteVarBytes(
 	      SOCKET           s,
 	      char            *buffer,
@@ -594,7 +643,7 @@ WriteVarBytes(
 /* D.3.3.12. TpmServer() */
 /* Processing incoming TPM command requests using the protocol / interface defined above. */
 
-bool
+static bool
 TpmServer(
 	  SOCKET           s
 	  )

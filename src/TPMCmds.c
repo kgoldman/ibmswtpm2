@@ -3,7 +3,6 @@
 /*			 Main Simulator Entry Point		    		*/
 /*			     Written by Ken Goldman				*/
 /*		       IBM Thomas J. Watson Research Center			*/
-/*            $Id: TPMCmds.c 1646 2020-10-16 13:11:49Z kgoldman $		*/
 /*										*/
 /*  Licenses and Notices							*/
 /*										*/
@@ -55,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2019				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2026				*/
 /*										*/
 /********************************************************************************/
 
@@ -110,6 +109,8 @@ Usage(
 	    pszProgramName, DEFAULT_TPM_PORT, DEFAULT_TPM_PORT+1);
     fprintf(stderr,  "%s -port PortNum - Starts the TPM server listening on port PortNum, PortNum+1\n",
 	    pszProgramName);
+    fprintf(stderr,  "%s -ipaddr bind address (default all interfaces)\n", pszProgramName);
+    fprintf(stderr,  "\t127.0.0.1 for localhost only\n");
     fprintf(stderr,  "%s -rm remanufacture the TPM before starting\n", pszProgramName);
     fprintf(stderr,  "%s -h      - This message\n", pszProgramName);
     fprintf(stderr,  "%s -v      - Verbose trace to trace.txt\n", pszProgramName);
@@ -135,6 +136,10 @@ main(
     int manufacture = 0;
     int portNum = DEFAULT_TPM_PORT;
     int portNumPlat;
+    const char *ipaddr = NULL;
+    /* must be defined here so it has program lifetime. If defined as a local variable down the call
+       tree, there are race conditions with the spawned thread. */
+    ThreadParams params;
     setvbuf(stdout, 0, _IONBF, 0);      /* output may be going through pipe to log file */
 
     for (i=1 ; i<argc ; i++) {
@@ -151,6 +156,16 @@ main(
 	    }
 	    else {
 		printf("Missing parameter for -port\n");
+		Usage(argv[0]);
+	    }
+	}
+	else if (strcmp(argv[i],"-ipaddr") == 0) {
+	    i++;
+	    if (i < argc) {
+		ipaddr = argv[i];
+	    }
+	    else {
+		printf("Missing parameter for -ipaddrs\n");
 		Usage(argv[0]);
 	    }
 	}
@@ -205,8 +220,11 @@ main(
     _rpc__Signal_NvOn();
 
     portNumPlat = portNum + 1;
+    params.portc = portNum;
+    params.portp = portNumPlat;
+    params.ipaddr = ipaddr;
 
-    irc = StartTcpServer(&portNum, &portNumPlat);
+    irc = StartTcpServer(&params);
     if (irc == 0) {
 	return EXIT_SUCCESS;
     }

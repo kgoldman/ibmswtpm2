@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2026				*/
 /*										*/
 /********************************************************************************/
 
@@ -70,62 +70,6 @@
 
 #include "CompilerDependencies.h"
 #include "BaseTypes.h"
-
-bool
-PlatformServer(
-	       SOCKET           s
-	       );
-int
-PlatformSvcRoutine(
-		   void *port
-		   );
-int
-PlatformSignalService(
-		      int              *PortNumberPlatform
-		      );
-int
-RegularCommandService(
-		      int              *PortNumber
-		      );
-int
-StartTcpServer(
-	       int              *PortNumber,
-	       int              *PortNumberPlatform
-	       );
-bool
-ReadBytes(
-	  SOCKET           s,
-	  char            *buffer,
-	  int              NumBytes
-	  );
-bool
-WriteBytes(
-	   SOCKET           s,
-	   char            *buffer,
-	   int              NumBytes
-	   );
-bool
-WriteUINT32(
-	    SOCKET           s,
-	    UINT32           val
-	    );
-bool
-ReadVarBytes(
-	     SOCKET           s,
-	     char            *buffer,
-	     UINT32          *BytesReceived,
-	     int              MaxLen
-	     );
-bool
-WriteVarBytes(
-	      SOCKET           s,
-	      char            *buffer,
-	      int              BytesToSend
-	      );
-bool
-TpmServer(
-	  SOCKET           s
-	  );
 
 
 #endif

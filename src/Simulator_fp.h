@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2023				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2026				*/
 /*										*/
 /********************************************************************************/
 
@@ -66,77 +66,13 @@
 #ifndef _SIMULATOR_FP_H_
 #define _SIMULATOR_FP_H_
 
+#include "TcpServer_fp.h"
+
 //** From TcpServer.c
 
 #ifdef _MSC_VER
 #elif defined(__unix__) || defined(__APPLE__)
 #endif
-
-//*** PlatformServer()
-// This function processes incoming platform requests.
-bool PlatformServer(SOCKET s);
-
-//*** PlatformSvcRoutine()
-// This function is called to set up the socket interfaces to listen for
-// commands.
-int  PlatformSvcRoutine(LPVOID port);
-
-//*** PlatformSignalService()
-// This function starts a new thread waiting for platform signals.
-// Platform signals are processed one at a time in the order in which they are
-// received.
-// If PickPorts is true, the server finds the next available port if the specified
-// port was unavailable.
-int PlatformSignalService(int *PortNumberPlatform);
-
-//*** RegularCommandService()
-// This function services regular commands.
-// If PickPorts is true, the server finds the next available port if the specified
-// port was unavailable.
-int RegularCommandService(int *PortNumber);
-
-//*** StartTcpServer()
-// This is the main entry-point to the TCP server.  The server listens on the port
-// specified.
-// If PickPorts is true, the server finds the next available port if the specified
-// port was unavailable.
-//
-// Note that there is no way to specify the network interface in this implementation.
-int StartTcpServer(int *PortNumber, int *PortNumberPlatform);
-
-
-//*** ReadBytes()
-// This function reads the indicated number of bytes ('NumBytes') into buffer
-// from the indicated socket.
-bool ReadBytes(SOCKET s, char* buffer, int NumBytes);
-
-//*** WriteBytes()
-// This function will send the indicated number of bytes ('NumBytes') to the
-// indicated socket
-bool WriteBytes(SOCKET s, char* buffer, int NumBytes);
-
-//*** WriteUINT32()
-// Send 4 byte integer
-bool WriteUINT32(SOCKET s, uint32_t val);
-
-//*** ReadUINT32()
-// Function to read 4 byte integer from socket.
-bool ReadUINT32(SOCKET s, uint32_t* val);
-
-//*** ReadVarBytes()
-// Get a uint32-length-prepended binary array.  Note that the 4-byte length is
-// in network byte order (big-endian).
-bool ReadVarBytes(SOCKET s, char* buffer, uint32_t* BytesReceived, int MaxLen);
-
-//*** WriteVarBytes()
-// Send a UINT32-length-prepended binary array.  Note that the 4-byte length is
-// in network byte order (big-endian).
-bool WriteVarBytes(SOCKET s, char* buffer, int BytesToSend);
-
-//*** TpmServer()
-// Processing incoming TPM command requests using the protocol / interface
-// defined above.
-bool TpmServer(SOCKET s);
 
 //** From TPMCmdp.c
 

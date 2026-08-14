@@ -55,7 +55,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2016 - 2021				*/
+/*  (c) Copyright IBM Corp. and others, 2016 - 2026				*/
 /*										*/
 /********************************************************************************/
 
@@ -64,66 +64,17 @@
 
 #include <stdbool.h>
 
-bool
-PlatformServer(
-	       SOCKET           s
-	       );
-int
-PlatformSvcRoutine(
-		   void *port
-		   );
-int
-PlatformSignalService(
-		      int              *PortNumber
-		      );
-int
-RegularCommandService(
-		      int              *PortNumber
-		      );
+/* thread parameter structure */
+
+typedef struct {
+    int portc;
+    int portp;
+    const char *ipaddr;
+} ThreadParams;
+
 int
 StartTcpServer(
-	       int              *PortNumber,
-	       int              *PortNumberPlatform
+	       ThreadParams 	 *params
 	       );
-bool
-ReadBytes(
-	  SOCKET           s,
-	  char            *buffer,
-	  int              NumBytes
-	  );
-bool
-WriteBytes(
-	   SOCKET           s,
-	   char            *buffer,
-	   int              NumBytes
-	   );
-bool
-WriteUINT32(
-	    SOCKET           s,
-	    uint32_t         val
-	    );
-bool
-ReadUINT32(
-	   SOCKET           s,
-	   UINT32          *val
-	   );
-bool
-ReadVarBytes(
-	     SOCKET           s,
-	     char            *buffer,
-	     uint32_t        *BytesReceived,
-	     int              MaxLen
-	     );
-bool
-WriteVarBytes(
-	      SOCKET           s,
-	      char            *buffer,
-	      int              BytesToSend
-	      );
-bool
-TpmServer(
-	  SOCKET           s
-	  );
-
 
 #endif

@@ -54,7 +54,7 @@
 /*    arising in any way out of use or reliance upon this specification or any 	*/
 /*    information herein.							*/
 /*										*/
-/*  (c) Copyright IBM Corp. and others, 2012 - 2024				*/
+/*  (c) Copyright IBM Corp. and others, 2012 - 2026				*/
 /*										*/
 /********************************************************************************/
 
@@ -72,6 +72,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <arpa/inet.h>
 
 #include "string.h"
 #include <stdlib.h>
@@ -86,12 +87,39 @@
 //#include "Platform_fp.h"	/* kgold */
 #include "PlatformACT_fp.h"	/* added kgold */
 
-bool				/* kgold */
+/* static function prototypes */
+static bool			/* kgold */
 ReadUINT32(
 	   SOCKET           s,
 	   uint32_t 	    *val
 	   );
-
+static bool
+WriteUINT32(
+	    SOCKET           s,
+	    uint32_t 	     val
+	    );
+static bool
+ReadBytes(
+	  SOCKET           s,
+	  char            *buffer,
+	  int              NumBytes
+	  );
+static bool
+WriteBytes(
+	   SOCKET           s,
+	   char            *buffer,
+	   int              NumBytes
+	   );
+static bool
+WriteVarBytes(
+	      SOCKET           s,
+	      char            *buffer,
+	      int              BytesToSend
+	      );
+static bool
+TpmServer(
+	  SOCKET           s
+	  );
 
 #define IPVER(len) ((len) == sizeof(struct sockaddr_in6) ? 6 :		\
 		    ((len) == sizeof(struct sockaddr_in) ? 4 : 0))
@@ -118,9 +146,10 @@ struct {
 static int
 CreateSocket(
 	     int                  PortNumber,
+	     const char		 *ipaddr,
 	     SOCKET              *listenSocket,
 	     socklen_t           *addr_len,
-	     int                  domain 	// AF_INET or AF_INET6
+	     int                  domain 	// AF_INET (2) or AF_INET6 (10)
 	     )
 {
     struct		sockaddr_in MyAddress4;
@@ -135,7 +164,8 @@ CreateSocket(
 	{
             printf("Warning: Cannot create server listen %s socket\nWarning is %d %s\n",
                    domain == AF_INET6 ? "IPv6" :
-                   (domain == AF_INET) ? "IPv4" : "?", errno, strerror(errno));
+                   (domain == AF_INET) ? "IPv4" : "?",
+		   errno, strerror(errno));
 	    printf("Ignore the IPv6 warning if the platform doesn't support IPv6\n");
 	    return -1;
 	}
@@ -154,14 +184,29 @@ CreateSocket(
 	MyAddress4.sin_family = domain;
 	MyAddress4.sin_port = htons((short) PortNumber);
 	*addr_len = sizeof(struct sockaddr_in);
-	res= bind(*listenSocket,(struct sockaddr*) &MyAddress4, *addr_len);
+	if (ipaddr != NULL) {
+	    res = inet_pton(AF_INET, ipaddr, &MyAddress4.sin_addr);
+	    if (res != 1) {
+		printf("inet_pton Error, invalid ipv4 address: %s\n", ipaddr);
+		close(*listenSocket);
+		return -1;
+	    }
+	}
+	res = bind(*listenSocket,(struct sockaddr*) &MyAddress4, *addr_len);
 	break;
       case AF_INET6:
 	memset((char *)&MyAddress6, 0, sizeof(MyAddress6));
 	MyAddress6.sin6_family = domain;
         MyAddress6.sin6_port = htons((short) PortNumber);
 	*addr_len = sizeof(struct sockaddr_in6);
-
+	if (ipaddr != NULL) {
+	    res = inet_pton(AF_INET6, ipaddr, &MyAddress6.sin6_addr);
+	    if (res != 1) {
+		printf("inet_pton Error, invalid ipv6 address: %s\n", ipaddr);
+		close(*listenSocket);
+		return -1;
+	    }
+	}
         opt = 1;
         // Set IPPROTO_IPV6 so that it's just for IPv6 and not both IPv4/IPv6.
         res = setsockopt(*listenSocket, IPPROTO_IPV6, IPV6_V6ONLY, &opt,
@@ -172,7 +217,7 @@ CreateSocket(
 	    return -1;
         }
 	res= bind(*listenSocket,(struct sockaddr*) &MyAddress6, *addr_len);
-      break;
+	break;
       default:
         printf("Address family %d not supported\n", domain);
         return -1;
@@ -181,7 +226,11 @@ CreateSocket(
 	{
             close(*listenSocket);
 	    *listenSocket = -1;
-	    printf("Bind error.  Error is  %d %s\n", errno, strerror(errno));
+	    printf("Bind error port %d domain %s. Error is %d %s\n",
+		   PortNumber,
+                   domain == AF_INET6 ? "IPv6" :
+                   (domain == AF_INET) ? "IPv4" : "?",
+		   errno, strerror(errno));
 	    return -1;
 	}
     // listen/wait for server connections
@@ -199,7 +248,7 @@ CreateSocket(
 // D.3.3.2.	PlatformServer()
 // This function processes incoming platform requests.
 
-bool
+static bool
 PlatformServer(
 	       SOCKET           s
 	       )
@@ -282,13 +331,11 @@ PlatformServer(
 // D.3.3.3.	PlatformSvcRoutine()
 // This function is called to set up the socket interfaces to listen for commands.
 
-int
-PlatformSvcRoutine(
-		   void *port
-		   )
+static int
+PlatformSvcRoutine(const ThreadParams *params)
 {
-    int                  PortNumber = *(int *)port;
-
+    int			 PortNumber = params->portp;
+    const char 		*ipaddr = params->ipaddr;
     SOCKET               listenSocket[2], maxListenSocket, serverSocket;
     struct               sockaddr_storage HerAddress;
     fd_set               sockSet;
@@ -297,12 +344,12 @@ PlatformSvcRoutine(
     socklen_t            length[2];
     BOOL                 continueServing = true;	/* kgold initialized */
 
-    if (CreateSocket(PortNumber, &listenSocket[nSock], &length[nSock],
+    if (CreateSocket(PortNumber, ipaddr, &listenSocket[nSock], &length[nSock],
 		     AF_INET) == 0) {
         nSock++;
 
     }
-    if (CreateSocket(PortNumber, &listenSocket[nSock], &length[nSock],
+    if (CreateSocket(PortNumber, ipaddr, &listenSocket[nSock], &length[nSock],
 		     AF_INET6) == 0) {
         nSock++;
     }
@@ -320,7 +367,8 @@ PlatformSvcRoutine(
     // Note the platform service is single-threaded so we don't listen for a new
     // connection until the prior connection drops.
     do {
-        printf("Platform server listening on port %d\n", PortNumber);
+        printf("Platform server listening on port %d ip addr %s\n", PortNumber,
+	       (ipaddr == NULL) ? "NULL": ipaddr);
 
 	// Select both IPv4 and IPv6 sockets or whatever is available
 	FD_ZERO(&sockSet);
@@ -372,9 +420,9 @@ PlatformSvcRoutine(
 // This function starts a new thread waiting for platform signals. Platform signals are processed
 // one at a time in the order in which they are received.
 
-int
+static int
 PlatformSignalService(
-		      int              *PortNumberPlatform
+		      ThreadParams 	 *params
 		      )
 {
     unsigned long       thread;
@@ -384,7 +432,7 @@ PlatformSignalService(
     irc = pthread_create(pthread,
                          NULL,
                          (void * (*)(void *))PlatformSvcRoutine,      /* thread entry function */
-                         (void *)PortNumberPlatform); 	          /* thread function parameters */
+                         (void *)params); 		          /* thread function parameters */
     if (irc != 0) {
 	printf("Thread Creation failed\n");
 	return -1;
@@ -395,9 +443,9 @@ PlatformSignalService(
 // D.3.3.5.	RegularCommandService()
 // This funciton services regular commands.
 
-int
+static int
 RegularCommandService(
-		      int              *PortNumber
+		      ThreadParams 	 *params
 		      )
 {
     SOCKET               listenSocket[2], maxListenSocket;
@@ -409,12 +457,12 @@ RegularCommandService(
     socklen_t            length[2];
     BOOL 		 continueServing = true;	/* kgold - initialized */
 
-    if (CreateSocket(*PortNumber, &listenSocket[nSock], &length[nSock],
+    if (CreateSocket(params->portc, params->ipaddr, &listenSocket[nSock], &length[nSock],
 		     AF_INET) == 0) {
         nSock++;
 
     }
-    if (CreateSocket(*PortNumber, &listenSocket[nSock], &length[nSock],
+    if (CreateSocket(params->portc, params->ipaddr, &listenSocket[nSock], &length[nSock],
 		     AF_INET6) == 0) {
         nSock++;
     }
@@ -432,7 +480,9 @@ RegularCommandService(
     // a new connection until the prior connection drops.
     do
 	{
-	    printf("TPM command server listening on port %d\n", *PortNumber);
+	    printf("TPM command server listening on port %d ip addr %s \n",
+		   params->portc,
+		   (params->ipaddr == NULL) ? "NULL": params->ipaddr);
 
 	    // Select both IPv4 and IPv6 sockets or whatever is available
 	    FD_ZERO(&sockSet);
@@ -463,7 +513,7 @@ RegularCommandService(
 			       ipver, errno, strerror(errno));
 			return -1;
 		    };
-	        printf("Command IPv%d client accepted\n", ipver);
+		printf("TPM server IPv%d client accepted\n", ipver);
 
 	        // normal behavior on client disconnection is to wait for a new
 	        // client to connect
@@ -560,10 +610,7 @@ ActTimeService(
 // way to specify the network interface in this implementation.
 
 int
-StartTcpServer(
-	       int              *PortNumber,
-	       int              *PortNumberPlatform
-	       )
+StartTcpServer(ThreadParams *params)
 {
     int                  res;
 
@@ -577,18 +624,18 @@ StartTcpServer(
 	}
 #endif
     // Start Platform Signal Processing Service
-    res = PlatformSignalService(PortNumberPlatform);
+    res = PlatformSignalService(params);
     if (res != 0)
 	{
-	    printf("PlatformSignalService failed\n");
+	    printf("PlatformSignalService failed port %d\n", params->portp);
 	    return res;
 	}
 
     // Start Regular/DRTM TPM command service
-    res = RegularCommandService(PortNumber);
+    res = RegularCommandService(params);
     if (res != 0)
 	{
-	    printf("RegularCommandService failed\n");
+	    printf("RegularCommandService failed port %d\n", params->portc);
 	    return res;
 	}
     return 0;
@@ -598,7 +645,7 @@ StartTcpServer(
 // This function reads the indicated number of bytes (NumBytes) into buffer from the indicated
 // socket.
 
-bool
+static bool
 ReadBytes(
 	  SOCKET           s,
 	  char            *buffer,
@@ -628,7 +675,7 @@ ReadBytes(
 // D.3.3.8.	WriteBytes()
 // This function will send the indicated number of bytes (NumBytes) to the indicated socket
 
-bool
+static bool
 WriteBytes(
 	   SOCKET           s,
 	   char            *buffer,
@@ -653,7 +700,7 @@ WriteBytes(
 // D.3.3.9.	WriteUINT32()
 // Send 4 byte integer
 
-bool
+static bool
 WriteUINT32(
 	    SOCKET           s,
 	    uint32_t 	     val
@@ -666,7 +713,7 @@ WriteUINT32(
 /* D.3.2.11.	ReadUINT32() */
 /* Function to read 4 byte integer from socket. */
 
-bool
+static bool
 ReadUINT32(
 	   SOCKET           s,
 	   uint32_t 	    *val
@@ -684,7 +731,7 @@ ReadUINT32(
 // Get a uint32_t-length-prepended binary array.  Note that the 4-byte length is in network byte
 // order (big-endian).
 
-bool
+static bool
 ReadVarBytes(
 	     SOCKET           s,
 	     char            *buffer,
@@ -714,7 +761,7 @@ ReadVarBytes(
 // Send a uint32_t--length-prepended binary array.  Note that the 4-byte length is in network byte
 // order (big-endian).
 
-bool
+static bool
 WriteVarBytes(
 	      SOCKET           s,
 	      char            *buffer,
@@ -734,7 +781,7 @@ WriteVarBytes(
 // D.3.3.12.	TpmServer()
 // Processing incoming TPM command requests using the protocol / interface defined above.
 
-bool
+static bool
 TpmServer(
 	  SOCKET           s
 	  )
